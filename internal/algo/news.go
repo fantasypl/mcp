@@ -8,8 +8,6 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
 
-// Ported from app/algorithms/news.py.
-//
 // The FPL `news` field is free text like "Hamstring - Expected back 15 Mar",
 // and `news_added` is an ISO timestamp. These supplement
 // chance_of_playing_next_round, which is often stale or optimistic.
@@ -41,7 +39,7 @@ var NegativeNewsKeywords = []string{
 	"match fitness",
 }
 
-// NewsPenaltyScore ports news.news_penalty_score.
+// NewsPenaltyScore assigns the documented penalty for concerning news.
 //
 //	-3.0  "unknown return" — worst, no timeline at all
 //	-2.0  any other negative keyword
@@ -62,7 +60,7 @@ func NewsPenaltyScore(p *fpl.Player) float64 {
 	return 0.0
 }
 
-// HasNegativeNews ports news.has_negative_news.
+// HasNegativeNews reports whether the player has concerning news.
 func HasNegativeNews(p *fpl.Player) bool {
 	if p.News == "" {
 		return false
@@ -76,8 +74,8 @@ func HasNegativeNews(p *fpl.Player) bool {
 	return false
 }
 
-// FormatNewsAge ports news.format_news_age, rendering a news timestamp as a
-// relative age. Returns "" where the Python returns None.
+// FormatNewsAge renders a news timestamp as a relative age. Returns "" when
+// no usable age is available.
 //
 // now is passed explicitly rather than read from the clock so that output is
 // reproducible; see Engine.Now.
@@ -91,9 +89,8 @@ func FormatNewsAge(newsAdded *string, now time.Time) string {
 	}
 
 	delta := now.Sub(added)
-	// Python's timedelta.days floors toward negative infinity and .seconds is
-	// the non-negative remainder, so a future timestamp yields days == -1
-	// rather than 0. Reproduce by flooring.
+	// A future timestamp must yield days == -1 rather than 0, so the day/hour
+	// split floors toward negative infinity rather than truncating toward zero.
 	days := int(deltaFloorDays(delta))
 	hours := int((delta - time.Duration(days)*24*time.Hour) / time.Hour)
 
@@ -124,7 +121,7 @@ func deltaFloorDays(d time.Duration) int64 {
 	if n >= 0 {
 		return n / day
 	}
-	// Floor division for negatives, matching Python.
+	// Floor division for negatives is required for the day/hour split above.
 	q := n / day
 	if n%day != 0 {
 		q--
@@ -144,7 +141,8 @@ func parseFPLTime(s string) (time.Time, bool) {
 	}
 	for _, l := range layouts {
 		if t, err := time.Parse(l, s); err == nil {
-			// A naive timestamp is treated as UTC, as the Python does.
+			// A timestamp with no timezone offset is treated as UTC; the FPL API's
+			// news_added field never carries one.
 			if t.Location() == time.UTC || !strings.ContainsAny(s, "Z+") {
 				return t.UTC(), true
 			}
@@ -155,13 +153,13 @@ func parseFPLTime(s string) (time.Time, bool) {
 }
 
 // PlayerNews is the structured form of a player's news, or nil when there is
-// none. Mirrors news.get_player_news.
+// none.
 type PlayerNews struct {
 	Text    string `json:"text"`
 	Updated string `json:"updated,omitempty"`
 }
 
-// GetPlayerNews ports news.get_player_news.
+// GetPlayerNews returns the structured form of a player's news.
 func GetPlayerNews(p *fpl.Player, now time.Time) *PlayerNews {
 	text := strings.TrimSpace(p.News)
 	if text == "" {
@@ -174,7 +172,7 @@ func GetPlayerNews(p *fpl.Player, now time.Time) *PlayerNews {
 	return out
 }
 
-// FormatNewsForReasoning ports news.format_news_for_reasoning, producing
+// FormatNewsForReasoning produces
 // "Hamstring - Expected back 15 Mar (2 days ago)" or "" for no news.
 func FormatNewsForReasoning(p *fpl.Player, now time.Time) string {
 	info := GetPlayerNews(p, now)

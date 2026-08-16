@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-// Expected values generated from CPython 3.12. If one of these fails, the port
+// Expected values encode the formatting contract. If one of these fails, the implementation
 // will silently disagree with the reference implementation somewhere in the
 // scoring pipeline.
 
-func TestRoundMatchesPython(t *testing.T) {
+func TestRound(t *testing.T) {
 	cases := []struct {
 		in   float64
 		n    int
@@ -59,7 +59,7 @@ func TestRoundDiffersFromMathRound(t *testing.T) {
 	}
 }
 
-func TestRoundToIntMatchesPython(t *testing.T) {
+func TestRoundToInt(t *testing.T) {
 	cases := []struct {
 		in   float64
 		want int
@@ -85,9 +85,9 @@ func TestRoundToIntMatchesPython(t *testing.T) {
 	}
 }
 
-// "%d" % 1.4 truncates in Python. Rounding here would shift FDR labels in the
+// "%d" % 1.4 truncates. Rounding here would shift FDR labels in the
 // reasoning strings by one.
-func TestTruncIntMatchesPython(t *testing.T) {
+func TestTruncInt(t *testing.T) {
 	cases := []struct {
 		in   float64
 		want int
@@ -106,7 +106,7 @@ func TestTruncIntMatchesPython(t *testing.T) {
 	}
 }
 
-func TestFloatStrMatchesPython(t *testing.T) {
+func TestFloatStr(t *testing.T) {
 	cases := []struct {
 		in   float64
 		want string
@@ -129,9 +129,9 @@ func TestFloatStrMatchesPython(t *testing.T) {
 	}
 }
 
-// Go's fmt must agree with Python's format spec, since reasoning strings embed
+// Go's fmt must agree with the format spec, since reasoning strings embed
 // xG/90 as "%.2f".
-func TestSprintfMatchesPythonFormatSpec(t *testing.T) {
+func TestSprintfFormatSpec(t *testing.T) {
 	cases := []struct {
 		in   float64
 		want string
@@ -153,8 +153,8 @@ func TestSprintfMatchesPythonFormatSpec(t *testing.T) {
 	}
 }
 
-// The single most mistranslatable line in the port.
-func TestCapitalizeMatchesPython(t *testing.T) {
+// The single most mistranslatable line in the implementation.
+func TestCapitalize(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{
 			"Poor form, strong xG/90 (0.32), FPL expects 4.0pts, elite ICT index",

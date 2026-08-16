@@ -12,7 +12,8 @@ import (
 
 const rivalsUserTeamID = 999002
 
-// newRivalsEngine wires the scenario from scripts/gen_rivals_golden.py — the
+// newRivalsEngine wires the scenario `fplctl gengolden --which=rivals`
+// produces — the
 // user is Sam Rival (999002); Alex (999001) and Jo (999003) are analyzable
 // rivals; Kim (999004) has no picks stubbed, simulating a fetch failure that
 // drops them from the analysis entirely (unlike league_analyzer, which
@@ -43,13 +44,13 @@ func newRivalsEngine(t *testing.T) *Engine {
 	return e
 }
 
-// TestRivalAnalysisMatchesGolden compares against the captured Python output
+// TestRivalAnalysisMatchesGolden compares against the captured expected output
 // with one deliberate exception: your_differentials/their_differentials are
-// built from a Python set[int] difference, and within a tied form value
+// built from a set[int] difference, and within a tied form value
 // (several players commonly share the same form, e.g. 0.0), the pre-sort
-// order comes from CPython's internal set iteration — deterministic in the
+// order comes from set iteration — deterministic in the
 // sense that it doesn't change between runs (small-int hashes aren't
-// randomised by PYTHONHASHSEED), but not something worth reverse-engineering
+// randomized by the runtime seed), but not something worth reverse-engineering
 // bit-for-bit in Go. formatPlayerList breaks ties by player ID instead, which
 // is an equally valid order the algorithm never promised against. So this
 // test sorts differential lists by player_id on both sides before comparing
@@ -84,7 +85,7 @@ func TestRivalAnalysisMatchesGolden(t *testing.T) {
 	// output is actually sorted by form descending in the first place. A
 	// real sort-direction bug would sail through the reordered comparison
 	// above, so check that invariant directly against Go's own (unsorted)
-	// output instead of against Python's.
+	// output instead of against an external runtime.
 	result := got.(*RivalAnalysisResult)
 	for _, r := range result.Rivals {
 		assertSortedByFormDesc(t, r.ManagerName+".your_differentials", r.YourDifferentials)
@@ -128,7 +129,7 @@ func canonicalizeDifferentials(v any) {
 
 // A manager whose squad can't be fetched is dropped from rival_analyses
 // entirely — a different failure mode from league_analyzer, which reports
-// them with an error entry instead. Both are faithful to their own Python
+// them with an error entry instead. Both are faithful to their own
 // source; they just genuinely behave differently.
 func TestRivalWithFailedFetchIsDropped(t *testing.T) {
 	e := newRivalsEngine(t)

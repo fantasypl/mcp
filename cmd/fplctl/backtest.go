@@ -16,14 +16,14 @@ import (
 // runBacktest runs the captain-pick algorithm against a reconstructed
 // historical gameweek and reports how the picks actually performed — a
 // predictive-validity check, distinct from the golden-file parity tests,
-// which only prove Go agrees with the Python reference.
+// which only verify the implementation against the established outputs.
 //
 // Absorbed from the former cmd/backtest-demo prototype. Input is produced by
 // scripts/backtest_from_vaastav.py: a bootstrap reflecting genuine
 // season-to-date state through gameweek N-1 (no look-ahead), the full
 // fixture list, and gameweek N's actual per-player results — deliberately
-// not the live-fetch approach backtest.py's Python takes, which scores past
-// gameweeks against *today's* bootstrap and is look-ahead-biased as a result.
+// not the live-fetch approach, which scores past gameweeks against *today's*
+// bootstrap and is look-ahead-biased as a result.
 func runBacktest(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("backtest", flag.ExitOnError)
 	bootstrapPath := fs.String("bootstrap", "", "path to reconstructed bootstrap JSON (single mode)")

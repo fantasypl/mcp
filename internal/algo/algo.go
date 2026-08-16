@@ -1,14 +1,14 @@
-// Package algo ports the FPL scoring algorithms from app/algorithms/*.py.
+// Package algo implements the FPL scoring algorithms: captain picks, chip
+// strategy, transfer suggestions, comparisons, and the Engine's other methods.
 //
-// Two structural changes from the Python, both deliberate:
+// Two deliberate structural choices:
 //
 //   - Algorithms are methods on Engine rather than module-level functions, so
 //     weights and the FPL client are injected instead of loaded at import time
 //     behind a swallowed exception.
 //   - Players arrive as typed fpl.Player values rather than dicts.
 //
-// Everything else is a faithful translation. Where a Python built-in behaves
-// differently from its Go counterpart — rounding, capitalisation, sort
+// Where a Go operation behaves differently from the required contract — rounding, capitalisation, sort
 // stability — see pyfmt.go and the comments at each call site.
 package algo
 
@@ -31,7 +31,7 @@ var PositionMap = map[int]string{1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 // injured, doubtful, suspended, unavailable.
 var InjuryStatuses = map[string]bool{"i": true, "d": true, "s": true, "u": true}
 
-// Position returns the short position name, or "?" as the Python .get default.
+// Position returns the short position name, or "?" when the element type is unknown.
 func Position(elementType int) string {
 	if p, ok := PositionMap[elementType]; ok {
 		return p
@@ -53,12 +53,10 @@ type Client interface {
 	PlayerSummary(ctx context.Context, playerID int) (*fpl.PlayerSummary, error)
 }
 
-// Engine holds everything the algorithms need, replacing the Python's
-// module-level globals.
+// Engine holds everything the algorithms need as explicit state.
 //
-// captain.py runs `WEIGHTS = _load_weights()` at import time, reading
-// data/optimized_weights.json behind a bare `except: pass`. That is both
-// untestable and silently variable, so weights become explicit state here.
+// Weights are explicit state, making loading testable and preventing silent
+// fallback behavior from changing results unexpectedly.
 type Engine struct {
 	client  Client
 	weights Weights
@@ -72,7 +70,7 @@ type Engine struct {
 	// implementation makes real HTTP requests to third-party sites
 	// (premierleague.com, allaboutfpl.com — see dgw_intel.go), which tests
 	// must never do. Chip strategy treats a fetch failure as best-effort and
-	// proceeds without it, matching the Python's own bare try/except around
+	// proceeds without it, because chip strategy treats this fetch as best-effort
 	// this call.
 	IntelFetcher intelFetcher
 }
@@ -105,8 +103,7 @@ type Streak struct {
 	Detail string `json:"detail"`
 }
 
-// DetectStreak ports algorithms.detect_streak: compare recent form against
-// season points-per-game.
+// DetectStreak compares recent form against season points-per-game.
 //
 // Note the guard — with either value at zero the result is "neutral". In
 // preseason FPL resets form to 0.0 for every player, so this returns

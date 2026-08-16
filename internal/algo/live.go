@@ -50,13 +50,9 @@ type bonusInfo struct {
 // with ties sharing the higher bonus and consuming that many slots — two
 // players tied for first both get 3, and the next player gets 1, not 2.
 //
-// Tie order beyond BPS itself is not something the reference implementation
-// actually controls — CPython set iteration order for player IDs is
-// implementation-defined, so there was never a single "correct" order to
-// match byte-for-byte here. Every player in a tie group receives the same
-// bonus and rank regardless of order, which is the only thing that's
-// observable; this breaks ties by element ID so the output is at least
-// deterministic across runs, which the Python's own version is not.
+// Tie order beyond BPS itself is not observable: every player in a tie group
+// receives the same bonus and rank. Break ties by element ID so output is
+// deterministic across runs.
 func calculateFixtureBPS(playerIDs []int, live fpl.LiveResponse, playersByID map[int]*fpl.Player, teams map[int]*fpl.Team) []bpsEntry {
 	liveByID := live.ByID()
 
@@ -176,7 +172,8 @@ func buildBPSData(fixtures []fpl.Fixture, gw int, live fpl.LiveResponse, players
 
 		// The bonus cutoff is the lowest BPS that still earned bonus — the
 		// last entry in ranking order with ProjectedBonus >= 1, matching the
-		// Python's "keep overwriting while scanning" loop exactly.
+		// Keep overwriting while scanning so the cutoff is the last qualifying
+		// entry in ranking order.
 		bonusCutoff := -1
 		hasCutoff := false
 		for _, r := range rankings {
@@ -284,12 +281,9 @@ type AutoSub struct {
 	Note         string `json:"note"`
 }
 
-// LivePoints ports live.get_live_points.
-//
-// Note: the Python fetches the manager's team history alongside everything
-// else but never reads it — dead code preserved nowhere here, since skipping
-// an unused fetch changes no observable output and saves a network round
-// trip.
+// LivePoints returns live points and related gameweek information. The
+// manager's team history is not fetched because it is unused and skipping it
+// changes no observable output while saving a network round trip.
 func (e *Engine) LivePoints(ctx context.Context, teamID int) (*LivePointsResult, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {

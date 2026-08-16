@@ -80,7 +80,7 @@ func loadBootstrap(t *testing.T, path string) *Bootstrap {
 }
 
 // Decoding the real payload is the test that matters: a hand-written struct
-// that silently fails to match production JSON is the classic port bug.
+// that silently fails to match production JSON is a classic compatibility bug.
 func TestDecodeRealBootstrap(t *testing.T) {
 	bs := loadBootstrap(t, "../../testdata/bootstrap_preseason.json")
 
@@ -97,7 +97,7 @@ func TestDecodeRealBootstrap(t *testing.T) {
 		t.Errorf("element types = %d, want 4", got)
 	}
 
-	// Haaland, id 411. Values cross-checked against the Python golden output.
+	// Haaland, id 411. Values cross-checked against the golden output.
 	var h *Player
 	for i := range bs.Elements {
 		if bs.Elements[i].ID == 411 {
@@ -256,7 +256,7 @@ func TestDecodeFixtures(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, ok := unassigned.EventOf(); ok {
-		t.Error("null event reported as assigned")
+		t.Error("null event marked as assigned")
 	}
 	for gw := 1; gw <= 38; gw++ {
 		if unassigned.InGameweek(gw) {

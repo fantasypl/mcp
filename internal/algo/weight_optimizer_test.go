@@ -12,13 +12,13 @@ import (
 // synthetic season (8 gameweeks, 30 players, 6 teams, randomly generated with
 // a fixed seed) built specifically to cross-check the optimizer, since no
 // real finished gameweek exists yet this season. testdata/optimizer_expected_
-// {weights,scores}.json were captured by running the Python optimizer over
+// {weights,scores}.json were captured by running the optimizer over
 // this exact fixture.
 func optimizerFixtureLayout() store.Layout {
 	return store.Layout{Root: testdataPath("optimizer_fixture")}
 }
 
-func TestOptimizeWeightsMatchesPython(t *testing.T) {
+func TestOptimizeWeightsFixture(t *testing.T) {
 	want := loadJSON[map[string]float64](t, testdataPath("optimizer_expected_weights.json"))
 
 	got, ok, err := OptimizeWeights(optimizerFixtureLayout(), RollingWindow)
@@ -26,7 +26,7 @@ func TestOptimizeWeightsMatchesPython(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !ok {
-		t.Fatal("optimizer reported insufficient data against a fixture built to have enough")
+		t.Fatal("optimizer returned insufficient data against a fixture built to have enough")
 	}
 
 	if len(got) != len(want) {
@@ -44,7 +44,7 @@ func TestOptimizeWeightsMatchesPython(t *testing.T) {
 	}
 }
 
-// The search must actually find an improvement on this fixture — the Python
+// The search must actually find an improvement on this fixture — the optimizer
 // run against the same data went from 61 to 67. If Go's search space or
 // scoring diverges even slightly, this is usually the first thing to catch it
 // because it's a single scalar rather than 15 floats to eyeball.

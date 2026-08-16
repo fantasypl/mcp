@@ -1,7 +1,8 @@
 // Command fplctl is the operational counterpart to fpl-mcp: it captures the
 // gameweek snapshots and cached live results the weight optimizer needs, and
 // exposes the backtest/evaluate/audit tooling used to validate the
-// algorithms against reality. It ports reference/python-src/scripts/*.py.
+// algorithms against reality. It implements the corresponding operational
+// workflows for snapshot, optimization, backtest, evaluation, and audit.
 package main
 
 import (
@@ -31,6 +32,8 @@ func main() {
 		err = runEvaluate(ctx, args)
 	case "audit":
 		err = runAudit(ctx, args)
+	case "gengolden":
+		err = runGenGolden(ctx, args)
 	case "-h", "--help", "help":
 		usage()
 		return

@@ -9,10 +9,9 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/golden"
 )
 
-// newLiveEngine wires the hand-built live scenario from
-// scripts/gen_live_golden.py into a stub client. See that script's docstring
-// for exactly what the scenario covers — BPS ties, confirmed vs projected
-// bonus, and a bench too small to cover every unused starter.
+// newLiveEngine wires the hand-built live scenario `fplctl gengolden
+// --which=live` produces into a stub client. It covers BPS ties, confirmed
+// vs projected bonus, and a bench too small to cover every unused starter.
 func newLiveEngine(t *testing.T) *Engine {
 	t.Helper()
 	c := &stubClient{
@@ -169,7 +168,7 @@ func TestNotStartedFixtureReportsEmptyBPS(t *testing.T) {
 	}
 }
 
-// bonus_status is "provisional" unless every reported day has confirmed
+// bonus_status is "provisional" unless every recorded day has confirmed
 // bonus — the fixture's event_status has one confirmed day and one not.
 func TestOverallBonusStatusRequiresEveryDayConfirmed(t *testing.T) {
 	e := newLiveEngine(t)

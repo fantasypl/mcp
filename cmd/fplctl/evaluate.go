@@ -17,7 +17,7 @@ import (
 )
 
 // evalCSVColumns is data/evaluation.csv's fixed column order — a
-// compatibility boundary with the Python implementation, per the port plan.
+// compatibility boundary for the established evaluation CSV contract.
 var evalCSVColumns = []string{
 	"gw", "algo_version", "captain_name", "captain_pts", "captain_rank",
 	"top3_hit", "top5_hit", "top10_hit", "haaland_pts", "haaland_rank",
@@ -43,8 +43,8 @@ type evalActual struct {
 	Points int    `json:"points"`
 }
 
-// evalResult ports evaluate_gw.py's evaluate_gameweek result dict. The first
-// block of fields is exactly evalCSVColumns; the rest is JSON-only detail.
+// evalResult is one gameweek's accuracy-evaluation result. The first block
+// of fields is exactly evalCSVColumns; the rest is JSON-only detail.
 type evalResult struct {
 	GW              int     `json:"gw"`
 	AlgoVersion     string  `json:"algo_version"`
@@ -224,8 +224,8 @@ func evaluateGameweek(ctx context.Context, engine *algo.Engine, bootstrap *fpl.B
 	for _, p := range bootstrap.Elements {
 		playerPoints = append(playerPoints, rankedPoints{id: p.ID, name: p.WebName, points: pointsByID[p.ID]})
 	}
-	// Stable descending sort — ties keep bootstrap.Elements order, matching
-	// Python's stable sort over the same insertion order.
+	// Stable descending sort — ties keep bootstrap.Elements order, preserving
+	// deterministic ranking for equal scores.
 	sort.SliceStable(playerPoints, func(i, j int) bool { return playerPoints[i].points > playerPoints[j].points })
 	for i := range playerPoints {
 		playerPoints[i].rank = i + 1
@@ -274,7 +274,7 @@ func evaluateGameweek(ctx context.Context, engine *algo.Engine, bootstrap *fpl.B
 	}
 	moInfo := byID[mostOwned.ID]
 
-	// --- differentials: evaluate_gw.py's own inline filter, narrower than
+	// --- differentials: this evaluation's own inline filter, narrower than
 	// Differentials()'s InjuryStatuses — only "i"/"u", and a hardcoded 10%
 	// cap rather than a parameter.
 	type diffScored struct {

@@ -11,10 +11,11 @@ import (
 
 const leagueScenarioID = 12345
 
-// newLeagueEngine wires the 4-manager scenario from
-// scripts/gen_league_golden.py into a stub client. Manager 999004 has no
-// picks or history stubbed at all, simulating a fetch failure. See that
-// script's docstring for what each manager is built to exercise.
+// newLeagueEngine wires the 4-manager scenario `fplctl gengolden
+// --which=league` produces into a stub client. Manager 999004 has no
+// picks or history stubbed at all, simulating a fetch failure. See
+// cmd/fplctl/gengolden_scenarios.go for what each manager is built to
+// exercise.
 func newLeagueEngine(t *testing.T) *Engine {
 	t.Helper()
 	dir := func(name string) string { return testdataPath("league_scenario", name) }
@@ -76,7 +77,7 @@ func TestAnalyzeLeagueNotFound(t *testing.T) {
 	}
 }
 
-// A manager whose picks or history can't be fetched is reported, not
+// A manager whose picks or history can't be fetched is returned, not
 // dropped, and does not abort analysis of the other managers.
 func TestAnalyzeLeaguePartialFetchFailure(t *testing.T) {
 	e := newLeagueEngine(t)

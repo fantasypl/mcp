@@ -10,9 +10,8 @@ package fpl
 // itself does not archive it past the season it belongs to. Gameweek numbers
 // 1-38 are reused every season with no season parameter anywhere in the API,
 // so once a season rolls over, its picks are gone from every source,
-// official or third-party, permanently. See the port plan's note on the
-// entry/ data problem for how algorithms that need this are tested without
-// real historical picks.
+// official or third-party, permanently. Algorithms that need this data are
+// tested without real historical picks.
 type TeamPicks struct {
 	Picks        []Pick       `json:"picks"`
 	ActiveChip   *string      `json:"active_chip"`

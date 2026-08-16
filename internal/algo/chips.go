@@ -82,7 +82,7 @@ type pendingFixture struct {
 // finished) — the leading indicator that a future gameweek will become a
 // DGW once the makeup date is confirmed. teamOrder preserves the order teams
 // were first encountered scanning fixtures, matching the insertion order a
-// Python dict built the same way would have — several downstream displays
+// The response map is built this way — several downstream displays
 // iterate this order rather than sorting by team ID.
 func predictDGWTeams(fixtures []fpl.Fixture) (pending map[int][]pendingFixture, teamOrder []int) {
 	pending = make(map[int][]pendingFixture)
@@ -394,11 +394,8 @@ type chipAssignment struct {
 // no need for anything cleverer.
 //
 // chips is iterated in a fixed canonical order (allChips' declaration order)
-// rather than whatever order a Go map would give. The Python builds the
-// equivalent list from `list(chips_remaining)`, a set of chip-name strings —
-// and CPython randomises string-set iteration per process via
-// PYTHONHASHSEED, so there was never a reproducible "correct" order to match
-// there either. In practice this only matters when two full assignments tie
+// rather than whatever order a Go map would give. This fixed order makes
+// tie-breaking deterministic across runs. In practice this only matters when two full assignments tie
 // exactly on total score, which needs several independent float sums to
 // collide bit-for-bit — essentially never happens with real fixture data.
 func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gwStats map[int]*gwChipStats, benchPlayers, squadPlayers []*fpl.Player, allPlayers []fpl.Player, e *Engine) map[string]chipAssignment {
@@ -484,7 +481,7 @@ func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gw
 		// Built by walking scanGWs (ascending), not by ranging over the
 		// scores map — Go map iteration is randomised, and the stable sort
 		// below only preserves tie-order correctly if its *input* order is
-		// deterministic. Python's equivalent sorts scores.keys(), which
+		// deterministic. Sorting the score keys, which
 		// iterates in dict insertion order — itself scan_gws order, since
 		// every score map here was built by looping scan_gws.
 		gws := make([]int, 0, len(scores))
@@ -543,7 +540,7 @@ func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gw
 
 // ---------------------------------------------------------------------------
 // Output shapes. Each chip type's recommendation has a genuinely different
-// field set in the Python (Triple Captain has a suggested_captain, Wildcard
+// field set for each chip (Triple Captain has a suggested_captain, Wildcard
 // has squad_issues, Free Hit's gw_details carries an extra blank_teams
 // field none of the others do) — modelled here as four distinct structs
 // rather than one struct with optional fields, for the same reason
@@ -579,7 +576,7 @@ type ChipStrategyResult struct {
 	PendingDGWs     *PendingDGWsSummary  `json:"pending_dgws,omitempty"`
 	CommunityIntel  *ChipsCommunityIntel `json:"community_intel,omitempty"`
 	// ChipPlaysByGW is keyed by gameweek number as a string, since JSON
-	// object keys are always strings — Python's dict has int keys and
+	// object keys are always strings — the internal map has int keys and
 	// json.dumps stringifies them the same way on encode.
 	ChipPlaysByGW map[string]map[string]int `json:"chip_plays_by_gw,omitempty"`
 }
@@ -662,9 +659,9 @@ type PendingDGWTeam struct {
 }
 
 // ChipsCommunityIntel mirrors the subset of CommunityIntel chip strategy
-// surfaces, only when at least one field is non-empty (see the Python's
+// surfaces, only when at least one field is non-empty (see the
 // `if intel_summary:` guard) — omitempty here is safe, unlike elsewhere in
-// this port, because both sides already treat "empty" and "absent" the same
+// implementation, because callers already treat "empty" and "absent" the same
 // way.
 type ChipsCommunityIntel struct {
 	PredictedDGWs map[string]SourcedMention `json:"predicted_dgws,omitempty"`
@@ -677,7 +674,7 @@ func (c *ChipsCommunityIntel) empty() bool {
 	return c == nil || (len(c.PredictedDGWs) == 0 && len(c.PredictedBGWs) == 0 && len(c.Sources) == 0 && len(c.SourceErrors) == 0)
 }
 
-// ChipStrategy ports chips.get_chip_strategy.
+// ChipStrategy recommends which of the remaining chips to play, and when.
 func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
@@ -702,7 +699,7 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 	// Chips reset at the season's halfway point (after GW19), so "used"
 	// means used within the current half, exactly mirroring
 	// league_analyzer's chipsRemaining (same rule, independently
-	// implemented in the Python — not shared code there either).
+	// implemented independently — not shared code here either).
 	const halfwayGW = 19
 	usedNames := make(map[string]bool)
 	for _, c := range history.Chips {
@@ -900,7 +897,7 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 	// Chip usage trends: both the scanned upcoming window and every finished
 	// gameweek, so a caller can reason about community timing ("80k
 	// managers used BB in GW34"). Two separate passes over events because
-	// that's what the Python does — the second pass can revisit a gameweek
+	// this is intentional — the second pass can revisit a gameweek
 	// the first already touched (a finished GW inside the scan window,
 	// possible right at a season's start/rollover), and the second write
 	// simply overwrites the first with the same finished-event data.
@@ -1189,7 +1186,7 @@ func buildWildcardRecommendation(a chipAssignment, stats *gwChipStats, squadPlay
 }
 
 // bestGWByScore returns the gameweek with the highest score, breaking ties by
-// earliest gameweek — Python's max(dict, key=dict.get) breaks ties by
+// earliest gameweek — equal values retain the first encountered gameweek,
 // insertion order, and scanGWs (ascending) is exactly that insertion order
 // here since every score map is built by iterating scanGWs.
 func bestGWByScore(scores map[int]float64, scanGWs []int) *int {

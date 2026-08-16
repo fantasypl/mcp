@@ -35,7 +35,7 @@ func newPlayer() *fpl.Player {
 	}
 }
 
-// numOf builds an fpl.Num, which has no exported constructor because it is
+// numOf builds an fpl.Num, which has no public constructor because it is
 // normally produced by unmarshalling.
 func numOf(f float64) fpl.Num {
 	var n fpl.Num

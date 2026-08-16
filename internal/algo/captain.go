@@ -26,11 +26,11 @@ type TeamFixture struct {
 	Opponent int
 }
 
-// buildFixtureMap ports captain._build_fixture_map.
+// buildFixtureMap indexes each team's upcoming fixtures by team ID.
 //
 // Returns team id -> fixtures in that gameweek. A team appears more than once
 // in a double gameweek. Iteration follows the fixtures slice order, which the
-// Python relies on for the "first fixture" fields in the output.
+// used for the "first fixture" fields in the output.
 func buildFixtureMap(fixtures []fpl.Fixture, gameweek int, teams map[int]*fpl.Team) map[int][]TeamFixture {
 	out := make(map[int][]TeamFixture)
 
@@ -56,7 +56,7 @@ func buildFixtureMap(fixtures []fpl.Fixture, gameweek int, teams map[int]*fpl.Te
 	return out
 }
 
-// strengthOr mirrors the Python `teams_by_id.get(id, {}).get(field, 1200)`:
+// strengthOr returns 1200 when the team or field is absent:
 // a missing team, or a missing field, falls back to 1200.
 func strengthOr(t *fpl.Team, get func(*fpl.Team) int) int {
 	if t == nil {
@@ -65,15 +65,16 @@ func strengthOr(t *fpl.Team, get func(*fpl.Team) int) int {
 	return get(t)
 }
 
-// blendFDR ports captain._blend_fdr: 40% raw FDR, 60% normalised opponent
-// strength. FPL's strength values run ~1000-1400 with finer granularity than
+// blendFDR blends 40% raw FDR with 60% normalised opponent strength. FPL's
+// strength values run ~1000-1400 with finer granularity than
 // the static 1-5 FDR, and they update weekly.
 func blendFDR(rawFDR float64, opponentStrength int) float64 {
 	strengthNorm := math.Max(1.0, math.Min(5.0, float64(opponentStrength-1000)/100+1.0))
 	return Round(rawFDR*0.4+strengthNorm*0.6, 2)
 }
 
-// playingChancePenalty ports captain._playing_chance_penalty.
+// playingChancePenalty scores how much to discount a player based on their
+// chance of playing.
 //
 // The null-versus-zero distinction is the crux: a nil chance means no flag has
 // been raised, so the player is assumed fit unless status says otherwise. A
@@ -93,7 +94,8 @@ func (e *Engine) playingChancePenalty(p *fpl.Player) float64 {
 	return e.weights.PlayingChanceMaxPenalty * (1.0 - chance/100.0)
 }
 
-// scorePlayer ports captain._score_player.
+// scorePlayer computes a player's captain score from form, fixtures, and
+// playing-chance.
 func (e *Engine) scorePlayer(p *fpl.Player, fixtures []TeamFixture) float64 {
 	w := e.weights
 
@@ -123,7 +125,7 @@ func (e *Engine) scorePlayer(p *fpl.Player, fixtures []TeamFixture) float64 {
 	epNext := p.EPNext.Float()
 
 	// Minutes certainty is deliberately not clamped: a player who started more
-	// often than his rounded 90s can exceed 1.0, and the Python lets it.
+	// often than his rounded 90s can exceed 1.0, as required by the scoring rule.
 	gwPlayed := 1
 	if nineties > 0 {
 		gwPlayed = max(1, RoundToInt(nineties))
@@ -209,9 +211,9 @@ func orderOf(p *int) int {
 	return *p
 }
 
-// buildReasoning ports captain._build_reasoning.
+// buildReasoning composes a human-readable explanation for a captain pick.
 //
-// The final Capitalize is Python's str.capitalize(), which lower-cases
+// The final Capitalize lower-cases
 // everything after the first character — so "xG/90" becomes "xg/90" and "FPL"
 // becomes "fpl" in the output. That is not a bug to fix here; it is the
 // reference behaviour the golden files record.
@@ -272,7 +274,7 @@ func (e *Engine) buildReasoning(p *fpl.Player, fixtures []TeamFixture, score flo
 			parts = append(parts, fmt.Sprintf("double gameweek (%d fixtures)", len(fixtures)))
 		}
 		for _, f := range fixtures {
-			// "%d" on a float truncates in Python: FDR 1.4 renders as 1.
+			// Float formatting truncates toward zero: FDR 1.4 renders as 1.
 			if f.FDR <= 2 {
 				parts = append(parts, fmt.Sprintf("easy fixture (FDR %d)", TruncInt(f.FDR)))
 			} else if f.FDR >= 4 {
@@ -402,18 +404,18 @@ type scoredPlayer struct {
 // ScoredPlayer pairs a player with its raw captain score and that
 // gameweek's fixtures — the uncapped, unfiltered form CaptainPicks builds
 // internally before excluding blank-gameweek players and applying the
-// max-2-per-club business rule. Exported for callers (fplctl's evaluate and
-// audit subcommands) that need the same raw scoring evaluate_gw.py and
-// accuracy_audit.py apply directly, without either of CaptainPicks' rules.
+// max-2-per-club business rule. Public for callers (fplctl's evaluate and
+// audit subcommands) that need the same raw scoring applied directly,
+// without either of CaptainPicks' rules.
 type ScoredPlayer struct {
 	Player   *fpl.Player
 	Score    float64
 	Fixtures []TeamFixture
 }
 
-// ScoreAllPlayers ports the scoring loop evaluate_gw.py and accuracy_audit.py
-// both inline directly from captain.py's _score_player/_build_fixture_map,
-// rather than calling get_captain_picks: every player is scored, including
+// ScoreAllPlayers exposes the scoring loop that fplctl's evaluate and audit
+// subcommands both inline directly, rather than calling CaptainPicks: every
+// player is scored, including
 // ones with no fixture this gameweek (scorePlayer's blanking penalty handles
 // those), and the result is stable-sorted descending by score with no
 // per-club cap. gameweek is optional; nil selects the next gameweek.
@@ -454,10 +456,10 @@ func (e *Engine) ScoreAllPlayers(ctx context.Context, gameweek *int) ([]ScoredPl
 	return scored, nil
 }
 
-// CaptainPicks ports captain.get_captain_picks.
+// CaptainPicks returns the top-N captain recommendations for a gameweek.
 //
 // gameweek is optional; nil selects the next gameweek. topN defaults to 5 when
-// non-positive, matching the Python signature default.
+// non-positive, using the function's default horizon.
 func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*CaptainResult, error) {
 	if topN <= 0 {
 		topN = 5
@@ -490,7 +492,7 @@ func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*Ca
 		scored = append(scored, scoredPlayer{e.scorePlayer(p, pf), p, pf})
 	}
 
-	// Stable sort is required, not merely preferred. Python's sort is stable,
+	// Stable sort is required, not merely preferred: equal-score entries retain
 	// and in preseason every player has form 0.0, so ties are pervasive and
 	// stability alone decides the ordering.
 	slices.SortStableFunc(scored, func(a, b scoredPlayer) int {
@@ -632,7 +634,7 @@ func mostCaptained(b *fpl.Bootstrap, gw int, teams map[int]*fpl.Team) *MostCapta
 				Team:          shortName(teams[p.Team]),
 				SelectedByPct: p.SelectedByPercent.Float(),
 				// most_captained_pct is not present in the FPL payload, so the
-				// Python always yields None here.
+				// A missing value is represented as nil here.
 				CaptaincyPct: nil,
 			}
 		}

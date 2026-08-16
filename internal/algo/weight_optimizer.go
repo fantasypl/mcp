@@ -25,7 +25,7 @@ import (
 // news terms. That is a real divergence between what gets *tuned* and what
 // gets *run*: an "optimized" weight set is only meaningful for the formula it
 // was optimized against, and today those are two different formulas. This is
-// preserved exactly as reference behaviour for the port; unifying the two
+// preserved exactly as reference behaviour; unifying the two
 // scoring paths is exactly the kind of change that belongs in the backtested
 // redesign pass, not here.
 
@@ -232,7 +232,7 @@ var pairwiseMultipliers = []float64{0.5, 0.75, 1.0, 1.25, 1.5}
 //
 // Returns (nil, false, nil) — not an error — when there isn't enough data to
 // optimize over: fewer than three qualifying gameweeks, or no fixtures cache
-// at all. That mirrors the Python, which treats "insufficient data" as a
+// at all. The optimizer treats "insufficient data" as a
 // routine, expected outcome rather than a failure.
 func OptimizeWeights(layout store.Layout, maxGWs int) (map[string]float64, bool, error) {
 	fixturesData, ok, err := layout.LoadFixturesCache()
@@ -245,7 +245,7 @@ func OptimizeWeights(layout store.Layout, maxGWs int) (map[string]float64, bool,
 
 	// Scan from the most recent gameweek backwards, keeping every snapshot
 	// found along the way rather than discarding it and re-reading later —
-	// the Python re-reads in a second pass, but there's no reason to pay disk
+	// the optimizer re-reads in a second pass, but there's no reason to pay disk
 	// I/O twice for a file already in hand.
 	var availableGWs []int
 	snapshots := make(map[int]*store.Snapshot)

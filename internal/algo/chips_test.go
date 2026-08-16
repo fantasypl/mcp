@@ -21,9 +21,10 @@ func (s *stubIntelFetcher) Fetch(context.Context) (*CommunityIntel, error) {
 	return s.intel, s.err
 }
 
-// chipsScenarioIntel matches scripts/gen_chips_golden.py's COMMUNITY_INTEL
-// exactly — a predicted BGW for GW7 (Nott'm Forest) and a predicted DGW for
-// GW8 (Aston Villa), plus one failed source, exercising the merge path.
+// chipsScenarioIntel matches `fplctl gengolden --which=chips`'s community
+// intel fixture exactly — a predicted BGW for GW7 (Nott'm Forest) and a
+// predicted DGW for GW8 (Aston Villa), plus one failed source, exercising
+// the merge path.
 func chipsScenarioIntel() *CommunityIntel {
 	return &CommunityIntel{
 		DGWs: map[string]SourcedMention{

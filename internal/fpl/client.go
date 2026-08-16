@@ -12,9 +12,9 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// Defaults ported from app/fpl_client.py. The TTLs are behavioural, not
-// incidental — live scores go stale in seconds while bootstrap-static is
-// ~1.3 MB and changes slowly — so they are preserved exactly.
+// The TTLs are behavioural, not incidental — live scores go stale in seconds
+// while bootstrap-static is ~1.3 MB and changes slowly, so each endpoint's
+// TTL is tuned to its own staleness rather than sharing one blanket value.
 const (
 	DefaultBaseURL = "https://fantasy.premierleague.com/api"
 
@@ -39,10 +39,10 @@ type entry struct {
 
 // Client fetches from the FPL API with a TTL cache.
 //
-// Two differences from the Python original, both deliberate:
+// Two concurrency properties are deliberate:
 //
-//   - The cache is mutex-guarded. The Python uses a bare module-level dict,
-//     which races under concurrent requests.
+//   - The cache is mutex-guarded, so concurrent requests cannot race while
+//     reading or updating it.
 //   - Concurrent misses for the same URL collapse via singleflight, so a cold
 //     start with several algorithms in flight triggers one bootstrap fetch
 //     rather than one per caller.
@@ -59,7 +59,7 @@ type Client struct {
 	sleep func(context.Context, time.Duration) error
 }
 
-// NewClient returns a Client with the ported defaults.
+// NewClient returns a Client with the package defaults.
 func NewClient() *Client {
 	return &Client{
 		BaseURL: DefaultBaseURL,
@@ -104,8 +104,7 @@ func (c *Client) store(url string, v any, ttl time.Duration) {
 	c.cache[url] = entry{val: v, expires: c.now().Add(ttl)}
 }
 
-// HTTPError is a non-2xx response. Retried like a transport error, matching
-// the Python's httpx.HTTPStatusError handling.
+// HTTPError is a non-2xx response. It is retried like a transport error.
 type HTTPError struct {
 	StatusCode int
 	URL        string
@@ -162,7 +161,7 @@ func fetch[T any](ctx context.Context, c *Client, path string, ttl time.Duration
 	return typed, nil
 }
 
-// do performs the request with the ported retry policy: up to 3 attempts with
+// do performs the request with the retry policy: up to 3 attempts with
 // a linear 1s, 2s backoff.
 func do[T any](ctx context.Context, c *Client, url string) (T, error) {
 	var zero T
@@ -237,7 +236,7 @@ func asJSONError(err error, target **json.SyntaxError) bool {
 }
 
 // ---------------------------------------------------------------------------
-// Endpoints, one per app/fpl_client.py function.
+// Endpoint wrappers, one per FPL API path.
 // ---------------------------------------------------------------------------
 
 // Bootstrap returns GET /bootstrap-static/ — every player, team, gameweek and
@@ -274,9 +273,9 @@ func (c *Client) TeamHistory(ctx context.Context, teamID int) (*TeamHistory, err
 	return fetch[*TeamHistory](ctx, c, fmt.Sprintf("/entry/%d/history/", teamID), DefaultTTL)
 }
 
-// LeagueTTL matches the Python's ttl=120 for league standings — shorter than
-// most endpoints since a live league table shifts as gameweeks progress, but
-// long enough that repeated calls within a session don't hammer the API.
+// LeagueTTL is shorter than most endpoint TTLs since a live league table
+// shifts as gameweeks progress, but long enough that repeated calls within a
+// session do not hammer the API.
 const LeagueTTL = 120 * time.Second
 
 // LeagueStandings returns GET /leagues-classic/{league_id}/standings/.

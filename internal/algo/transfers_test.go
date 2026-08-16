@@ -9,8 +9,8 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/golden"
 )
 
-// syntheticTeamID matches SYNTHETIC_TEAM_ID in scripts/gen_golden.py and the
-// fixed team_id scripts/make_squad_fixture.py's output was captured under.
+// syntheticTeamID matches the fixed team_id scripts/make_squad_fixture.py's
+// output was captured under, and the one `fplctl gengolden` uses too.
 const syntheticTeamID = 999001
 
 // newEngineWithSquad wires the synthetic squad fixture into a stub client
@@ -61,7 +61,7 @@ func suffixToFixture(suffix string) string {
 }
 
 // An unresolvable team ID must produce TransferError, not a Go error — the
-// Python treats this as a normal result shape, not an exception.
+// The API treats this as a normal result shape, not an exception.
 func TestTransferSuggestionsUnknownTeam(t *testing.T) {
 	e := newEngineWithSquad(t, "preseason")
 	got, err := e.TransferSuggestions(context.Background(), 424242, 1, 0)
@@ -191,9 +191,8 @@ func TestSellReasonPriority(t *testing.T) {
 	}
 
 	// The trailing Capitalize() call lower-cases everything after the first
-	// character — Python's str.capitalize(), not title case — so "FDR"
-	// renders as "fdr" here. Confirmed against a live Python run; this is
-	// reference behaviour, not a casing bug in the port.
+	// character — sentence capitalization, not title case — so "FDR"
+	// renders as "fdr" here. This is required behavior, not a casing bug.
 	toughFixture := &squadEntry{player: newPlayer(), form: 5.0, status: "a", fixture: &TeamFixture{FDR: 5}}
 	if got := e.sellReason(toughFixture); got != "Tough upcoming fixture (fdr 5)" {
 		t.Errorf("got %q, want %q", got, "Tough upcoming fixture (fdr 5)")
@@ -205,7 +204,7 @@ func TestSellReasonPriority(t *testing.T) {
 		t.Errorf("got %q, want %q", got, "Lowest squad value score")
 	}
 
-	// Multiple reasons combine, in the Python's checked order.
+	// Multiple reasons combine, in the defined checked order.
 	multi := &squadEntry{player: newPlayer(), form: 1.0, status: "d", fixture: &TeamFixture{FDR: 5}}
 	want := "Poor form, injury/suspension concern, tough upcoming fixture (fdr 5)"
 	if got := e.sellReason(multi); got != want {
@@ -221,7 +220,7 @@ func TestPlayerValueScoreFixtureWeighting(t *testing.T) {
 	if playerValueScore(p, easy, nil) <= playerValueScore(p, hard, nil) {
 		t.Error("an easy fixture should score above a hard one")
 	}
-	// Confirmed against live Python: the model's flat -3.0 blank penalty is
+	// The model's flat -3.0 blank penalty is
 	// actually milder than a genuinely brutal fixture. -f.FDR at FDR 5 away
 	// costs -5.0, worse than not playing at all. Counter-intuitive but real
 	// reference behaviour — not a defect to "fix" quietly in a test.

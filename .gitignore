@@ -1,14 +1,14 @@
-# Reference checkout of the Python implementation. Cloned on demand by
-# `make reference`; 115 MB and not ours to vendor.
+# On-demand external reference checkout used for local development and
+# parity verification; 115 MB and not ours to vendor.
 /reference/
 
 # Build output
 /bin/
 /dist/
 
-# Runtime state: snapshots, backtest cache, tuned weights. Schema-compatible
-# with the Python implementation's data/ directory — see the plan. Regenerated
-# by fplctl, and the GW snapshots are irreplaceable, so back these up rather
+# Runtime state: snapshots, backtest cache, tuned weights — schema-stable
+# on-disk artifacts written and read by fplctl. GW snapshots are
+# irreplaceable once a gameweek has been played, so back these up rather
 # than relying on git.
 /data/
 

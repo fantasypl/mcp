@@ -37,8 +37,8 @@ func (l Layout) LoadOptimizedWeightsCache() (*OptimizedWeightsCache, bool, error
 }
 
 // SaveOptimizedWeightsCache writes the cache, creating data/ if needed.
-// Indented for the same reason the Python does: this file is meant to be
-// readable by a human debugging why captaincy picks shifted.
+// Indented because this file is meant to be readable by a human debugging why
+// captaincy picks shifted.
 func (l Layout) SaveOptimizedWeightsCache(c *OptimizedWeightsCache) error {
 	path := l.OptimizedWeightsPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

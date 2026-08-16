@@ -19,8 +19,8 @@ import (
 const rivalWindow = 3
 
 // RivalLeagueError is the shape used both when a league has no standings at
-// all and when the user's own squad can't be fetched — two different Python
-// error paths that happen to produce the same {league_id, error} shape.
+// all and when the user's own squad can't be fetched — two different error
+// paths that intentionally produce the same {league_id, error} shape.
 type RivalLeagueError struct {
 	LeagueID int    `json:"league_id"`
 	Error    string `json:"error"`
@@ -70,7 +70,7 @@ type RivalAnalysis struct {
 
 	// RecentTransfers and TransferPrediction are populated only for the two
 	// closest rivals by point gap. A *[]T rather than []T: a nil pointer
-	// omits the key entirely (matching Python, where the key is never set
+	// omits the key entirely (the key is never set
 	// for a non-closest rival), while a non-nil pointer to an empty slice
 	// still marshals as "[]" (matching a closest rival who simply made no
 	// recent transfers). Plain omitempty on a slice can't tell those two
@@ -140,11 +140,8 @@ type TransferInCandidate struct {
 
 // formatPlayerList renders a set of player IDs (already deduplicated —
 // callers pass a differential set) with form/fixture context, sorted by form
-// descending. The Python source of this list is a set difference, so its
-// pre-sort order is CPython's hash-dependent set iteration — not reproducible
-// byte-for-byte — but every player in it is distinct, so this breaks ties by
-// player ID for determinism rather than trying to match an order Python
-// itself never guaranteed.
+// descending. The input is a set difference, so its pre-sort order is
+// unspecified; break ties by player ID for deterministic output.
 func formatPlayerList(playerIDs map[int]bool, playersByID map[int]*fpl.Player, teams map[int]*fpl.Team, fixtureMap map[int][]TeamFixture) []PlayerDetail {
 	ids := make([]int, 0, len(playerIDs))
 	for id := range playerIDs {
@@ -412,9 +409,8 @@ func predictNextMove(rivalPicks []fpl.Pick, playersByID map[int]*fpl.Player, tea
 
 // topTransfersIn finds likely buy targets: in-form, fit, has a fixture, not
 // already in the rival's squad. Iterates bootstrap.Elements in its original
-// order rather than a map — the Python iterates a dict built with
-// insertion-preserving order matching the bootstrap array, and its stable
-// sort afterward means tie order depends on that original order too.
+// order rather than a map; the stable sort afterward makes tie order depend
+// on that original order too.
 func topTransfersIn(bootstrap *fpl.Bootstrap, rivalIDs map[int]bool, fixtureMap map[int][]TeamFixture, teams map[int]*fpl.Team) []TransferInCandidate {
 	var candidates []TransferInCandidate
 	for i := range bootstrap.Elements {
@@ -459,7 +455,8 @@ func topTransfersIn(bootstrap *fpl.Bootstrap, rivalIDs map[int]bool, fixtureMap 
 	return candidates
 }
 
-// RivalAnalysis ports rivals.get_rival_analysis.
+// RivalAnalysis computes a rival manager's point gap, gap direction, and
+// recent-transfer summary relative to the requesting team.
 func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
@@ -533,8 +530,7 @@ func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, 
 
 	var rivalAnalyses []*RivalAnalysis
 	// Picks fetched here are reused below for the transfer-prediction step,
-	// matching the Python's own reuse of its first fetch rather than
-	// fetching each rival's squad twice.
+	// rather than fetching each rival's squad twice.
 	rivalPicksByTeam := make(map[int]*fpl.TeamPicks, len(rivalStandings))
 	for _, rival := range rivalStandings {
 		rivalPicks, err := e.client.TeamPicks(ctx, rival.Entry, currentGW)

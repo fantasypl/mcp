@@ -7,7 +7,8 @@
 // A GW snapshot captured before a deadline records exactly what a manager saw
 // at decision time — form, price, fixture — and that moment cannot be
 // recreated once the gameweek has been played. Whatever writes these files
-// must keep writing the same shape indefinitely, Go or Python.
+// must keep writing the same shape indefinitely so existing artifacts remain
+// readable and compatible.
 package store
 
 import (
@@ -20,8 +21,8 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
 
-// Layout mirrors the Python project's data/ directory so the two
-// implementations can share a single set of files on disk.
+// Layout uses the shared data/ directory structure so the implementations can
+// read and write a single set of files on disk.
 type Layout struct {
 	Root string // project root; snapshots live under Root/data/...
 }
@@ -181,8 +182,8 @@ func (l Layout) LoadFixturesCache() ([]fpl.Fixture, bool, error) {
 	return readJSON[[]fpl.Fixture](l.FixturesCachePath())
 }
 
-// SnapshotFromBootstrap ports snapshot_gw.py's compact field selection: only
-// what a backtest needs, not the full ~4MB bootstrap.
+// SnapshotFromBootstrap selects a compact field set: only what a backtest
+// needs, not the full ~4MB bootstrap.
 func SnapshotFromBootstrap(b *fpl.Bootstrap, fixtures []fpl.Fixture, gw int, backfill bool, capturedAt time.Time) Snapshot {
 	players := make([]SnapshotPlayer, 0, len(b.Elements))
 	for _, p := range b.Elements {
@@ -243,8 +244,8 @@ func SnapshotFromBootstrap(b *fpl.Bootstrap, fixtures []fpl.Fixture, gw int, bac
 	}
 
 	// event defaults to the zero value (nil ID, false Finished/DataChecked) if
-	// gw isn't in the bootstrap's event list — mirrors Python's
-	// next((e for e in events if e["id"] == target_gw), {}).get(...).
+	// gw isn't in the bootstrap's event list — the zero-value event preserves
+	// the contract of treating all event fields as absent in that case.
 	var event SnapshotEvent
 	for _, e := range b.Events {
 		if e.ID == gw {
@@ -273,8 +274,7 @@ func SnapshotFromBootstrap(b *fpl.Bootstrap, fixtures []fpl.Fixture, gw int, bac
 }
 
 // SaveSnapshot writes s to data/snapshots/gw{N}.json, creating the directory
-// if needed. Unlike SaveOptimizedWeightsCache this is compact (no indent),
-// matching snapshot_gw.py's json.dump(snapshot, f) with no indent argument —
+// if needed. Unlike SaveOptimizedWeightsCache this is compact (no indent) —
 // a season's worth of these adds up, and nothing reads the file by eye.
 func (l Layout) SaveSnapshot(s Snapshot) error {
 	path := l.SnapshotPath(s.Gameweek)

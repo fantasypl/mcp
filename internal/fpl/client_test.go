@@ -163,7 +163,7 @@ func TestRetryThenSucceed(t *testing.T) {
 	if hits != 3 {
 		t.Errorf("attempts = %d, want 3", hits)
 	}
-	// Ported policy: linear backoff of 1s then 2s.
+	// Retry policy: linear backoff of 1s then 2s.
 	want := []time.Duration{time.Second, 2 * time.Second}
 	if len(*slept) != len(want) {
 		t.Fatalf("backoff = %v, want %v", *slept, want)

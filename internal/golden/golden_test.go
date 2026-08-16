@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// The harness is the only thing standing between a subtle port bug and a
+// The harness is the only thing standing between a subtle implementation bug and a
 // silently wrong recommendation, so it gets tested before it is trusted.
 
 func decode(t *testing.T, s string) any {
@@ -27,7 +27,7 @@ func TestDiffDetects(t *testing.T) {
 	}{
 		{"identical", `{"a":1,"b":"x"}`, `{"a":1,"b":"x"}`, 0, ""},
 
-		// Float drift below Epsilon is expected between CPython and Go and
+		// Float drift below Epsilon is expected across runtimes and
 		// must not fail; drift above it must.
 		{"float within epsilon", `{"score":9.629}`, `{"score":9.6290000001}`, 0, ""},
 		{"float beyond epsilon", `{"score":9.629}`, `{"score":9.63}`, 1, "$.score"},
@@ -39,7 +39,7 @@ func TestDiffDetects(t *testing.T) {
 		{"zero vs null", `{"chance":0}`, `{"chance":null}`, 1, "$.chance"},
 		{"null vs null", `{"chance":null}`, `{"chance":null}`, 0, ""},
 
-		// FPL emits form as the string "6.2"; a port that helpfully converts
+		// FPL emits form as the string "6.2"; code that helpfully converts
 		// it to a number changes the output shape.
 		{"string vs number", `{"form":"6.2"}`, `{"form":6.2}`, 1, "$.form"},
 
@@ -114,7 +114,7 @@ func TestGoldenFilesAreUsable(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(paths) == 0 {
-		t.Fatal("no golden files found — run scripts/gen_golden.py")
+		t.Fatal("no golden files found — run `fplctl gengolden`")
 	}
 	for _, p := range paths {
 		v, err := Load(p)

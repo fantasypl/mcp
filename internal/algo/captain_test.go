@@ -54,7 +54,7 @@ func TestBlendFDR(t *testing.T) {
 	}
 }
 
-// A missing team must fall back to strength 1200, matching the Python's
+// A missing team must fall back to strength 1200, matching the contract's
 // `.get(id, {}).get(field, 1200)` chain.
 func TestStrengthFallback(t *testing.T) {
 	if got := strengthOr(nil, nil); got != 1200 {
@@ -62,7 +62,7 @@ func TestStrengthFallback(t *testing.T) {
 	}
 }
 
-// The highest-risk translation in the port: nil chance means fit, 0 means out.
+// The highest-risk edge case: nil chance means fit, 0 means out.
 func TestPlayingChancePenalty(t *testing.T) {
 	e := NewEngine(nil)
 	maxPen := e.weights.PlayingChanceMaxPenalty

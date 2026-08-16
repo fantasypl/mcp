@@ -10,15 +10,13 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
 
-// Ported from app/algorithms/compare.py.
-//
 // Fuzzy-matches 2-4 player names against web_name (and, failing that, full
 // name), then builds a rich head-to-head profile for each: captain score
 // (reusing captain.go's scoring, so the number here is directly comparable to
 // a captain_pick result), home/away form split from element-summary history,
 // upcoming fixtures, and a verdict recommending the best pick.
 
-// compareResultKind selects which of Python's three distinct dict literals
+// compareResultKind selects which of the three distinct response shapes
 // CompareResult.MarshalJSON renders. A struct tag can't express "this key is
 // present, with an empty list, in branch B but absent entirely in branch A" —
 // omitempty conflates "empty" and "unset" — so the shape is picked explicitly
@@ -87,8 +85,8 @@ type MatchedQuery struct {
 }
 
 // UpcomingFixture is one gameweek's fixture (or blank) for a compared
-// player's team. FDR/IsHome are nil for a blank gameweek — Python emits
-// null for both, so these stay pointers rather than omitting the keys.
+// player's team. FDR/IsHome are nil for a blank gameweek and therefore render
+// as JSON null rather than being omitted.
 type UpcomingFixture struct {
 	Gameweek int      `json:"gameweek"`
 	Opponent string   `json:"opponent"`
@@ -97,9 +95,8 @@ type UpcomingFixture struct {
 }
 
 // PlayerProfile is one player's entry in a comparison. Every field below is a
-// fixed key in Python's profile dict literal — including the nullable ones —
-// so none of them use omitempty; a null value renders as JSON null, matching
-// Python's None, rather than an absent key.
+// fixed key in the profile response — including the nullable ones — so none
+// use omitempty; a null value renders as JSON null rather than an absent key.
 type PlayerProfile struct {
 	Query                      string            `json:"query"`
 	MatchConfidence            string            `json:"match_confidence"`
@@ -134,7 +131,7 @@ type PlayerProfile struct {
 	UpcomingFixtures           []UpcomingFixture `json:"upcoming_fixtures"`
 	BlankGameweeks             []int             `json:"blank_gameweeks"`
 
-	// avgFDR and gameweeksAhead are unexported: Python renders avg_fdr under a
+	// avgFDR and gameweeksAhead are internal: JSON renders avg_fdr under a
 	// key whose name embeds gameweeks_ahead (e.g. "avg_fdr_next_5_gws"), which
 	// a static json tag can't express. MarshalJSON below injects it.
 	avgFDR         *float64
@@ -161,8 +158,8 @@ func (p PlayerProfile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// calcHomeAwayForm ports compare._calc_home_away_form: average points from
-// the last 5 home and last 5 away games played (minutes > 0).
+// calcHomeAwayForm computes average points from the last 5 home and last 5
+// away games played (minutes > 0).
 func calcHomeAwayForm(summary *fpl.PlayerSummary) (homeForm, awayForm float64, insight string) {
 	var homeGames, awayGames []fpl.PlayerHistoryEntry
 	for _, m := range summary.History {
@@ -209,11 +206,11 @@ func avgTotalPoints(games []fpl.PlayerHistoryEntry) float64 {
 	return Round(float64(sum)/float64(len(games)), 1)
 }
 
-// fuzzyMatchPlayer ports compare._fuzzy_match_player.
+// fuzzyMatchPlayer finds the best fuzzy name match for a player.
 //
 // Priority: exact web_name match, web_name prefix, web_name substring, full
 // name substring. Within a tier, ties go to the player with the most total
-// points — and, mirroring Python's max(), to whichever of those is *first*
+// points — and among equal-points players, to whichever is *first*
 // in elements order, not the last.
 func fuzzyMatchPlayer(name string, elements []fpl.Player) (*fpl.Player, string, bool) {
 	query := strings.ToLower(strings.TrimSpace(name))
@@ -256,8 +253,8 @@ func fuzzyMatchPlayer(name string, elements []fpl.Player) (*fpl.Player, string, 
 	return nil, "", false
 }
 
-// buildUpcomingFixtures ports compare._build_upcoming_fixtures, reusing
-// buildFixtureMap (captain.go) per gameweek — so the FDR shown here is the
+// buildUpcomingFixtures reuses buildFixtureMap (captain.go) per gameweek —
+// so the FDR shown here is the
 // same team-strength-blended FDR captain scoring uses, not the raw FPL 1-5.
 func buildUpcomingFixtures(teamID int, fixtures []fpl.Fixture, nextGW, gameweeksAhead int, teams map[int]*fpl.Team) []UpcomingFixture {
 	upcoming := make([]UpcomingFixture, 0, gameweeksAhead)
@@ -297,10 +294,10 @@ func transferPressure(net int) string {
 	}
 }
 
-// buildVerdict ports compare._build_verdict.
+// buildVerdict picks a winner among the compared players.
 //
 // Every "pick the best/second-best/runner-up" step below keeps the first
-// player encountered on a tie, matching Python's max() semantics.
+// player encountered on a tie.
 func buildVerdict(profiles []PlayerProfile) string {
 	if len(profiles) == 0 {
 		return "No players to compare."
@@ -403,10 +400,9 @@ func buildVerdict(profiles []PlayerProfile) string {
 	return fmt.Sprintf("%s is the clear pick — %s.", name, reasonStr)
 }
 
-// ComparePlayers ports compare.compare_players: a 2-4 player head-to-head.
+// ComparePlayers runs a 2-4 player head-to-head comparison.
 //
-// gameweeksAhead <= 0 defaults to 5 (the Python signature default); any value
-// is then clamped to [1, 10], matching the Python's own clamp.
+// gameweeksAhead <= 0 defaults to 5; any value is then clamped to [1, 10].
 func (e *Engine) ComparePlayers(ctx context.Context, playerNames []string, gameweeksAhead int) (*CompareResult, error) {
 	if len(playerNames) < 2 {
 		return compareError("Please provide at least 2 player names to compare."), nil

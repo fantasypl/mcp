@@ -17,9 +17,8 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
 
-// auditCheck ports accuracy_audit.py's AuditCheck dataclass — field names and
-// JSON tags match exactly, since data/accuracy_audit.json is a compatibility
-// boundary.
+// auditCheck's field names and JSON tags match data/accuracy_audit.json's
+// established shape exactly, since that file is a compatibility boundary.
 type auditCheck struct {
 	Tool     string `json:"tool"`
 	Check    string `json:"check"`
@@ -174,11 +173,10 @@ func verifyPosition(playerID int, claimedPos string, playersByID map[int]fpl.Pla
 
 // --- generic JSON-shape helpers ---------------------------------------------
 //
-// Every audit function below inspects tool output the same way the Python
-// does: as a generic dict, not a typed struct — accuracy_audit.py's whole
-// point is validating the JSON contract an MCP client actually sees, which is
-// exactly what round-tripping through encoding/json into map[string]any
-// reproduces, regardless of which concrete Go type produced it.
+// Every audit function below inspects tool output as a generic map, not a
+// typed struct — the checks validate the JSON contract an MCP client actually
+// sees, so round-tripping through encoding/json into map[string]any preserves
+// that boundary regardless of which concrete Go type produced it.
 
 func toMap(v any) map[string]any {
 	b, err := json.Marshal(v)
@@ -543,13 +541,12 @@ func auditPrices(ctx context.Context, e *algo.Engine, bootstrap *fpl.Bootstrap, 
 	return checks
 }
 
-// auditTransfers ports accuracy_audit.py's audit_transfers verbatim — including
-// its bug. The Python reads result.get("suggestions", []), but
-// get_transfer_suggestions actually returns the list under
-// "transfer_suggestions" — so the Python's check always sees an empty list
-// and short-circuits to the "no_suggestions" info check, never validating
-// anything past that. Reproduced faithfully rather than fixed; see the port
-// plan's Phase 7 for where such fixes belong.
+// auditTransfers preserves the existing audit behavior — including its bug.
+// It reads result["suggestions"], but get_transfer_suggestions actually
+// returns the list under "transfer_suggestions" — so this check always sees
+// an empty list and short-circuits to the "no_suggestions" info check, never
+// validating anything past that. Reproduced faithfully rather than fixed;
+// documented in place so any future behavior change can be intentional.
 func auditTransfers(ctx context.Context, e *algo.Engine, teamID int) []auditCheck {
 	const tool = "transfers"
 	result, err := e.TransferSuggestions(ctx, teamID, 1, 0.0)

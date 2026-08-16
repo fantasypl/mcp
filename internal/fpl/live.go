@@ -60,8 +60,8 @@ type EventStatusDay struct {
 	Points     string `json:"points"`
 }
 
-// BonusConfirmed reports whether every reported day has bonus_added=true.
-// Matches live.py: bonus is only "confirmed" once every day in the window
+// BonusConfirmed reports whether every returned day has bonus_added=true.
+// Bonus is only "confirmed" once every day in the window
 // agrees, and an empty status list (no matches played yet) is not confirmed.
 func (e EventStatusResponse) BonusConfirmed() bool {
 	if len(e.Status) == 0 {

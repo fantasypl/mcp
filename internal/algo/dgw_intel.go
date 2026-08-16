@@ -220,7 +220,7 @@ func gwFromMatch(s string, loc []int) (int, bool) {
 }
 
 // wordBoundaryContains reports whether alias appears in s as a whole word —
-// not as a substring of a longer word — mirroring Python's `\bALIAS\b`.
+// not as a substring of a longer word.
 func wordBoundaryContains(s, alias string) bool {
 	if alias == "" {
 		return false

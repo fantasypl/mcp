@@ -231,7 +231,8 @@ type ScoutInsights struct {
 	YellowCardRisks             []CardRisk               `json:"yellow_card_risks"`
 }
 
-// SquadScout ports scout.get_squad_scout.
+// SquadScout surfaces risk flags and set-piece duty notes for a manager's
+// current squad.
 func (e *Engine) SquadScout(ctx context.Context, teamID int) (*SquadScoutResult, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
@@ -321,8 +322,8 @@ func (e *Engine) SquadScout(ctx context.Context, teamID int) (*SquadScoutResult,
 		}
 
 		if isSetPieceTaker {
-			// Duties here is spParts itself, not a fresh plain-text list: the
-			// Python appends set_piece_takers with "duties": sp_parts — the
+			// Duties here is spParts itself, not a fresh plain-text list: it's
+			// set as "duties": spParts — the
 			// same ordinal-formatted strings used in the summary field, in
 			// corners/FK/penalties order. This differs from
 			// externalSetPiece's duties below, which really is a separate,
@@ -532,13 +533,13 @@ func buildScoutSummary(blanks []BlankWarning, epCaptain *EPCaptainSuggestion, ye
 	}
 
 	if len(parts) == 0 {
-		// The trailing period here is deliberate, not a stray edit: the
-		// Python source already ends this exact string with "." and then
+		// The trailing period here is deliberate, not a stray edit: this
+		// exact string already ends with "." and then the caller
 		// unconditionally appends another below, producing a genuine double
-		// period ("...healthy.."). Reference behaviour, reproduced exactly —
+		// period ("...healthy.."). Existing behaviour, reproduced exactly —
 		// see the Phase 7 redesign note in the plan for output defects like
-		// this one, which get fixed there with backtest-style scrutiny, not
-		// silently during the port.
+		// this one, which get fixed there with backtest-style scrutiny,
+		// rather than silently changed here.
 		parts = append(parts, "No major risks detected. Squad looks healthy.")
 	}
 

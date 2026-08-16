@@ -20,7 +20,7 @@ import (
 // starting XI.
 //
 // A manager whose squad or history can't be fetched doesn't abort the whole
-// analysis — they're reported with an error and excluded from the
+// analysis — they're returned with an error and excluded from the
 // probability model, while everyone else's analysis proceeds normally.
 
 // maxAnalyzedManagers caps how many managers get the expensive squad+history
@@ -32,7 +32,7 @@ const maxAnalyzedManagers = 10
 const halfwayGW = 19
 
 // LeagueNotFound is returned when the league has no standings at all — a
-// distinct shape from LeagueAnalysisResult, matching the Python's own
+// distinct shape from LeagueAnalysisResult, matching the API's
 // {"league_id": ..., "error": ...} versus the full result dict.
 type LeagueNotFound struct {
 	LeagueID int    `json:"league_id"`
@@ -47,7 +47,7 @@ type LeagueAnalysisResult struct {
 	GameweeksRemaining int    `json:"gameweeks_remaining"`
 	AnalyzedTop        int    `json:"analyzed_top"`
 	// Managers holds a mix of *ManagerAnalysis and *ManagerFetchError — the
-	// Python dict shape genuinely differs per manager depending on whether
+	// The result shape genuinely differs per manager depending on whether
 	// their squad/history fetch succeeded, the same reason
 	// TransferSuggestions returns `any` instead of a single struct with
 	// optional fields: a shared struct with omitempty would silently drop
@@ -58,7 +58,7 @@ type LeagueAnalysisResult struct {
 }
 
 // ManagerFetchError is one manager whose squad or history couldn't be
-// fetched — reported rather than dropped, so the caller knows they exist and
+// fetched — retained with an error rather than dropped, so the caller knows they exist and
 // why they're excluded from the probability model.
 type ManagerFetchError struct {
 	ManagerName      string  `json:"manager_name"`
@@ -88,7 +88,7 @@ type ManagerAnalysis struct {
 	WinProbability   float64  `json:"win_probability"`
 
 	// rawScore is the pre-normalisation composite score. Not part of the
-	// Python's returned dict either (it's `del`eted before return) — kept
+	// The returned result omits rawScore (it is removed before serialization) — kept
 	// here only to compute WinProbability, and never marshalled.
 	rawScore float64 `json:"-"`
 }
@@ -176,7 +176,8 @@ func teamValue(picks []fpl.Pick, playersByID map[int]*fpl.Player) float64 {
 	return float64(total) / 10
 }
 
-// AnalyzeLeague ports league_analyzer.analyze_league.
+// AnalyzeLeague computes per-manager standings, form, and chip-usage
+// analysis across a classic mini-league.
 func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
@@ -447,7 +448,7 @@ func buildLeagueInsights(managers []*ManagerAnalysis, gwsRemaining int) []string
 		))
 	}
 
-	// The Python filters top5 to "cold" managers (momentum <= 45), takes only
+	// The analysis filters top5 to "cold" managers (momentum <= 45), takes only
 	// the first such manager, and checks whether *that* one is the
 	// favourite. Since favourite is always by_prob[0] — the highest-ranked
 	// element of any list that preserves by_prob order — it is necessarily

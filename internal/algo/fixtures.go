@@ -9,7 +9,7 @@ import (
 )
 
 // Fixture Outlook — ranks teams by aggregate fixture difficulty over the next
-// N gameweeks. Ported from app/algorithms/fixtures.py.
+// N gameweeks.
 
 // homeWeight discounts home fixtures: home advantage eases difficulty, so a
 // home FDR counts 85%.
@@ -58,7 +58,8 @@ type FixtureOutlookResult struct {
 
 var positionNames = map[string]bool{"GKP": true, "DEF": true, "MID": true, "FWD": true}
 
-// FixtureOutlook ports fixtures.get_fixture_outlook.
+// FixtureOutlook summarizes each team's fixture difficulty over the next
+// N gameweeks.
 //
 // gameweeksAhead defaults to 5 when non-positive; position is optional and
 // filters the suggested players.
@@ -96,7 +97,7 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 
 		// Note this differs from captain.go: the outlook blends against the
 		// opponent's *attack* strength, where captaincy blends against their
-		// defence. Both are faithful to their Python source.
+		// defence. Both are required by the fixture-difficulty contract.
 		homeFDR := blendFDR(float64(f.TeamHDifficulty),
 			strengthOr(teams[f.TeamA], func(t *fpl.Team) int { return t.StrengthAttackAway }))
 		awayFDR := blendFDR(float64(f.TeamADifficulty),
@@ -118,9 +119,8 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		})
 	}
 
-	// Iterate the teams slice, not a map: Python dicts preserve insertion
-	// order and the downstream sort is stable, so map iteration would make the
-	// ranking of equal-difficulty teams nondeterministic.
+	// Iterate the teams slice, not a map: the downstream sort is stable, so map
+	// iteration would make the ranking of equal-difficulty teams nondeterministic.
 	scores := make([]TeamOutlook, 0, len(bootstrap.Teams))
 	for i := range bootstrap.Teams {
 		team := &bootstrap.Teams[i]

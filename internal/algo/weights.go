@@ -2,8 +2,8 @@ package algo
 
 // Weights for the captain model (v3.0).
 //
-// JSON tags match the Python dict keys exactly, so data/optimized_weights.json
-// written by either implementation is readable by both. That file compatibility
+// JSON tags match the persisted weight keys exactly, so
+// data/optimized_weights.json remains readable. That file compatibility
 // is a hard requirement — see the plan.
 type Weights struct {
 	XG90        float64 `json:"xg90"`
@@ -39,8 +39,8 @@ var weightFieldOrder = []string{
 // override doesn't mention at base's value.
 //
 // This exists because the weight optimizer's base set has one fewer key than
-// the live scoring weights: it never touches news_penalty. The Python handles
-// that with a dict lookup default — WEIGHTS.get("news_penalty", 1.0) — which
+// the live scoring weights: it never touches news_penalty. The optimizer's
+// base set omits that key, so the default value
 // only ever fires when the active weight set came from the optimizer. Go's
 // Weights has no notion of "key absent," so the same outcome is reproduced by
 // merging onto DefaultWeights() (whose NewsPenalty is already 1.0) rather than
@@ -90,9 +90,8 @@ func MergeWeights(base Weights, override map[string]float64) Weights {
 	return m
 }
 
-// DefaultWeights are the hand-tuned v3.0 weights, tuned against GW1-29 actuals
-// via scripts/backtest.py. Values are copied verbatim from
-// captain.DEFAULT_WEIGHTS; changing one changes every recommendation.
+// DefaultWeights are the hand-tuned v3.0 weights, tuned against GW1-29
+// actuals via backtesting; changing one changes every recommendation.
 func DefaultWeights() Weights {
 	return Weights{
 		XG90:        1.07,

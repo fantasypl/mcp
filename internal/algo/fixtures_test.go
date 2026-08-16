@@ -31,7 +31,7 @@ func TestFixtureOutlookMatchesGolden(t *testing.T) {
 }
 
 // Every team must be ranked, even one with no fixtures in the window, which
-// the Python assigns a neutral 3.0 difficulty rather than dropping.
+// the contract assigns a neutral 3.0 difficulty rather than dropping.
 func TestAllTeamsRanked(t *testing.T) {
 	bothFixtures(t, func(t *testing.T, e *Engine, _ string) {
 		res, err := e.FixtureOutlook(context.Background(), 5, "")
@@ -52,7 +52,7 @@ func TestAllTeamsRanked(t *testing.T) {
 	})
 }
 
-// The position filter must be applied, and reported back upper-cased.
+// The position filter must be applied, and returned back upper-cased.
 func TestPositionFilter(t *testing.T) {
 	bothFixtures(t, func(t *testing.T, e *Engine, _ string) {
 		res, err := e.FixtureOutlook(context.Background(), 5, "mid")
@@ -71,7 +71,7 @@ func TestPositionFilter(t *testing.T) {
 }
 
 // An unrecognised position is echoed back upper-cased but filters nothing,
-// matching the Python's `if position and position.upper() in POSITION_NAMES`.
+// matching the contract `if position and position.upper() in POSITION_NAMES`.
 func TestUnknownPositionDoesNotFilter(t *testing.T) {
 	e := newEngine(t, "preseason")
 	res, err := e.FixtureOutlook(context.Background(), 5, "wizard")

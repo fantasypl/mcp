@@ -1,7 +1,6 @@
 package algo
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -11,94 +10,6 @@ import (
 
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
-
-// stubClient serves the frozen payloads in testdata/, so algorithm tests are
-// offline and deterministic — the same inputs scripts/gen_golden.py fed to the
-// Python implementation.
-//
-// picks is keyed by (teamID, gw) so a single stub can serve the synthetic
-// squad fixtures used by the team-dependent algorithms — see the port plan's
-// note on the entry/ data problem for why these are synthetic rather than
-// real historical picks.
-type stubClient struct {
-	bootstrap   *fpl.Bootstrap
-	fixtures    []fpl.Fixture
-	picks       map[picksKey]*fpl.TeamPicks
-	live        map[int]*fpl.LiveResponse
-	eventStatus *fpl.EventStatusResponse
-	// history and leagues follow the same "absent = 404" convention as
-	// picks: a missing map entry simulates that manager's fetch failing,
-	// which is exactly the partial-failure case league_analyzer has to
-	// handle per manager without aborting the whole request.
-	history   map[int]*fpl.TeamHistory
-	leagues   map[int]*fpl.LeagueStandings
-	transfers map[int][]fpl.ManagerTransfer
-	// playerSummaries follows the same "absent = 404" convention, keyed by
-	// player id — compare.go's per-player element-summary lookups.
-	playerSummaries map[int]*fpl.PlayerSummary
-}
-
-type picksKey struct {
-	teamID, gw int
-}
-
-func (s *stubClient) Bootstrap(context.Context) (*fpl.Bootstrap, error) { return s.bootstrap, nil }
-func (s *stubClient) Fixtures(context.Context) ([]fpl.Fixture, error)   { return s.fixtures, nil }
-
-func (s *stubClient) TeamPicks(_ context.Context, teamID, gw int) (*fpl.TeamPicks, error) {
-	p, ok := s.picks[picksKey{teamID, gw}]
-	if !ok {
-		return nil, &fpl.HTTPError{StatusCode: 404, URL: "stub"}
-	}
-	return p, nil
-}
-
-func (s *stubClient) LivePoints(_ context.Context, gw int) (*fpl.LiveResponse, error) {
-	l, ok := s.live[gw]
-	if !ok {
-		return &fpl.LiveResponse{}, nil
-	}
-	return l, nil
-}
-
-func (s *stubClient) EventStatus(context.Context) (*fpl.EventStatusResponse, error) {
-	if s.eventStatus == nil {
-		return &fpl.EventStatusResponse{}, nil
-	}
-	return s.eventStatus, nil
-}
-
-func (s *stubClient) TeamHistory(_ context.Context, teamID int) (*fpl.TeamHistory, error) {
-	h, ok := s.history[teamID]
-	if !ok {
-		return nil, &fpl.HTTPError{StatusCode: 404, URL: "stub"}
-	}
-	return h, nil
-}
-
-func (s *stubClient) LeagueStandings(_ context.Context, leagueID int) (*fpl.LeagueStandings, error) {
-	l, ok := s.leagues[leagueID]
-	if !ok {
-		return nil, &fpl.HTTPError{StatusCode: 404, URL: "stub"}
-	}
-	return l, nil
-}
-
-func (s *stubClient) ManagerTransfers(_ context.Context, teamID int) ([]fpl.ManagerTransfer, error) {
-	t, ok := s.transfers[teamID]
-	if !ok {
-		return nil, &fpl.HTTPError{StatusCode: 404, URL: "stub"}
-	}
-	return t, nil
-}
-
-func (s *stubClient) PlayerSummary(_ context.Context, playerID int) (*fpl.PlayerSummary, error) {
-	ps, ok := s.playerSummaries[playerID]
-	if !ok {
-		return nil, &fpl.HTTPError{StatusCode: 404, URL: "stub"}
-	}
-	return ps, nil
-}
 
 func testdataPath(parts ...string) string {
 	return filepath.Join(append([]string{"..", "..", "testdata"}, parts...)...)

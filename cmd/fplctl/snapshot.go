@@ -11,7 +11,8 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/store"
 )
 
-// runSnapshot ports scripts/snapshot_gw.py.
+// runSnapshot captures a gameweek's bootstrap+fixtures into
+// data/snapshots/gw{N}.json.
 func runSnapshot(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("snapshot", flag.ExitOnError)
 	gw := fs.Int("gw", 0, "specific gameweek to snapshot (default: auto-detect next upcoming GW)")
@@ -65,7 +66,7 @@ func runSnapshot(ctx context.Context, args []string) error {
 	return nil
 }
 
-// resolveTargetGW ports take_snapshot's target-GW selection:
+// resolveTargetGW picks the target gameweek:
 //   - an explicit --gw wins outright
 //   - --backfill picks the highest-ID finished gameweek
 //   - otherwise, the lowest-ID gameweek that isn't finished yet

@@ -14,14 +14,14 @@ import (
 //
 // This is the first of six algorithms that need a manager's actual squad via
 // GET /entry/{id}/event/{gw}/picks/. That endpoint cannot be sourced for any
-// past season — verified live against the real API while porting this
-// project: gameweek numbers are reused every season with no season parameter
+// past season — verified live against the real API: gameweek numbers are
+// reused every season with no season parameter
 // anywhere, so once a season rolls over its picks are gone for good, from
 // every source. Tests here run against a synthetic but schema-valid squad
 // (testdata/picks_squad1.json, built by scripts/make_squad_fixture.py from
 // real player IDs) rather than a captured real one.
 
-// TransferError is what a failed team lookup returns — the Python algorithm
+// TransferError is what a failed team lookup returns — the transfer algorithm
 // itself produces this shape (not a raised exception) when a team_id can't be
 // resolved, so it is modelled as a distinct result shape here too rather than
 // as a Go error. See TransferSuggestions.
@@ -73,9 +73,9 @@ type TransferInOption struct {
 }
 
 // FixtureLite is a single fixture's raw fields, as opposed to FixtureInfo's
-// richer shape — this is what transfers.py's "first fixture for backward
-// compat" actually stores: fdr and venue on the fixture map's own team-ID
-// terms, not resolved to short names.
+// richer shape — this is what the "first fixture for backward compat" field
+// actually stores: fdr and venue on the fixture map's own team-ID terms, not
+// resolved to short names.
 type FixtureLite struct {
 	FDR      float64 `json:"fdr"`
 	IsHome   bool    `json:"is_home"`
@@ -91,7 +91,7 @@ type SquadOverviewEntry struct {
 }
 
 // squadEntry is the internal working shape for one of the manager's 15
-// players — mirrors the Python squad dict, including keeping the source
+// players — including keeping the source
 // fpl.Player around for reasoning that needs the full record (news, status).
 type squadEntry struct {
 	player     *fpl.Player
@@ -106,8 +106,8 @@ type squadEntry struct {
 	fixtures   []TeamFixture
 }
 
-// playerValueScore ports transfers._player_value_score: recent output plus a
-// short fixture outlook, penalised for injury risk. future is up to two
+// playerValueScore scores recent output plus a short fixture outlook,
+// penalised for injury risk. future is up to two
 // gameweeks of fixtures beyond the immediate one — GW+1 weighted 0.5, GW+2
 // weighted 0.3 — so a transfer is judged as a medium-term decision rather
 // than chasing a single good week.
@@ -161,8 +161,8 @@ func firstFixture(fixtures []TeamFixture) *TeamFixture {
 	return &fixtures[0]
 }
 
-// sellReason ports transfers._sell_reason: why this player is the weakest
-// link in the squad, in the same priority order the Python checks — form,
+// sellReason explains why this player is the weakest
+// link in the squad, in the same priority order the algorithm checks — form,
 // then availability, then the fixture ahead, then any concerning news.
 //
 // A method rather than a free function because news age is rendered as a
@@ -208,14 +208,15 @@ func joinComma(parts []string) string {
 	return out
 }
 
-// TransferSuggestions ports transfers.get_transfer_suggestions.
+// TransferSuggestions recommends players to sell and buy given a budget and
+// number of free transfers.
 //
 // The return value is either a *TransferSuggestionsResult on success or a
 // *TransferError when the team's picks can't be fetched — two distinct JSON
-// shapes, matching the Python function's own behaviour of returning
+// shapes, returning
 // {"error": ...} as a normal (non-exceptional) result rather than raising.
 // The Go error return is reserved for failures unrelated to team lookup
-// (bootstrap or fixtures fetch failing), which the Python doesn't
+// (bootstrap or fixtures fetch failing), which the transfer flow doesn't
 // specifically handle either.
 func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers int, bankM float64) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
@@ -228,10 +229,10 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 	}
 	nextGW := bootstrap.NextGameweek()
 
-	// The Python catches any exception from the first attempt (network
+	// The first attempt catches any fetch error (network
 	// failure, 404, decode error alike) and retries against the current
 	// gameweek before giving up — preserved here even though it means a
-	// transient fetch error is reported to the user as "check your team ID."
+	// transient fetch error is surfaced to the user as "check your team ID."
 	picks, pErr := e.client.TeamPicks(ctx, teamID, nextGW)
 	if pErr != nil {
 		currentGW := bootstrap.CurrentGameweek()
@@ -306,7 +307,7 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 	for _, sell := range sellCandidates {
 		// FPL pays selling_price, not current price, but purchase price isn't
 		// exposed by this endpoint — current price is the best available
-		// estimate, same as the Python.
+		// estimate, as required by the transfer estimate contract.
 		budget := sell.cost + bankM
 		posType := sell.player.ElementType
 

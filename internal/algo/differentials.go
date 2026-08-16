@@ -59,10 +59,10 @@ type DifferentialStats struct {
 }
 
 // DifferentialScore exposes differentialScore for callers outside the
-// package. evaluate_gw.py and accuracy_audit.py both inline this same
+// package. cmd/fplctl's evaluate and audit subcommands both inline this same
 // formula directly against their own ownership/status filters (narrower than
 // Differentials' — see fplctl's evaluate.go) rather than calling
-// get_differentials, so fplctl needs the scoring primitive on its own.
+// Differentials, so fplctl needs the scoring primitive on its own.
 func DifferentialScore(p *fpl.Player, fixtures []TeamFixture, ownershipPct float64) float64 {
 	return differentialScore(p, fixtures, ownershipPct)
 }

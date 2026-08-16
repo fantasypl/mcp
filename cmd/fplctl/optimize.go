@@ -13,9 +13,9 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/store"
 )
 
-// runOptimize ports app/algorithms/weight_optimizer.py's __main__ block —
-// force a fresh search (ignoring any cache-freshness check) and report the
-// result — but additionally persists to data/optimized_weights.json using
+// runOptimize forces a fresh search (ignoring any cache-freshness check) and
+// reports the result — but additionally persists to
+// data/optimized_weights.json using
 // the exact schema algo.GetOptimizedWeights writes, since fplctl exists to
 // produce that artifact rather than just preview it.
 func runOptimize(ctx context.Context, args []string) error {

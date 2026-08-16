@@ -21,9 +21,9 @@ import (
 //	"expected_goals_per_90": 0.78 // number
 //	"ep_this":                null // absent
 //
-// The Python implementation absorbs this at every call site with
-// `float(player.get("form") or 0)`. Doing that thousands of times is exactly
-// the dict-shaped tax the port exists to remove, so it is handled once here.
+// Handling this once here — rather than at every call site — means the rest
+// of the codebase can treat every numeric FPL field as a plain float64,
+// string-or-number-or-null included.
 //
 // Note the asymmetry with nullable fields: Num treats null as 0 because for
 // form, xG and friends "no value" genuinely means zero. Fields where null
@@ -141,7 +141,7 @@ type Player struct {
 	ExpectedAssists          Num `json:"expected_assists"`
 	ExpectedGoalInvolvements Num `json:"expected_goal_involvements"`
 	// ExpectedGoalsConceded is the season total; only fplctl's snapshot
-	// capture reads it (matching snapshot_gw.py's field list) — no scoring
+	// capture reads it (as part of the snapshot field set) — no scoring
 	// algorithm uses the season total, only the per-90 rate below.
 	ExpectedGoalsConceded Num `json:"expected_goals_conceded"`
 
@@ -157,10 +157,10 @@ type Player struct {
 
 	// ScoutRisks flags things FPL's own scout has noticed — most commonly a
 	// blank gameweek, occasionally an injury note. Empty for the overwhelming
-	// majority of players; every real payload captured while building this
-	// port had it empty for everyone, so the field shape here is inferred
-	// from how scout.py reads it (.get("property"), .get("notes"),
-	// .get("gameweek")) rather than verified against a populated example.
+	// majority of players; every real payload captured so far had it empty
+	// for everyone, so the field shape here is inferred from the properties
+	// and notes consumed by scout-risk handling rather than verified against
+	// a populated example.
 	ScoutRisks []ScoutRisk `json:"scout_risks"`
 }
 
@@ -265,15 +265,15 @@ func (f Fixture) EventOf() (int, bool) {
 	return *f.Event, true
 }
 
-// InGameweek reports whether the fixture belongs to gw. Mirrors the Python
-// `f.get("event") == gameweek`, which is false for an unassigned fixture.
+// InGameweek reports whether the fixture belongs to gw. An unassigned fixture
+// never belongs to a gameweek.
 func (f Fixture) InGameweek(gw int) bool {
 	e, ok := f.EventOf()
 	return ok && e == gw
 }
 
-// CurrentGameweek mirrors fpl_client.get_current_gameweek: the current
-// gameweek, else the next, else the last finished, else 1.
+// CurrentGameweek returns the current gameweek, else the next, else the last
+// finished, else 1.
 func (b *Bootstrap) CurrentGameweek() int {
 	for _, e := range b.Events {
 		if e.IsCurrent {

@@ -10,7 +10,7 @@ import (
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
 
-// Sort stability is a correctness requirement, not a preference: Python's sort
+// Sort stability is a correctness requirement, not a preference: tied scores
 // is stable, so tied players must keep their bootstrap order.
 //
 // The golden files do NOT cover this. Scoring the frozen payload produces ties
