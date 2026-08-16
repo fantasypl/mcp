@@ -1,1 +1,31 @@
-{"dgws": {"8": {"teams": ["AVL"], "status": "predicted", "sources": ["allaboutfpl.com"]}}, "bgws": {"7": {"teams": ["NFO"], "status": "predicted", "sources": ["allaboutfpl.com"]}}, "sources_checked": ["premierleague.com", "allaboutfpl.com"], "errors": ["premierleague.com: failed to fetch"]}
+{
+  "dgws": {
+    "8": {
+      "teams": [
+        "AVL"
+      ],
+      "status": "predicted",
+      "sources": [
+        "allaboutfpl.com"
+      ]
+    }
+  },
+  "bgws": {
+    "7": {
+      "teams": [
+        "NFO"
+      ],
+      "status": "predicted",
+      "sources": [
+        "allaboutfpl.com"
+      ]
+    }
+  },
+  "sources_checked": [
+    "premierleague.com",
+    "allaboutfpl.com"
+  ],
+  "errors": [
+    "premierleague.com: failed to fetch"
+  ]
+}

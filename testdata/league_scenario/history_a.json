@@ -1,1 +1,14 @@
-{"current": [{"event": 1, "points": 68}], "chips": [{"name": "wildcard", "event": 3}]}
+{
+  "current": [
+    {
+      "event": 1,
+      "points": 68
+    }
+  ],
+  "chips": [
+    {
+      "name": "wildcard",
+      "event": 3
+    }
+  ]
+}
