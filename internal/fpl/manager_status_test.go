@@ -157,3 +157,25 @@ func TestManagerStatusBankConvertedToMillions(t *testing.T) {
 		t.Errorf("bank = %v, want 5.3", got.Bank)
 	}
 }
+
+// TestManagerStatusAllChipsUsedGivesEmptySlice guards against a nil slice
+// marshaling to JSON null: Python's sorted(set() - used) always returns [],
+// even when every chip is used, and callers depend on chips_remaining being
+// iterable rather than null.
+func TestManagerStatusAllChipsUsedGivesEmptySlice(t *testing.T) {
+	c := managerStatusServer(t, picksJSON(1, 50), historyJSON(
+		ChipUsage{Name: "wildcard", Event: 20}, ChipUsage{Name: "bboost", Event: 20},
+		ChipUsage{Name: "freehit", Event: 20}, ChipUsage{Name: "3xc", Event: 20},
+	))
+	b := bootstrapAtGW(20, 21)
+	got, err := c.ManagerStatus(context.Background(), 12345, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ChipsRemaining == nil {
+		t.Fatal("chips_remaining is nil, want non-nil empty slice (marshals to null instead of [])")
+	}
+	if len(got.ChipsRemaining) != 0 {
+		t.Errorf("chips_remaining = %v, want empty", got.ChipsRemaining)
+	}
+}

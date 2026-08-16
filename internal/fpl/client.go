@@ -381,7 +381,7 @@ func DeriveManagerStatus(picks *TeamPicks, history *TeamHistory, b *Bootstrap) *
 			usedThisHalf[ch.Name] = true
 		}
 	}
-	var chipsRemaining []string
+	chipsRemaining := make([]string, 0, len(allChips))
 	for _, ch := range allChips {
 		if !usedThisHalf[ch] {
 			chipsRemaining = append(chipsRemaining, ch)
