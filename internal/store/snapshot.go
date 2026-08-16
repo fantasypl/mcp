@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
 )
@@ -178,4 +179,111 @@ func (l Layout) LoadLiveData(gw int) (*LiveData, bool, error) {
 // repeated backtest runs don't refetch it.
 func (l Layout) LoadFixturesCache() ([]fpl.Fixture, bool, error) {
 	return readJSON[[]fpl.Fixture](l.FixturesCachePath())
+}
+
+// SnapshotFromBootstrap ports snapshot_gw.py's compact field selection: only
+// what a backtest needs, not the full ~4MB bootstrap.
+func SnapshotFromBootstrap(b *fpl.Bootstrap, fixtures []fpl.Fixture, gw int, backfill bool, capturedAt time.Time) Snapshot {
+	players := make([]SnapshotPlayer, 0, len(b.Elements))
+	for _, p := range b.Elements {
+		players = append(players, SnapshotPlayer{
+			ID:                               p.ID,
+			WebName:                          p.WebName,
+			FirstName:                        p.FirstName,
+			SecondName:                       p.SecondName,
+			Team:                             p.Team,
+			ElementType:                      p.ElementType,
+			Form:                             p.Form,
+			PointsPerGame:                    p.PointsPerGame,
+			EPNext:                           p.EPNext,
+			EPThis:                           p.EPThis,
+			TotalPoints:                      p.TotalPoints,
+			Minutes:                          p.Minutes,
+			Starts:                           p.Starts,
+			ExpectedGoals:                    p.ExpectedGoals,
+			ExpectedAssists:                  p.ExpectedAssists,
+			ExpectedGoalInvolvements:         p.ExpectedGoalInvolvements,
+			ExpectedGoalsConceded:            p.ExpectedGoalsConceded,
+			ExpectedGoalsConcededPer90:       p.ExpectedGoalsConcededPer90,
+			ICTIndex:                         p.ICTIndex,
+			Influence:                        p.Influence,
+			Creativity:                       p.Creativity,
+			Threat:                           p.Threat,
+			Bonus:                            p.Bonus,
+			BPS:                              p.BPS,
+			GoalsScored:                      p.GoalsScored,
+			Assists:                          p.Assists,
+			CleanSheets:                      p.CleanSheets,
+			NowCost:                          p.NowCost,
+			SelectedByPercent:                p.SelectedByPercent,
+			Status:                           p.Status,
+			ChanceOfPlayingNextRound:         p.ChanceOfPlayingNextRound,
+			PenaltiesOrder:                   p.PenaltiesOrder,
+			CornersAndIndirectFreekicksOrder: p.CornersAndIndirectFreekicksOrder,
+			DirectFreekicksOrder:             p.DirectFreekicksOrder,
+			TransfersInEvent:                 p.TransfersInEvent,
+			TransfersOutEvent:                p.TransfersOutEvent,
+		})
+	}
+
+	teams := make([]SnapshotTeam, 0, len(b.Teams))
+	for _, t := range b.Teams {
+		teams = append(teams, SnapshotTeam{
+			ID:                  t.ID,
+			Name:                t.Name,
+			ShortName:           t.ShortName,
+			Strength:            t.Strength,
+			StrengthOverallHome: t.StrengthOverallHome,
+			StrengthOverallAway: t.StrengthOverallAway,
+			StrengthAttackHome:  t.StrengthAttackHome,
+			StrengthAttackAway:  t.StrengthAttackAway,
+			StrengthDefenceHome: t.StrengthDefenceHome,
+			StrengthDefenceAway: t.StrengthDefenceAway,
+		})
+	}
+
+	// event defaults to the zero value (nil ID, false Finished/DataChecked) if
+	// gw isn't in the bootstrap's event list — mirrors Python's
+	// next((e for e in events if e["id"] == target_gw), {}).get(...).
+	var event SnapshotEvent
+	for _, e := range b.Events {
+		if e.ID == gw {
+			id := e.ID
+			event = SnapshotEvent{ID: &id, DeadlineTime: e.DeadlineTime, Finished: e.Finished, DataChecked: e.DataChecked}
+			break
+		}
+	}
+
+	fixtureCount := 0
+	for _, f := range fixtures {
+		if f.InGameweek(gw) {
+			fixtureCount++
+		}
+	}
+
+	return Snapshot{
+		Gameweek:     gw,
+		CapturedAt:   capturedAt.UTC().Format(time.RFC3339),
+		IsBackfill:   backfill,
+		Event:        event,
+		Players:      players,
+		Teams:        teams,
+		FixtureCount: fixtureCount,
+	}
+}
+
+// SaveSnapshot writes s to data/snapshots/gw{N}.json, creating the directory
+// if needed. Unlike SaveOptimizedWeightsCache this is compact (no indent),
+// matching snapshot_gw.py's json.dump(snapshot, f) with no indent argument —
+// a season's worth of these adds up, and nothing reads the file by eye.
+func (l Layout) SaveSnapshot(s Snapshot) error {
+	path := l.SnapshotPath(s.Gameweek)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	b, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, b, 0o644)
 }

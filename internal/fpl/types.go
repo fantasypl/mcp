@@ -120,6 +120,11 @@ type Player struct {
 	YellowCards    int `json:"yellow_cards"`
 	RedCards       int `json:"red_cards"`
 	DreamteamCount int `json:"dreamteam_count"`
+	// GoalsScored and Assists are season totals; like ExpectedGoalsConceded
+	// above, only fplctl's snapshot capture reads these — no scoring
+	// algorithm uses them (they use the expected-stat and per-90 fields).
+	GoalsScored int `json:"goals_scored"`
+	Assists     int `json:"assists"`
 
 	// ICT. Strings in the payload; the *_rank fields are plain ints.
 	ICTIndex       Num `json:"ict_index"`
@@ -135,6 +140,10 @@ type Player struct {
 	ExpectedGoals            Num `json:"expected_goals"`
 	ExpectedAssists          Num `json:"expected_assists"`
 	ExpectedGoalInvolvements Num `json:"expected_goal_involvements"`
+	// ExpectedGoalsConceded is the season total; only fplctl's snapshot
+	// capture reads it (matching snapshot_gw.py's field list) — no scoring
+	// algorithm uses the season total, only the per-90 rate below.
+	ExpectedGoalsConceded Num `json:"expected_goals_conceded"`
 
 	CleanSheetsPer90           Num `json:"clean_sheets_per_90"`
 	DefensiveContributionPer90 Num `json:"defensive_contribution_per_90"`
