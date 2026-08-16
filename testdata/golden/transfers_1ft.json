@@ -1,0 +1,218 @@
+{
+  "bank_balance_m": 0.5,
+  "budget_note": "Budget estimates use current player prices. FPL's selling price may differ if a player's value has risen since purchase \u2014 check the FPL app for your exact budget.",
+  "free_transfers": 1,
+  "gameweek": 1,
+  "num_suggestions": 1,
+  "squad_overview": [
+    {
+      "form": 0.0,
+      "name": "Forster",
+      "position": "GKP",
+      "team": "BOU",
+      "value_score": -3.79
+    },
+    {
+      "form": 0.0,
+      "name": "J.Timber",
+      "position": "DEF",
+      "team": "ARS",
+      "value_score": -1.79
+    },
+    {
+      "form": 0.0,
+      "name": "Oriola",
+      "position": "MID",
+      "team": "BHA",
+      "value_score": -1.67
+    },
+    {
+      "form": 0.0,
+      "name": "Furo",
+      "position": "FWD",
+      "team": "BRE",
+      "value_score": -1.47
+    },
+    {
+      "form": 0.0,
+      "name": "Howell",
+      "position": "MID",
+      "team": "BHA",
+      "value_score": -1.37
+    },
+    {
+      "form": 0.0,
+      "name": "Isak",
+      "position": "FWD",
+      "team": "LIV",
+      "value_score": 0.03
+    },
+    {
+      "form": 0.0,
+      "name": "Marmoush",
+      "position": "FWD",
+      "team": "MCI",
+      "value_score": 0.23
+    },
+    {
+      "form": 0.0,
+      "name": "Pickford",
+      "position": "GKP",
+      "team": "EVE",
+      "value_score": 0.89
+    },
+    {
+      "form": 0.0,
+      "name": "Enzo",
+      "position": "MID",
+      "team": "CHE",
+      "value_score": 1.37
+    },
+    {
+      "form": 0.0,
+      "name": "Rice",
+      "position": "MID",
+      "team": "ARS",
+      "value_score": 2.59
+    },
+    {
+      "form": 0.0,
+      "name": "Konsa",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 2.73
+    },
+    {
+      "form": 0.0,
+      "name": "Digne",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 2.79
+    },
+    {
+      "form": 0.0,
+      "name": "A.Garc\u00eda",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 3.15
+    },
+    {
+      "form": 0.0,
+      "name": "B.Fernandes",
+      "position": "MID",
+      "team": "MUN",
+      "value_score": 4.31
+    },
+    {
+      "form": 0.0,
+      "name": "Gabriel",
+      "position": "DEF",
+      "team": "ARS",
+      "value_score": 8.53
+    }
+  ],
+  "squad_size": 15,
+  "team_id": 999001,
+  "transfer_suggestions": [
+    {
+      "budget_available": 4.5,
+      "transfer_in_options": [
+        {
+          "captain_score": 5.3,
+          "cost": 4.5,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": false,
+            "opponent": 9
+          },
+          "form": 0.0,
+          "id": 199,
+          "name": "Benitez",
+          "position": "GKP",
+          "ppg": 7.0,
+          "team": "CRY",
+          "team_full_name": "Crystal Palace",
+          "value_score": 3.81
+        },
+        {
+          "captain_score": 5.0,
+          "cost": 4.5,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": false,
+            "opponent": 12
+          },
+          "form": 0.0,
+          "id": 531,
+          "name": "Ellborg",
+          "position": "GKP",
+          "ppg": 5.3,
+          "team": "SUN",
+          "team_full_name": "Sunderland",
+          "value_score": 2.91
+        },
+        {
+          "captain_score": 3.7,
+          "cost": 4.5,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": true,
+            "opponent": 2
+          },
+          "form": 0.0,
+          "id": 109,
+          "name": "Verbruggen",
+          "position": "GKP",
+          "ppg": 3.4,
+          "team": "BHA",
+          "team_full_name": "Brighton",
+          "value_score": 0.73
+        },
+        {
+          "captain_score": 3.4,
+          "cost": 4.5,
+          "fixture": {
+            "fdr": 2.2,
+            "is_home": true,
+            "opponent": 6
+          },
+          "form": 0.0,
+          "id": 250,
+          "name": "Leno",
+          "position": "GKP",
+          "ppg": 3.2,
+          "team": "FUL",
+          "team_full_name": "Fulham",
+          "value_score": 0.21
+        },
+        {
+          "captain_score": 3.1,
+          "cost": 4.5,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": false,
+            "opponent": 4
+          },
+          "form": 0.0,
+          "id": 494,
+          "name": "Vicario",
+          "position": "GKP",
+          "ppg": 2.9,
+          "team": "TOT",
+          "team_full_name": "Spurs",
+          "value_score": 0.11
+        }
+      ],
+      "transfer_out": {
+        "cost": 4.0,
+        "form": 0.0,
+        "id": 58,
+        "name": "Forster",
+        "position": "GKP",
+        "reasoning": "Poor form",
+        "team": "BOU",
+        "value_score": -3.79
+      }
+    }
+  ]
+}

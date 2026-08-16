@@ -1,0 +1,232 @@
+// Package golden compares Go algorithm output against outputs captured from
+// the reference Python implementation.
+//
+// The golden files are the parity contract for the port. They were generated
+// once by scripts/gen_golden.py against frozen FPL payloads in testdata/ and
+// are not regenerated from Go output — a golden file refreshed from the thing
+// it is meant to check would silently absorb whatever bug it was supposed to
+// catch. When a mismatch is real and the Python is wrong, fix the Python,
+// regenerate, and say so in the commit.
+package golden
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"os"
+	"sort"
+	"strings"
+)
+
+// Epsilon is the tolerance for float comparison. The scoring weights carry
+// three decimals and scores are reported to three, so 1e-6 is comfortably
+// tighter than anything meaningful while absorbing float summation-order drift
+// between CPython and Go.
+const Epsilon = 1e-6
+
+// Mismatch is a single difference, located by JSON path.
+type Mismatch struct {
+	Path   string
+	Reason string
+	Want   any
+	Got    any
+}
+
+func (m Mismatch) String() string {
+	return fmt.Sprintf("%s: %s (want %s, got %s)",
+		m.Path, m.Reason, render(m.Want), render(m.Got))
+}
+
+func render(v any) string {
+	switch t := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		return fmt.Sprintf("%q", t)
+	case float64:
+		return fmt.Sprintf("%g", t)
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		if len(b) > 120 {
+			return string(b[:117]) + "..."
+		}
+		return string(b)
+	}
+}
+
+// Diff walks two decoded JSON values and reports every difference.
+//
+// Both arguments must be the result of json.Unmarshal into any, so numbers are
+// float64 and objects are map[string]any. Ordering of returned mismatches is
+// deterministic: map keys are visited in sorted order.
+func Diff(want, got any, eps float64) []Mismatch {
+	var out []Mismatch
+	diff("$", want, got, eps, &out)
+	return out
+}
+
+func diff(path string, want, got any, eps float64, out *[]Mismatch) {
+	if want == nil || got == nil {
+		// null is load-bearing in this codebase: a null
+		// chance_of_playing_next_round means "fit" while 0 means "definitely
+		// out", so these must never be treated as interchangeable.
+		if want != nil || got != nil {
+			*out = append(*out, Mismatch{path, "null mismatch", want, got})
+		}
+		return
+	}
+
+	switch w := want.(type) {
+	case map[string]any:
+		g, ok := got.(map[string]any)
+		if !ok {
+			*out = append(*out, Mismatch{path, "type mismatch: want object", want, got})
+			return
+		}
+		diffObject(path, w, g, eps, out)
+
+	case []any:
+		g, ok := got.([]any)
+		if !ok {
+			*out = append(*out, Mismatch{path, "type mismatch: want array", want, got})
+			return
+		}
+		if len(w) != len(g) {
+			*out = append(*out, Mismatch{path,
+				fmt.Sprintf("length mismatch: %d vs %d", len(w), len(g)), nil, nil})
+			return
+		}
+		for i := range w {
+			diff(fmt.Sprintf("%s[%d]", path, i), w[i], g[i], eps, out)
+		}
+
+	case float64:
+		g, ok := got.(float64)
+		if !ok {
+			*out = append(*out, Mismatch{path, "type mismatch: want number", want, got})
+			return
+		}
+		if !closeEnough(w, g, eps) {
+			*out = append(*out, Mismatch{path,
+				fmt.Sprintf("value differs by %g", math.Abs(w-g)), want, got})
+		}
+
+	case string:
+		g, ok := got.(string)
+		if !ok {
+			*out = append(*out, Mismatch{path, "type mismatch: want string", want, got})
+			return
+		}
+		if w != g {
+			*out = append(*out, Mismatch{path, "string differs", want, got})
+		}
+
+	case bool:
+		g, ok := got.(bool)
+		if !ok {
+			*out = append(*out, Mismatch{path, "type mismatch: want bool", want, got})
+			return
+		}
+		if w != g {
+			*out = append(*out, Mismatch{path, "bool differs", want, got})
+		}
+
+	default:
+		*out = append(*out, Mismatch{path, "unsupported JSON type", want, got})
+	}
+}
+
+func diffObject(path string, want, got map[string]any, eps float64, out *[]Mismatch) {
+	keys := make([]string, 0, len(want))
+	for k := range want {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		child := path + "." + k
+		g, present := got[k]
+		if !present {
+			*out = append(*out, Mismatch{child, "missing key", want[k], nil})
+			continue
+		}
+		diff(child, want[k], g, eps, out)
+	}
+
+	extra := make([]string, 0)
+	for k := range got {
+		if _, present := want[k]; !present {
+			extra = append(extra, k)
+		}
+	}
+	sort.Strings(extra)
+	for _, k := range extra {
+		*out = append(*out, Mismatch{path + "." + k, "unexpected key", nil, got[k]})
+	}
+}
+
+// closeEnough combines an absolute and a relative tolerance so that both tiny
+// values (where relative error explodes) and large ones (where absolute error
+// is meaningless) compare sensibly.
+func closeEnough(a, b, eps float64) bool {
+	if a == b {
+		return true
+	}
+	if math.IsNaN(a) || math.IsNaN(b) {
+		return math.IsNaN(a) && math.IsNaN(b)
+	}
+	d := math.Abs(a - b)
+	if d <= eps {
+		return true
+	}
+	scale := math.Max(math.Abs(a), math.Abs(b))
+	return d <= eps*scale
+}
+
+// Load reads and decodes a golden file.
+func Load(path string) (any, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return nil, fmt.Errorf("decode %s: %w", path, err)
+	}
+	return v, nil
+}
+
+// Normalize round-trips a Go value through JSON so it can be compared against
+// a decoded golden file on equal terms.
+func Normalize(v any) (any, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var out any
+	if err := json.Unmarshal(b, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Format renders mismatches for a test failure message, capping the output so
+// a wholesale mismatch on a 22 KB golden file stays readable.
+func Format(ms []Mismatch, max int) string {
+	if len(ms) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%d mismatch(es):\n", len(ms))
+	for i, m := range ms {
+		if i == max {
+			fmt.Fprintf(&b, "  ... and %d more\n", len(ms)-max)
+			break
+		}
+		fmt.Fprintf(&b, "  %s\n", m)
+	}
+	return b.String()
+}

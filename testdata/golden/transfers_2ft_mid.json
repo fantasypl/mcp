@@ -1,0 +1,318 @@
+{
+  "bank_balance_m": 0.0,
+  "budget_note": "Budget estimates use current player prices. FPL's selling price may differ if a player's value has risen since purchase \u2014 check the FPL app for your exact budget.",
+  "free_transfers": 2,
+  "gameweek": 1,
+  "num_suggestions": 2,
+  "squad_overview": [
+    {
+      "form": 0.0,
+      "name": "Forster",
+      "position": "GKP",
+      "team": "BOU",
+      "value_score": -3.79
+    },
+    {
+      "form": 0.0,
+      "name": "J.Timber",
+      "position": "DEF",
+      "team": "ARS",
+      "value_score": -1.79
+    },
+    {
+      "form": 0.0,
+      "name": "Oriola",
+      "position": "MID",
+      "team": "BHA",
+      "value_score": -1.67
+    },
+    {
+      "form": 0.0,
+      "name": "Howell",
+      "position": "MID",
+      "team": "BHA",
+      "value_score": -1.37
+    },
+    {
+      "form": 0.2,
+      "name": "Furo",
+      "position": "FWD",
+      "team": "BRE",
+      "value_score": -1.07
+    },
+    {
+      "form": 0.2,
+      "name": "Isak",
+      "position": "FWD",
+      "team": "LIV",
+      "value_score": 0.43
+    },
+    {
+      "form": 0.2,
+      "name": "A.Garc\u00eda",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 3.55
+    },
+    {
+      "form": 0.5,
+      "name": "Konsa",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 3.73
+    },
+    {
+      "form": 1.8,
+      "name": "Pickford",
+      "position": "GKP",
+      "team": "EVE",
+      "value_score": 4.49
+    },
+    {
+      "form": 1.2,
+      "name": "Digne",
+      "position": "DEF",
+      "team": "AVL",
+      "value_score": 5.19
+    },
+    {
+      "form": 3.2,
+      "name": "Marmoush",
+      "position": "FWD",
+      "team": "MCI",
+      "value_score": 6.63
+    },
+    {
+      "form": 3.2,
+      "name": "Rice",
+      "position": "MID",
+      "team": "ARS",
+      "value_score": 8.99
+    },
+    {
+      "form": 6.0,
+      "name": "Enzo",
+      "position": "MID",
+      "team": "CHE",
+      "value_score": 13.37
+    },
+    {
+      "form": 7.8,
+      "name": "B.Fernandes",
+      "position": "MID",
+      "team": "MUN",
+      "value_score": 19.91
+    },
+    {
+      "form": 6.0,
+      "name": "Gabriel",
+      "position": "DEF",
+      "team": "ARS",
+      "value_score": 20.52
+    }
+  ],
+  "squad_size": 15,
+  "team_id": 999001,
+  "transfer_suggestions": [
+    {
+      "budget_available": 4.0,
+      "transfer_in_options": [
+        {
+          "captain_score": 3.1,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": false,
+            "opponent": 4
+          },
+          "form": 0.5,
+          "id": 497,
+          "name": "Dubravka",
+          "position": "GKP",
+          "ppg": 2.7,
+          "team": "TOT",
+          "team_full_name": "Spurs",
+          "value_score": 0.91
+        },
+        {
+          "captain_score": 2.6,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": false,
+            "opponent": 17
+          },
+          "form": 0.5,
+          "id": 352,
+          "name": "Woodman",
+          "position": "GKP",
+          "ppg": 2.0,
+          "team": "LIV",
+          "team_full_name": "Liverpool",
+          "value_score": 0.13
+        },
+        {
+          "captain_score": 0.1,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": false,
+            "opponent": 11
+          },
+          "form": 0.0,
+          "id": 414,
+          "name": "Heaton",
+          "position": "GKP",
+          "ppg": 0.0,
+          "team": "MUN",
+          "team_full_name": "Man Utd",
+          "value_score": -2.39
+        },
+        {
+          "captain_score": 0.1,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": true,
+            "opponent": 20
+          },
+          "form": 0.0,
+          "id": 301,
+          "name": "Palmer",
+          "position": "GKP",
+          "ppg": 0.0,
+          "team": "IPS",
+          "team_full_name": "Ipswich Town",
+          "value_score": -2.51
+        },
+        {
+          "captain_score": 0.1,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": true,
+            "opponent": 20
+          },
+          "form": 0.0,
+          "id": 302,
+          "name": "Button",
+          "position": "GKP",
+          "ppg": 0.0,
+          "team": "IPS",
+          "team_full_name": "Ipswich Town",
+          "value_score": -2.51
+        }
+      ],
+      "transfer_out": {
+        "cost": 4.0,
+        "form": 0.0,
+        "id": 58,
+        "name": "Forster",
+        "position": "GKP",
+        "reasoning": "Poor form",
+        "team": "BOU",
+        "value_score": -3.79
+      }
+    },
+    {
+      "budget_available": 6.5,
+      "transfer_in_options": [
+        {
+          "captain_score": 1.5,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": false,
+            "opponent": 11
+          },
+          "form": 0.0,
+          "id": 425,
+          "name": "Fredricson",
+          "position": "DEF",
+          "ppg": 1.0,
+          "team": "MUN",
+          "team_full_name": "Man Utd",
+          "value_score": 43.61
+        },
+        {
+          "captain_score": 1.5,
+          "cost": 4.0,
+          "fixture": {
+            "fdr": 2.2,
+            "is_home": true,
+            "opponent": 14
+          },
+          "form": 0.2,
+          "id": 451,
+          "name": "A.Murphy",
+          "position": "DEF",
+          "ppg": 1.0,
+          "team": "NEW",
+          "team_full_name": "Newcastle",
+          "value_score": 24.12
+        },
+        {
+          "captain_score": 7.2,
+          "cost": 6.0,
+          "fixture": {
+            "fdr": 1.8,
+            "is_home": false,
+            "opponent": 4
+          },
+          "form": 7.0,
+          "id": 498,
+          "name": "Senesi",
+          "position": "DEF",
+          "ppg": 4.7,
+          "team": "TOT",
+          "team_full_name": "Spurs",
+          "value_score": 21.64
+        },
+        {
+          "captain_score": 7.1,
+          "cost": 5.5,
+          "fixture": {
+            "fdr": 1.4,
+            "is_home": false,
+            "opponent": 12
+          },
+          "form": 5.8,
+          "id": 533,
+          "name": "Mukiele",
+          "position": "DEF",
+          "ppg": 4.7,
+          "team": "SUN",
+          "team_full_name": "Sunderland",
+          "value_score": 18.32
+        },
+        {
+          "captain_score": 6.1,
+          "cost": 5.5,
+          "fixture": {
+            "fdr": 2.6,
+            "is_home": false,
+            "opponent": 15
+          },
+          "form": 6.5,
+          "id": 61,
+          "name": "Truffert",
+          "position": "DEF",
+          "ppg": 4.3,
+          "team": "BOU",
+          "team_full_name": "Bournemouth",
+          "value_score": 17.52
+        }
+      ],
+      "transfer_out": {
+        "cost": 6.5,
+        "form": 0.0,
+        "id": 5,
+        "name": "J.Timber",
+        "position": "DEF",
+        "reasoning": "Poor form, injury/suspension concern, news: groin injury - expected back 21 aug (6 days ago)",
+        "team": "ARS",
+        "value_score": -1.79
+      }
+    }
+  ]
+}

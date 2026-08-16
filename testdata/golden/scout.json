@@ -1,0 +1,821 @@
+{
+  "gameweek": 1,
+  "insights": {
+    "blank_gw_warnings": [],
+    "ep_captain_suggestion": null,
+    "ep_rankings": [
+      {
+        "ep_next": 4.0,
+        "name": "B.Fernandes",
+        "starter": true,
+        "team": "MUN"
+      },
+      {
+        "ep_next": 4.0,
+        "name": "Gabriel",
+        "starter": true,
+        "team": "ARS"
+      },
+      {
+        "ep_next": 3.3,
+        "name": "Pickford",
+        "starter": true,
+        "team": "EVE"
+      },
+      {
+        "ep_next": 2.7,
+        "name": "Isak",
+        "starter": true,
+        "team": "LIV"
+      },
+      {
+        "ep_next": 2.6,
+        "name": "Rice",
+        "starter": true,
+        "team": "ARS"
+      }
+    ],
+    "set_piece_takers_in_squad": [
+      {
+        "corners": 4,
+        "direct_free_kicks": 1,
+        "duties": [
+          "Corners (4th)",
+          "Direct FKs (1st)",
+          "Penalties (1st)"
+        ],
+        "name": "B.Fernandes",
+        "penalties": 1,
+        "starter": true,
+        "team": "MUN"
+      },
+      {
+        "corners": 5,
+        "direct_free_kicks": 1,
+        "duties": [
+          "Corners (5th)",
+          "Direct FKs (1st)"
+        ],
+        "name": "Rice",
+        "penalties": null,
+        "starter": true,
+        "team": "ARS"
+      },
+      {
+        "corners": 7,
+        "direct_free_kicks": 2,
+        "duties": [
+          "Corners (7th)",
+          "Direct FKs (2nd)",
+          "Penalties (2nd)"
+        ],
+        "name": "Enzo",
+        "penalties": 2,
+        "starter": true,
+        "team": "CHE"
+      },
+      {
+        "corners": 4,
+        "direct_free_kicks": null,
+        "duties": [
+          "Corners (4th)"
+        ],
+        "name": "Digne",
+        "penalties": null,
+        "starter": true,
+        "team": "AVL"
+      },
+      {
+        "corners": null,
+        "direct_free_kicks": 2,
+        "duties": [
+          "Direct FKs (2nd)",
+          "Penalties (2nd)"
+        ],
+        "name": "Marmoush",
+        "penalties": 2,
+        "starter": true,
+        "team": "MCI"
+      },
+      {
+        "corners": null,
+        "direct_free_kicks": null,
+        "duties": [
+          "Penalties (1st)"
+        ],
+        "name": "Isak",
+        "penalties": 1,
+        "starter": true,
+        "team": "LIV"
+      }
+    ],
+    "set_piece_targets_outside_squad": [
+      {
+        "cost": 15.5,
+        "duties": [
+          "penalties"
+        ],
+        "ep_next": 4.0,
+        "name": "Haaland",
+        "ownership": 75.3,
+        "position": "FWD",
+        "team": "MCI"
+      },
+      {
+        "cost": 9.5,
+        "duties": [
+          "penalties"
+        ],
+        "ep_next": 3.2,
+        "name": "Saka",
+        "ownership": 10.7,
+        "position": "MID",
+        "team": "ARS"
+      },
+      {
+        "cost": 9.5,
+        "duties": [
+          "penalties"
+        ],
+        "ep_next": 3.2,
+        "name": "Palmer",
+        "ownership": 13.2,
+        "position": "MID",
+        "team": "CHE"
+      }
+    ],
+    "yellow_card_risks": [
+      {
+        "cards_until_ban": 1,
+        "name": "Pickford",
+        "next_threshold": 5,
+        "note": "1 yellow card away from 1-match ban",
+        "red_cards": 0,
+        "team": "EVE",
+        "yellow_cards": 4
+      },
+      {
+        "cards_until_ban": 1,
+        "name": "Gabriel",
+        "next_threshold": 5,
+        "note": "1 yellow card away from 1-match ban",
+        "red_cards": 0,
+        "team": "ARS",
+        "yellow_cards": 4
+      }
+    ]
+  },
+  "next_gameweek": 1,
+  "num_suspension_warnings": 2,
+  "squad_report": [
+    {
+      "bps": 545,
+      "clean_sheets": 11,
+      "clean_sheets_per_90": 0.29,
+      "cost": 5.5,
+      "dreamteam_count": 0,
+      "ep_next": 3.3,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 20.3,
+        "creativity_rank": 323,
+        "influence": 885.2,
+        "influence_rank": 15,
+        "threat": 2.0,
+        "threat_rank": 357
+      },
+      "is_captain": false,
+      "name": "Pickford",
+      "points_per_million": 24.5,
+      "position": "GKP",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 1,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 1,
+        "next_threshold": 5,
+        "note": "1 yellow card away from 1-match ban",
+        "red_cards": 0,
+        "risk_level": "high",
+        "yellow_cards": 4
+      },
+      "team": "EVE",
+      "total_points": 135,
+      "value_form": 0.0,
+      "value_season": 24.5,
+      "xGC_per_90": 1.48
+    },
+    {
+      "bps": 1008,
+      "cost": 12.0,
+      "dreamteam_count": 0,
+      "ep_next": 4.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 1938.5,
+        "creativity_rank": 1,
+        "influence": 1258.0,
+        "influence_rank": 1,
+        "threat": 614.0,
+        "threat_rank": 29
+      },
+      "is_captain": true,
+      "name": "B.Fernandes",
+      "points_per_million": 19.6,
+      "position": "MID",
+      "set_pieces": {
+        "corners": 4,
+        "direct_free_kicks": 1,
+        "is_set_piece_taker": true,
+        "penalties": 1,
+        "summary": "Corners (4th), Direct FKs (1st), Penalties (1st)"
+      },
+      "slot": 2,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 10,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 5
+      },
+      "team": "MUN",
+      "total_points": 235,
+      "value_form": 0.0,
+      "value_season": 19.6
+    },
+    {
+      "bps": 724,
+      "clean_sheets": 18,
+      "clean_sheets_per_90": 0.59,
+      "cost": 8.0,
+      "dreamteam_count": 0,
+      "ep_next": 4.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 128.5,
+        "creativity_rank": 219,
+        "influence": 824.0,
+        "influence_rank": 25,
+        "threat": 298.0,
+        "threat_rank": 101
+      },
+      "is_captain": false,
+      "name": "Gabriel",
+      "points_per_million": 26.1,
+      "position": "DEF",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 3,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 1,
+        "next_threshold": 5,
+        "note": "1 yellow card away from 1-match ban",
+        "red_cards": 0,
+        "risk_level": "high",
+        "yellow_cards": 4
+      },
+      "team": "ARS",
+      "total_points": 209,
+      "value_form": 0.0,
+      "value_season": 26.1,
+      "xGC_per_90": 0.72
+    },
+    {
+      "bps": 790,
+      "cost": 7.5,
+      "dreamteam_count": 0,
+      "ep_next": 2.6,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 1027.4,
+        "creativity_rank": 4,
+        "influence": 827.2,
+        "influence_rank": 24,
+        "threat": 298.0,
+        "threat_rank": 100
+      },
+      "is_captain": false,
+      "name": "Rice",
+      "points_per_million": 24.5,
+      "position": "MID",
+      "set_pieces": {
+        "corners": 5,
+        "direct_free_kicks": 1,
+        "is_set_piece_taker": true,
+        "penalties": null,
+        "summary": "Corners (5th), Direct FKs (1st)"
+      },
+      "slot": 4,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 2,
+        "next_threshold": 5,
+        "note": "2 yellow cards away from 1-match ban",
+        "red_cards": 0,
+        "risk_level": "medium",
+        "yellow_cards": 3
+      },
+      "team": "ARS",
+      "total_points": 184,
+      "value_form": 0.0,
+      "value_season": 24.5
+    },
+    {
+      "bps": 700,
+      "cost": 7.0,
+      "dreamteam_count": 0,
+      "ep_next": 2.5,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 1063.2,
+        "creativity_rank": 3,
+        "influence": 835.6,
+        "influence_rank": 23,
+        "threat": 747.0,
+        "threat_rank": 20
+      },
+      "is_captain": false,
+      "name": "Enzo",
+      "points_per_million": 22.4,
+      "position": "MID",
+      "set_pieces": {
+        "corners": 7,
+        "direct_free_kicks": 2,
+        "is_set_piece_taker": true,
+        "penalties": 2,
+        "summary": "Corners (7th), Direct FKs (2nd), Penalties (2nd)"
+      },
+      "slot": 5,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 15,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 10
+      },
+      "team": "CHE",
+      "total_points": 157,
+      "value_form": 0.0,
+      "value_season": 22.4
+    },
+    {
+      "bps": 532,
+      "clean_sheets": 13,
+      "clean_sheets_per_90": 0.48,
+      "cost": 6.5,
+      "dreamteam_count": 0,
+      "ep_next": 0.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 402.6,
+        "creativity_rank": 76,
+        "influence": 499.0,
+        "influence_rank": 114,
+        "threat": 352.0,
+        "threat_rank": 76
+      },
+      "is_captain": false,
+      "name": "J.Timber",
+      "news": {
+        "text": "Groin injury - Expected back 21 Aug",
+        "updated": "6 days ago"
+      },
+      "news_risk": true,
+      "points_per_million": 22.9,
+      "position": "DEF",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 6,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 10,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 5
+      },
+      "team": "ARS",
+      "total_points": 149,
+      "value_form": 0.0,
+      "value_season": 22.9,
+      "xGC_per_90": 0.64
+    },
+    {
+      "bps": 497,
+      "clean_sheets": 9,
+      "clean_sheets_per_90": 0.27,
+      "cost": 4.5,
+      "dreamteam_count": 0,
+      "ep_next": 1.7,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 108.3,
+        "creativity_rank": 233,
+        "influence": 601.4,
+        "influence_rank": 76,
+        "threat": 124.0,
+        "threat_rank": 210
+      },
+      "is_captain": false,
+      "name": "Konsa",
+      "points_per_million": 22.2,
+      "position": "DEF",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 7,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": "1 red card this season",
+        "red_cards": 1,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "AVL",
+      "total_points": 100,
+      "value_form": 0.0,
+      "value_season": 22.2,
+      "xGC_per_90": 1.45
+    },
+    {
+      "bps": 381,
+      "clean_sheets": 7,
+      "clean_sheets_per_90": 0.34,
+      "cost": 4.5,
+      "dreamteam_count": 0,
+      "ep_next": 1.7,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 455.5,
+        "creativity_rank": 60,
+        "influence": 400.2,
+        "influence_rank": 153,
+        "threat": 130.0,
+        "threat_rank": 206
+      },
+      "is_captain": false,
+      "name": "Digne",
+      "points_per_million": 21.6,
+      "position": "DEF",
+      "set_pieces": {
+        "corners": 4,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": true,
+        "penalties": null,
+        "summary": "Corners (4th)"
+      },
+      "slot": 8,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 2,
+        "next_threshold": 5,
+        "note": "2 yellow cards away from 1-match ban",
+        "red_cards": 0,
+        "risk_level": "medium",
+        "yellow_cards": 3
+      },
+      "team": "AVL",
+      "total_points": 97,
+      "value_form": 0.0,
+      "value_season": 21.6,
+      "xGC_per_90": 1.36
+    },
+    {
+      "bps": 182,
+      "cost": 7.0,
+      "dreamteam_count": 0,
+      "ep_next": 2.2,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 159.8,
+        "creativity_rank": 195,
+        "influence": 203.2,
+        "influence_rank": 250,
+        "threat": 284.0,
+        "threat_rank": 106
+      },
+      "is_captain": false,
+      "name": "Marmoush",
+      "points_per_million": 8.0,
+      "position": "FWD",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": 2,
+        "is_set_piece_taker": true,
+        "penalties": 2,
+        "summary": "Direct FKs (2nd), Penalties (2nd)"
+      },
+      "slot": 9,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 2,
+        "next_threshold": 5,
+        "note": "2 yellow cards away from 1-match ban",
+        "red_cards": 0,
+        "risk_level": "medium",
+        "yellow_cards": 3
+      },
+      "team": "MCI",
+      "total_points": 56,
+      "value_form": 0.0,
+      "value_season": 8.0
+    },
+    {
+      "bps": 140,
+      "cost": 9.0,
+      "dreamteam_count": 0,
+      "ep_next": 2.7,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 39.2,
+        "creativity_rank": 299,
+        "influence": 146.4,
+        "influence_rank": 277,
+        "threat": 191.0,
+        "threat_rank": 162
+      },
+      "is_captain": false,
+      "name": "Isak",
+      "points_per_million": 4.6,
+      "position": "FWD",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": true,
+        "penalties": 1,
+        "summary": "Penalties (1st)"
+      },
+      "slot": 10,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "LIV",
+      "total_points": 41,
+      "value_form": 0.0,
+      "value_season": 4.6
+    },
+    {
+      "bps": 12,
+      "clean_sheets": 0,
+      "clean_sheets_per_90": 0.0,
+      "cost": 4.0,
+      "dreamteam_count": 0,
+      "ep_next": 1.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 3.2,
+        "creativity_rank": 359,
+        "influence": 17.8,
+        "influence_rank": 360,
+        "threat": 2.0,
+        "threat_rank": 348
+      },
+      "is_captain": false,
+      "name": "A.Garc\u00eda",
+      "points_per_million": 1.2,
+      "position": "DEF",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 11,
+      "starter": true,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "AVL",
+      "total_points": 5,
+      "value_form": 0.0,
+      "value_season": 1.2,
+      "xGC_per_90": 2.97
+    },
+    {
+      "bps": 0,
+      "clean_sheets": 0,
+      "clean_sheets_per_90": 0.0,
+      "cost": 4.0,
+      "dreamteam_count": 0,
+      "ep_next": 1.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 0.0,
+        "creativity_rank": 379,
+        "influence": 0.0,
+        "influence_rank": 396,
+        "threat": 0.0,
+        "threat_rank": 360
+      },
+      "is_captain": false,
+      "name": "Forster",
+      "points_per_million": 0.0,
+      "position": "GKP",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 12,
+      "starter": false,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "BOU",
+      "total_points": 0,
+      "value_form": 0.0,
+      "value_season": 0.0,
+      "xGC_per_90": 0.0
+    },
+    {
+      "bps": 11,
+      "cost": 4.5,
+      "dreamteam_count": 0,
+      "ep_next": 1.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 5.1,
+        "creativity_rank": 354,
+        "influence": 10.2,
+        "influence_rank": 371,
+        "threat": 2.0,
+        "threat_rank": 354
+      },
+      "is_captain": false,
+      "name": "Howell",
+      "points_per_million": 0.9,
+      "position": "MID",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 13,
+      "starter": false,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "BHA",
+      "total_points": 4,
+      "value_form": 0.0,
+      "value_season": 0.9
+    },
+    {
+      "bps": 3,
+      "cost": 4.5,
+      "dreamteam_count": 0,
+      "ep_next": 1.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 0.0,
+        "creativity_rank": 477,
+        "influence": 0.0,
+        "influence_rank": 481,
+        "threat": 0.0,
+        "threat_rank": 467
+      },
+      "is_captain": false,
+      "name": "Oriola",
+      "points_per_million": 0.2,
+      "position": "MID",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 14,
+      "starter": false,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "BHA",
+      "total_points": 1,
+      "value_form": 0.0,
+      "value_season": 0.2
+    },
+    {
+      "bps": 2,
+      "cost": 4.5,
+      "dreamteam_count": 0,
+      "ep_next": 1.0,
+      "ep_this": 0.0,
+      "ict": {
+        "creativity": 0.0,
+        "creativity_rank": 481,
+        "influence": 0.0,
+        "influence_rank": 486,
+        "threat": 0.0,
+        "threat_rank": 473
+      },
+      "is_captain": false,
+      "name": "Furo",
+      "points_per_million": 0.2,
+      "position": "FWD",
+      "set_pieces": {
+        "corners": null,
+        "direct_free_kicks": null,
+        "is_set_piece_taker": false,
+        "penalties": null,
+        "summary": null
+      },
+      "slot": 15,
+      "starter": false,
+      "suspension_risk": {
+        "cards_until_ban": 5,
+        "next_threshold": 5,
+        "note": null,
+        "red_cards": 0,
+        "risk_level": "low",
+        "yellow_cards": 0
+      },
+      "team": "BRE",
+      "total_points": 1,
+      "value_form": 0.0,
+      "value_season": 0.2
+    }
+  ],
+  "squad_size": 15,
+  "summary": "Suspension risk: Pickford (4 YC, 1 from ban), Gabriel (4 YC, 1 from ban).",
+  "suspension_warnings": [
+    {
+      "cards_until_ban": 1,
+      "name": "Pickford",
+      "next_threshold": 5,
+      "note": "1 yellow card away from 1-match ban",
+      "red_cards": 0,
+      "team": "EVE",
+      "yellow_cards": 4
+    },
+    {
+      "cards_until_ban": 1,
+      "name": "Gabriel",
+      "next_threshold": 5,
+      "note": "1 yellow card away from 1-match ban",
+      "red_cards": 0,
+      "team": "ARS",
+      "yellow_cards": 4
+    }
+  ],
+  "team_id": 999001
+}

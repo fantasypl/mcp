@@ -1,0 +1,201 @@
+{
+ "match": {
+  "arsenal": "ARS",
+  "chelsea": "CHE",
+  "Arsenal": "ARS",
+  "CHELSEA": "CHE",
+  "man city": "MCI",
+  "man utd": "MUN",
+  "spurs": "TOT",
+  "wolves": "WOL",
+  "palace": "CRY",
+  "manchester city": "MCI",
+  "manchester united": "MUN",
+  "crystal palace": "CRY",
+  "west ham": "WHU",
+  "nottingham forest": "NFO",
+  "barcelona": null,
+  "xyz": null,
+  "  arsenal  ": "ARS"
+ },
+ "text": [
+  {
+   "dgws": {
+    "33": {
+     "teams": [
+      "ARS",
+      "CHE"
+     ],
+     "status": "predicted"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "33": {
+     "teams": [
+      "LIV",
+      "MCI"
+     ],
+     "status": "predicted"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "36": {
+     "teams": [
+      "MCI"
+     ],
+     "status": "predicted"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {},
+   "bgws": {
+    "34": {
+     "teams": [
+      "ARS",
+      "LIV"
+     ],
+     "status": "predicted"
+    }
+   }
+  },
+  {
+   "dgws": {},
+   "bgws": {
+    "31": {
+     "teams": [
+      "ARS",
+      "WOL"
+     ],
+     "status": "predicted"
+    }
+   }
+  },
+  {
+   "dgws": {
+    "26": {
+     "teams": [
+      "ARS"
+     ],
+     "status": "confirmed"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "33": {
+     "teams": [],
+     "status": "predicted"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "33": {
+     "teams": [
+      "ARS",
+      "CHE",
+      "MCI"
+     ],
+     "status": "confirmed"
+    },
+    "36": {
+     "teams": [
+      "ARS",
+      "CHE",
+      "MCI"
+     ],
+     "status": "confirmed"
+    }
+   },
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "33": {
+     "teams": [
+      "ARS",
+      "CHE"
+     ],
+     "status": "predicted"
+    }
+   },
+   "bgws": {
+    "34": {
+     "teams": [
+      "ARS",
+      "CHE"
+     ],
+     "status": "predicted"
+    }
+   }
+  },
+  {
+   "dgws": {},
+   "bgws": {}
+  },
+  {
+   "dgws": {},
+   "bgws": {}
+  },
+  {
+   "dgws": {
+    "33": {
+     "teams": [
+      "CRY",
+      "MCI"
+     ],
+     "status": "confirmed"
+    }
+   },
+   "bgws": {
+    "31": {
+     "teams": [
+      "ARS",
+      "CRY",
+      "MCI",
+      "WOL"
+     ],
+     "status": "predicted"
+    }
+   }
+  }
+ ],
+ "merge": [
+  {
+   "33": [
+    1
+   ]
+  },
+  {
+   "33": [
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "33": [
+    1
+   ],
+   "36": [
+    3
+   ]
+  },
+  {
+   "33": [
+    1
+   ]
+  },
+  {}
+ ]
+}

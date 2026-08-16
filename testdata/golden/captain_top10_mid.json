@@ -1,0 +1,508 @@
+{
+  "algorithm_version": "3.0",
+  "gameweek": 1,
+  "most_captained": null,
+  "num_picks": 10,
+  "picks": [
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "HUL",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "HUL",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 12.0,
+        "id": 426,
+        "name": "B.Fernandes",
+        "position": "MID",
+        "selected_by_pct": 48.8,
+        "status": "a",
+        "team": "MUN",
+        "team_full_name": "Man Utd"
+      },
+      "rank": 1,
+      "reasoning": "Exceptional form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 11.977)",
+      "score": 11.977,
+      "stats": {
+        "bonus": 41,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 8.43,
+        "ep_next": 4.0,
+        "expected_assists": 12.28,
+        "expected_goal_involvements": 23.07,
+        "expected_goals": 10.79,
+        "form": 7.8,
+        "ict_index": 381.4,
+        "penalties_order": 1,
+        "points_per_game": 6.7,
+        "starts": 35,
+        "total_points": 235,
+        "xa_per_90": 0.361,
+        "xg_per_90": 0.317
+      },
+      "streak": {
+        "detail": "Form 7.8 in line with season avg 6.7",
+        "streak": "neutral"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "BOU",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "BOU",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 15.5,
+        "id": 411,
+        "name": "Haaland",
+        "position": "FWD",
+        "selected_by_pct": 75.3,
+        "status": "a",
+        "team": "MCI",
+        "team_full_name": "Man City"
+      },
+      "rank": 2,
+      "reasoning": "Strong form, elite xg/90 (0.78), on penalties, fpl expects 4.0pts, easy fixture (fdr 1), home advantage, elite ict index (score: 10.705)",
+      "score": 10.705,
+      "stats": {
+        "bonus": 43,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 3.17,
+        "ep_next": 4.0,
+        "expected_assists": 2.67,
+        "expected_goal_involvements": 28.17,
+        "expected_goals": 25.5,
+        "form": 5.4,
+        "ict_index": 302.3,
+        "penalties_order": 1,
+        "points_per_game": 6.8,
+        "starts": 34,
+        "total_points": 239,
+        "xa_per_90": 0.081,
+        "xg_per_90": 0.777
+      },
+      "streak": {
+        "detail": "Form 5.4 in line with season avg 6.8",
+        "streak": "neutral"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "COV",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "COV",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 9.5,
+        "id": 12,
+        "name": "Saka",
+        "position": "MID",
+        "selected_by_pct": 10.7,
+        "status": "a",
+        "team": "ARS",
+        "team_full_name": "Arsenal"
+      },
+      "rank": 3,
+      "reasoning": "Strong form, strong xg/90 (0.31), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 10.691)",
+      "score": 10.691,
+      "stats": {
+        "bonus": 18,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 7.47,
+        "ep_next": 3.2,
+        "expected_assists": 7.16,
+        "expected_goal_involvements": 14.73,
+        "expected_goals": 7.57,
+        "form": 5.8,
+        "ict_index": 230.6,
+        "penalties_order": 1,
+        "points_per_game": 5.1,
+        "starts": 25,
+        "total_points": 157,
+        "xa_per_90": 0.291,
+        "xg_per_90": 0.307
+      },
+      "streak": {
+        "detail": "Form 5.8 in line with season avg 5.1",
+        "streak": "neutral"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "COV",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "COV",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 8.0,
+        "id": 4,
+        "name": "Gabriel",
+        "position": "DEF",
+        "selected_by_pct": 25.4,
+        "status": "a",
+        "team": "ARS",
+        "team_full_name": "Arsenal"
+      },
+      "rank": 4,
+      "reasoning": "Strong form, fpl expects 4.0pts, easy fixture (fdr 1), home advantage (score: 9.047)",
+      "score": 9.047,
+      "stats": {
+        "bonus": 30,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 9.07,
+        "ep_next": 4.0,
+        "expected_assists": 1.75,
+        "expected_goal_involvements": 4.69,
+        "expected_goals": 2.94,
+        "form": 6.0,
+        "ict_index": 125.0,
+        "penalties_order": null,
+        "points_per_game": 6.5,
+        "starts": 30,
+        "total_points": 209,
+        "xa_per_90": 0.057,
+        "xg_per_90": 0.096
+      },
+      "streak": {
+        "detail": "Form 6.0 in line with season avg 6.5",
+        "streak": "neutral"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "LEE",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "LEE",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 8.0,
+        "id": 480,
+        "name": "Gibbs-White",
+        "position": "MID",
+        "selected_by_pct": 12.3,
+        "status": "a",
+        "team": "NFO",
+        "team_full_name": "Nott'm Forest"
+      },
+      "rank": 5,
+      "reasoning": "Strong form, strong xg/90 (0.31), on direct free kicks, easy fixture (fdr 1), home advantage, elite ict index (score: 8.472)",
+      "score": 8.472,
+      "stats": {
+        "bonus": 18,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 5.17,
+        "ep_next": 2.8,
+        "expected_assists": 2.91,
+        "expected_goal_involvements": 13.72,
+        "expected_goals": 10.81,
+        "form": 5.0,
+        "ict_index": 242.5,
+        "penalties_order": 2,
+        "points_per_game": 5.1,
+        "starts": 35,
+        "total_points": 188,
+        "xa_per_90": 0.084,
+        "xg_per_90": 0.314
+      },
+      "streak": {
+        "detail": "Form 5.0 in line with season avg 5.1",
+        "streak": "neutral"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "TOT",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "TOT",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 8.0,
+        "id": 106,
+        "name": "Thiago",
+        "position": "FWD",
+        "selected_by_pct": 15.9,
+        "status": "a",
+        "team": "BRE",
+        "team_full_name": "Brentford"
+      },
+      "rank": 6,
+      "reasoning": "Elite xg/90 (0.56), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 8.249)",
+      "score": 8.249,
+      "stats": {
+        "bonus": 22,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 5.87,
+        "ep_next": 2.5,
+        "expected_assists": 1.83,
+        "expected_goal_involvements": 22.43,
+        "expected_goals": 20.6,
+        "form": 3.0,
+        "ict_index": 256.9,
+        "penalties_order": 1,
+        "points_per_game": 4.8,
+        "starts": 37,
+        "total_points": 181,
+        "xa_per_90": 0.05,
+        "xg_per_90": 0.565
+      },
+      "streak": {
+        "detail": "Form 3.0 well below season avg 4.8",
+        "streak": "cold"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "FUL",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "FUL",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 9.5,
+        "id": 154,
+        "name": "Palmer",
+        "position": "MID",
+        "selected_by_pct": 13.2,
+        "status": "a",
+        "team": "CHE",
+        "team_full_name": "Chelsea"
+      },
+      "rank": 7,
+      "reasoning": "Strong xg/90 (0.49), on penalties, easy fixture (fdr 1) (score: 7.97)",
+      "score": 7.97,
+      "stats": {
+        "bonus": 11,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 6.22,
+        "ep_next": 3.2,
+        "expected_assists": 2.49,
+        "expected_goal_involvements": 13.04,
+        "expected_goals": 10.55,
+        "form": 3.0,
+        "ict_index": 147.7,
+        "penalties_order": 1,
+        "points_per_game": 4.4,
+        "starts": 24,
+        "total_points": 114,
+        "xa_per_90": 0.115,
+        "xg_per_90": 0.486
+      },
+      "streak": {
+        "detail": "Form 3.0 well below season avg 4.4",
+        "streak": "cold"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "NFO",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "NFO",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 346,
+        "name": "Calvert-Lewin",
+        "position": "FWD",
+        "selected_by_pct": 17.9,
+        "status": "a",
+        "team": "LEE",
+        "team_full_name": "Leeds"
+      },
+      "rank": 8,
+      "reasoning": "Strong form, elite xg/90 (0.51), on penalties, easy fixture (fdr 1), elite ict index (score: 7.896)",
+      "score": 7.896,
+      "stats": {
+        "bonus": 20,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 3.47,
+        "ep_next": 2.0,
+        "expected_assists": 1.06,
+        "expected_goal_involvements": 16.62,
+        "expected_goals": 15.57,
+        "form": 5.5,
+        "ict_index": 194.7,
+        "penalties_order": 1,
+        "points_per_game": 4.1,
+        "starts": 30,
+        "total_points": 142,
+        "xa_per_90": 0.035,
+        "xg_per_90": 0.515
+      },
+      "streak": {
+        "detail": "Form 5.5 well above season avg 4.1",
+        "streak": "hot"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "BHA",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "BHA",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 8.0,
+        "id": 55,
+        "name": "Watkins",
+        "position": "FWD",
+        "selected_by_pct": 12.2,
+        "status": "a",
+        "team": "AVL",
+        "team_full_name": "Aston Villa"
+      },
+      "rank": 9,
+      "reasoning": "Exceptional form, strong xg/90 (0.49), easy fixture (fdr 1), elite ict index (score: 7.751)",
+      "score": 7.751,
+      "stats": {
+        "bonus": 26,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 2.99,
+        "ep_next": 2.5,
+        "expected_assists": 1.18,
+        "expected_goal_involvements": 16.58,
+        "expected_goals": 15.4,
+        "form": 9.5,
+        "ict_index": 225.2,
+        "penalties_order": 2,
+        "points_per_game": 4.5,
+        "starts": 33,
+        "total_points": 167,
+        "xa_per_90": 0.037,
+        "xg_per_90": 0.489
+      },
+      "streak": {
+        "detail": "Form 9.5 well above season avg 4.5",
+        "streak": "hot"
+      }
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "AVL",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "AVL",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 136,
+        "name": "Welbeck",
+        "position": "FWD",
+        "selected_by_pct": 2.9,
+        "status": "a",
+        "team": "BHA",
+        "team_full_name": "Brighton"
+      },
+      "rank": 10,
+      "reasoning": "Strong xg/90 (0.49), on penalties, on direct free kicks, easy fixture (fdr 1), home advantage, elite ict index (score: 7.748)",
+      "score": 7.748,
+      "stats": {
+        "bonus": 18,
+        "chance_of_playing": 100,
+        "defensive_contribution_per_90": 4.48,
+        "ep_next": 2.0,
+        "expected_assists": 1.4,
+        "expected_goal_involvements": 13.76,
+        "expected_goals": 12.36,
+        "form": 2.5,
+        "ict_index": 168.2,
+        "penalties_order": 1,
+        "points_per_game": 3.4,
+        "starts": 26,
+        "total_points": 126,
+        "xa_per_90": 0.056,
+        "xg_per_90": 0.495
+      },
+      "streak": {
+        "detail": "Form 2.5 in line with season avg 3.4",
+        "streak": "neutral"
+      }
+    }
+  ]
+}

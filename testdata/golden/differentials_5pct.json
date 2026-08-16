@@ -1,0 +1,388 @@
+{
+  "algorithm_version": "1.1",
+  "differentials": [
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "EVE",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "EVE",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 4.5,
+        "id": 199,
+        "name": "Benitez",
+        "position": "GKP",
+        "selected_by_pct": 0.1,
+        "team": "CRY",
+        "team_full_name": "Crystal Palace"
+      },
+      "rank": 1,
+      "score": 6.113,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 2.3,
+        "points_per_game": 7.0,
+        "total_points": 7
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 0.1% owned \u2014 massive differential. easy fixture ahead. ppg 7.0 massively underowned for output"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "NFO",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "NFO",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 335,
+        "name": "Stach",
+        "position": "MID",
+        "selected_by_pct": 1.5,
+        "team": "LEE",
+        "team_full_name": "Leeds"
+      },
+      "rank": 2,
+      "score": 5.538,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 188.8,
+        "points_per_game": 4.7,
+        "total_points": 137
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.5% owned \u2014 massive differential. easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "CRY",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "CRY",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.5,
+        "id": 236,
+        "name": "Dewsbury-Hall",
+        "position": "MID",
+        "selected_by_pct": 4.1,
+        "team": "EVE",
+        "team_full_name": "Everton"
+      },
+      "rank": 3,
+      "score": 5.25,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 166.0,
+        "points_per_game": 4.9,
+        "total_points": 151
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Just 4.1% owned. easy fixture ahead. playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "TOT",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "TOT",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.5,
+        "id": 95,
+        "name": "O.Dango",
+        "position": "MID",
+        "selected_by_pct": 1.4,
+        "team": "BRE",
+        "team_full_name": "Brentford"
+      },
+      "rank": 4,
+      "score": 4.788,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 162.8,
+        "points_per_game": 4.2,
+        "total_points": 136
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.4% owned \u2014 massive differential. easy fixture ahead. playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "IPS",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "IPS",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 4.5,
+        "id": 531,
+        "name": "Ellborg",
+        "position": "GKP",
+        "selected_by_pct": 0.1,
+        "team": "SUN",
+        "team_full_name": "Sunderland"
+      },
+      "rank": 5,
+      "score": 4.664,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 7.4,
+        "points_per_game": 5.3,
+        "total_points": 16
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 0.1% owned \u2014 massive differential. easy fixture ahead. ppg 5.3 massively underowned for output"
+    },
+    {
+      "fixture": {
+        "fdr": 2.6,
+        "fixtures": [
+          {
+            "fdr": 2.6,
+            "opponent": "MCI",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "MCI",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 68,
+        "name": "Tavernier",
+        "position": "MID",
+        "selected_by_pct": 1.5,
+        "team": "BOU",
+        "team_full_name": "Bournemouth"
+      },
+      "rank": 6,
+      "score": 4.629,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 207.9,
+        "points_per_game": 4.0,
+        "total_points": 137
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.5% owned \u2014 massive differential"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "FUL",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "FUL",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.5,
+        "id": 156,
+        "name": "Neto",
+        "position": "MID",
+        "selected_by_pct": 1.2,
+        "team": "CHE",
+        "team_full_name": "Chelsea"
+      },
+      "rank": 7,
+      "score": 4.547,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 186.7,
+        "points_per_game": 3.7,
+        "total_points": 125
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.2% owned \u2014 massive differential. easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "NEW",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "NEW",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 7.0,
+        "id": 367,
+        "name": "Gakpo",
+        "position": "MID",
+        "selected_by_pct": 3.4,
+        "team": "LIV",
+        "team_full_name": "Liverpool"
+      },
+      "rank": 8,
+      "score": 4.444,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 208.4,
+        "points_per_game": 3.6,
+        "total_points": 131
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Just 3.4% owned. easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "NEW",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "NEW",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 371,
+        "name": "Gravenberch",
+        "position": "MID",
+        "selected_by_pct": 1.9,
+        "team": "LIV",
+        "team_full_name": "Liverpool"
+      },
+      "rank": 9,
+      "score": 4.311,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 140.1,
+        "points_per_game": 4.0,
+        "total_points": 144
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.9% owned \u2014 massive differential. easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "BRE",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "BRE",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 527,
+        "name": "Richarlison",
+        "position": "FWD",
+        "selected_by_pct": 1.6,
+        "team": "TOT",
+        "team_full_name": "Spurs"
+      },
+      "rank": 10,
+      "score": 4.292,
+      "stats": {
+        "form": 0.0,
+        "ict_index": 165.2,
+        "points_per_game": 3.7,
+        "total_points": 119
+      },
+      "streak": {
+        "detail": "Insufficient data",
+        "streak": "neutral"
+      },
+      "why": "Only 1.6% owned \u2014 massive differential. easy fixture ahead"
+    }
+  ],
+  "gameweek": 1,
+  "max_ownership_pct": 5.0,
+  "num_differentials": 10
+}

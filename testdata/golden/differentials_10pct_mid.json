@@ -1,0 +1,388 @@
+{
+  "algorithm_version": "1.1",
+  "differentials": [
+    {
+      "fixture": {
+        "fdr": 2.6,
+        "fixtures": [
+          {
+            "fdr": 2.6,
+            "opponent": "MCI",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "MCI",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 5.5,
+        "id": 61,
+        "name": "Truffert",
+        "position": "DEF",
+        "selected_by_pct": 4.6,
+        "team": "BOU",
+        "team_full_name": "Bournemouth"
+      },
+      "rank": 1,
+      "score": 23.666,
+      "stats": {
+        "form": 6.5,
+        "ict_index": 162.6,
+        "points_per_game": 4.3,
+        "total_points": 165
+      },
+      "streak": {
+        "detail": "Form 6.5 well above season avg 4.3",
+        "streak": "hot"
+      },
+      "why": "Just 4.6% owned. strong form (6.5)"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "FUL",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "FUL",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 7.0,
+        "id": 155,
+        "name": "Enzo",
+        "position": "MID",
+        "selected_by_pct": 5.2,
+        "team": "CHE",
+        "team_full_name": "Chelsea"
+      },
+      "rank": 2,
+      "score": 23.626,
+      "stats": {
+        "form": 6.0,
+        "ict_index": 264.6,
+        "points_per_game": 4.4,
+        "total_points": 157
+      },
+      "streak": {
+        "detail": "Form 6.0 well above season avg 4.4",
+        "streak": "hot"
+      },
+      "why": "5.2% owned. strong form (6.0). easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "TOT",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "TOT",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.5,
+        "id": 95,
+        "name": "O.Dango",
+        "position": "MID",
+        "selected_by_pct": 1.4,
+        "team": "BRE",
+        "team_full_name": "Brentford"
+      },
+      "rank": 3,
+      "score": 22.788,
+      "stats": {
+        "form": 6.0,
+        "ict_index": 162.8,
+        "points_per_game": 4.2,
+        "total_points": 136
+      },
+      "streak": {
+        "detail": "Form 6.0 well above season avg 4.2",
+        "streak": "hot"
+      },
+      "why": "Only 1.4% owned \u2014 massive differential. strong form (6.0). easy fixture ahead. playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "BOU",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "BOU",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 7.5,
+        "id": 400,
+        "name": "Doku",
+        "position": "MID",
+        "selected_by_pct": 6.4,
+        "team": "MCI",
+        "team_full_name": "Man City"
+      },
+      "rank": 4,
+      "score": 22.485,
+      "stats": {
+        "form": 6.0,
+        "ict_index": 202.5,
+        "points_per_game": 4.0,
+        "total_points": 120
+      },
+      "streak": {
+        "detail": "Form 6.0 well above season avg 4.0",
+        "streak": "hot"
+      },
+      "why": "6.4% owned. strong form (6.0). easy fixture ahead. playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 2.2,
+        "fixtures": [
+          {
+            "fdr": 2.2,
+            "opponent": "LIV",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "LIV",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 465,
+        "name": "Osula",
+        "position": "FWD",
+        "selected_by_pct": 2.1,
+        "team": "NEW",
+        "team_full_name": "Newcastle"
+      },
+      "rank": 5,
+      "score": 22.012,
+      "stats": {
+        "form": 6.5,
+        "ict_index": 62.2,
+        "points_per_game": 3.2,
+        "total_points": 76
+      },
+      "streak": {
+        "detail": "Form 6.5 well above season avg 3.2",
+        "streak": "hot"
+      },
+      "why": "Just 2.1% owned. strong form (6.5). playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "IPS",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "IPS",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 5.5,
+        "id": 533,
+        "name": "Mukiele",
+        "position": "DEF",
+        "selected_by_pct": 7.8,
+        "team": "SUN",
+        "team_full_name": "Sunderland"
+      },
+      "rank": 6,
+      "score": 21.949,
+      "stats": {
+        "form": 5.8,
+        "ict_index": 132.9,
+        "points_per_game": 4.7,
+        "total_points": 151
+      },
+      "streak": {
+        "detail": "Form 5.8 in line with season avg 4.7",
+        "streak": "neutral"
+      },
+      "why": "7.8% owned. strong form (5.8). easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 2.6,
+        "fixtures": [
+          {
+            "fdr": 2.6,
+            "opponent": "MCI",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "MCI",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.5,
+        "id": 67,
+        "name": "Rayan",
+        "position": "MID",
+        "selected_by_pct": 3.4,
+        "team": "BOU",
+        "team_full_name": "Bournemouth"
+      },
+      "rank": 7,
+      "score": 20.113,
+      "stats": {
+        "form": 5.5,
+        "ict_index": 75.3,
+        "points_per_game": 4.5,
+        "total_points": 67
+      },
+      "streak": {
+        "detail": "Form 5.5 in line with season avg 4.5",
+        "streak": "neutral"
+      },
+      "why": "Just 3.4% owned. strong form (5.5)"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "CRY",
+            "venue": "Home"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "CRY",
+        "venue": "Home"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 229,
+        "name": "Tarkowski",
+        "position": "DEF",
+        "selected_by_pct": 9.8,
+        "team": "EVE",
+        "team_full_name": "Everton"
+      },
+      "rank": 8,
+      "score": 19.977,
+      "stats": {
+        "form": 5.2,
+        "ict_index": 165.7,
+        "points_per_game": 4.6,
+        "total_points": 170
+      },
+      "streak": {
+        "detail": "Form 5.2 in line with season avg 4.6",
+        "streak": "neutral"
+      },
+      "why": "9.8% owned. strong form (5.2). easy fixture ahead. playing at home"
+    },
+    {
+      "fixture": {
+        "fdr": 1.4,
+        "fixtures": [
+          {
+            "fdr": 1.4,
+            "opponent": "HUL",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "HUL",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 415,
+        "name": "Dorgu",
+        "position": "MID",
+        "selected_by_pct": 2.0,
+        "team": "MUN",
+        "team_full_name": "Man Utd"
+      },
+      "rank": 9,
+      "score": 19.603,
+      "stats": {
+        "form": 5.2,
+        "ict_index": 120.3,
+        "points_per_game": 3.7,
+        "total_points": 95
+      },
+      "streak": {
+        "detail": "Form 5.2 well above season avg 3.7",
+        "streak": "hot"
+      },
+      "why": "Just 2.0% owned. strong form (5.2). easy fixture ahead"
+    },
+    {
+      "fixture": {
+        "fdr": 1.8,
+        "fixtures": [
+          {
+            "fdr": 1.8,
+            "opponent": "BRE",
+            "venue": "Away"
+          }
+        ],
+        "gameweek": 1,
+        "is_dgw": false,
+        "opponent": "BRE",
+        "venue": "Away"
+      },
+      "player": {
+        "cost": 6.0,
+        "id": 527,
+        "name": "Richarlison",
+        "position": "FWD",
+        "selected_by_pct": 1.6,
+        "team": "TOT",
+        "team_full_name": "Spurs"
+      },
+      "rank": 10,
+      "score": 19.292,
+      "stats": {
+        "form": 5.0,
+        "ict_index": 165.2,
+        "points_per_game": 3.7,
+        "total_points": 119
+      },
+      "streak": {
+        "detail": "Form 5.0 well above season avg 3.7",
+        "streak": "hot"
+      },
+      "why": "Only 1.6% owned \u2014 massive differential. strong form (5.0). easy fixture ahead"
+    }
+  ],
+  "gameweek": 1,
+  "max_ownership_pct": 10.0,
+  "num_differentials": 10
+}

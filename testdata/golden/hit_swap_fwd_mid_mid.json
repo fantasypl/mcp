@@ -1,0 +1,92 @@
+{
+  "analysis": {
+    "confidence": "medium",
+    "hit_cost": -4,
+    "hit_worth_it": true,
+    "net_after_hit": 1.86,
+    "player_in_expected_points": 38.95,
+    "player_out_expected_points": 33.09,
+    "projected_gain": 5.86
+  },
+  "gameweek": 1,
+  "gameweeks_projected": 5,
+  "player_in": {
+    "cost": 12.0,
+    "expected_points_projected": 38.95,
+    "fixtures": [
+      {
+        "fdr": 2,
+        "gameweek": 1,
+        "opponent": "HUL(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 2,
+        "opponent": "IPS(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 3,
+        "opponent": "EVE(A)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 4,
+        "opponent": "MCI(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 5,
+        "opponent": "FUL(A)"
+      }
+    ],
+    "form": 7.8,
+    "id": 426,
+    "name": "B.Fernandes",
+    "points_per_game": 6.7,
+    "position": "MID",
+    "status": "a",
+    "team": "MUN",
+    "total_points": 235
+  },
+  "player_out": {
+    "cost": 15.5,
+    "expected_points_projected": 33.09,
+    "fixtures": [
+      {
+        "fdr": 3,
+        "gameweek": 1,
+        "opponent": "BOU(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 2,
+        "opponent": "CRY(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 3,
+        "opponent": "COV(H)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 4,
+        "opponent": "MUN(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 5,
+        "opponent": "SUN(H)"
+      }
+    ],
+    "form": 5.4,
+    "id": 411,
+    "name": "Haaland",
+    "points_per_game": 6.8,
+    "position": "FWD",
+    "status": "a",
+    "team": "MCI",
+    "total_points": 239
+  },
+  "verdict": "Marginal but positive. The projected gain of 5.86 points just about covers the -4 hit (net ~1.86). Consider waiting if you have a free transfer coming."
+}

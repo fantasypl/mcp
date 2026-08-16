@@ -1,0 +1,535 @@
+{
+  "active_chip": null,
+  "auto_sub_scenarios": [
+    {
+      "in": "Forster",
+      "note": "GKP auto-sub",
+      "out": "Pickford",
+      "points_gained": 2
+    },
+    {
+      "in": "Howell",
+      "note": "Auto-sub (bench order)",
+      "out": "Marmoush",
+      "points_gained": 5
+    },
+    {
+      "in": "Furo",
+      "note": "Auto-sub (bench order)",
+      "out": "Isak",
+      "points_gained": 2
+    }
+  ],
+  "bench": [
+    {
+      "bonus_projection": {
+        "bps": 12,
+        "bps_behind_bonus": 0,
+        "bps_rank": 1,
+        "match": "BOU vs FUL",
+        "narrative": "On track for 3 bonus (12 BPS, rank 1)",
+        "projected_bonus": 3
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 58,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 2,
+      "minutes_played": 90,
+      "multiplier": 0,
+      "name": "Forster",
+      "played": true,
+      "position": "GKP",
+      "projected_bonus": 3,
+      "team": "BOU"
+    },
+    {
+      "bonus_projection": {
+        "bps": 25,
+        "bps_behind_bonus": 0,
+        "bps_rank": 1,
+        "match": "BHA vs BRE",
+        "narrative": "Bonus confirmed: 2 pts",
+        "projected_bonus": 0
+      },
+      "bonus_status": "confirmed",
+      "chance_of_playing": null,
+      "confirmed_bonus": 2,
+      "contributed_points": 0,
+      "element_id": 132,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 5,
+      "minutes_played": 90,
+      "multiplier": 0,
+      "name": "Howell",
+      "played": true,
+      "position": "MID",
+      "projected_bonus": 0,
+      "team": "BHA"
+    },
+    {
+      "bonus_projection": {
+        "bps": 0,
+        "bps_behind_bonus": 0,
+        "bps_rank": null,
+        "match": "",
+        "narrative": "No BPS data available",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 134,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 0,
+      "minutes_played": 0,
+      "multiplier": 0,
+      "name": "Oriola",
+      "played": false,
+      "position": "MID",
+      "projected_bonus": 0,
+      "team": "BHA"
+    },
+    {
+      "bonus_projection": {
+        "bps": 10,
+        "bps_behind_bonus": 0,
+        "bps_rank": 2,
+        "match": "BHA vs BRE",
+        "narrative": "On track for 2 bonus (10 BPS, rank 2)",
+        "projected_bonus": 2
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 107,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 2,
+      "minutes_played": 90,
+      "multiplier": 0,
+      "name": "Furo",
+      "played": true,
+      "position": "FWD",
+      "projected_bonus": 2,
+      "team": "BRE"
+    }
+  ],
+  "bonus_status": "provisional",
+  "gameweek": 1,
+  "gameweek_average": 52,
+  "highest_score": 98,
+  "live_total": 41,
+  "match_bps": [
+    {
+      "fixture_id": 1,
+      "match": "ARS vs MUN",
+      "status": "finished",
+      "top_bps": [
+        {
+          "bps": 35,
+          "bps_rank": 1,
+          "element_id": 4,
+          "name": "Gabriel",
+          "projected_bonus": 3,
+          "team": "ARS"
+        },
+        {
+          "bps": 35,
+          "bps_rank": 1,
+          "element_id": 13,
+          "name": "Rice",
+          "projected_bonus": 3,
+          "team": "ARS"
+        },
+        {
+          "bps": 20,
+          "bps_rank": 3,
+          "element_id": 5,
+          "name": "J.Timber",
+          "projected_bonus": 1,
+          "team": "ARS"
+        },
+        {
+          "bps": 15,
+          "bps_rank": 4,
+          "element_id": 426,
+          "name": "B.Fernandes",
+          "projected_bonus": 0,
+          "team": "MUN"
+        }
+      ]
+    },
+    {
+      "fixture_id": 2,
+      "match": "AVL vs CHE",
+      "status": "live",
+      "top_bps": [
+        {
+          "bps": 45,
+          "bps_rank": 1,
+          "element_id": 155,
+          "name": "Enzo",
+          "projected_bonus": 3,
+          "team": "CHE"
+        },
+        {
+          "bps": 30,
+          "bps_rank": 2,
+          "element_id": 31,
+          "name": "Konsa",
+          "projected_bonus": 2,
+          "team": "AVL"
+        },
+        {
+          "bps": 10,
+          "bps_rank": 3,
+          "element_id": 30,
+          "name": "Digne",
+          "projected_bonus": 1,
+          "team": "AVL"
+        }
+      ]
+    },
+    {
+      "fixture_id": 3,
+      "match": "BHA vs BRE",
+      "status": "finished",
+      "top_bps": [
+        {
+          "bps": 25,
+          "bps_rank": 1,
+          "element_id": 132,
+          "name": "Howell",
+          "projected_bonus": 3,
+          "team": "BHA"
+        },
+        {
+          "bps": 10,
+          "bps_rank": 2,
+          "element_id": 107,
+          "name": "Furo",
+          "projected_bonus": 2,
+          "team": "BRE"
+        }
+      ]
+    },
+    {
+      "fixture_id": 4,
+      "match": "MCI vs LIV",
+      "status": "not_started",
+      "top_bps": []
+    },
+    {
+      "fixture_id": 5,
+      "match": "BOU vs FUL",
+      "status": "finished",
+      "top_bps": [
+        {
+          "bps": 12,
+          "bps_rank": 1,
+          "element_id": 58,
+          "name": "Forster",
+          "projected_bonus": 3,
+          "team": "BOU"
+        }
+      ]
+    }
+  ],
+  "note": "Live points update during matches. Bonus points are projected and may change.",
+  "num_bench": 4,
+  "num_starters": 11,
+  "points_vs_average": -11,
+  "rank_estimate": "Below average",
+  "squad_valid": true,
+  "starters": [
+    {
+      "bonus_projection": {
+        "bps": 0,
+        "bps_behind_bonus": 0,
+        "bps_rank": null,
+        "match": "",
+        "narrative": "No BPS data available",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 226,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 0,
+      "minutes_played": 0,
+      "multiplier": 1,
+      "name": "Pickford",
+      "played": false,
+      "position": "GKP",
+      "projected_bonus": 0,
+      "team": "EVE"
+    },
+    {
+      "bonus_projection": {
+        "bps": 15,
+        "bps_behind_bonus": 5,
+        "bps_rank": 4,
+        "match": "ARS vs MUN",
+        "narrative": "5 BPS behind bonus (15 BPS, rank 4)",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 6,
+      "element_id": 426,
+      "is_captain": true,
+      "is_vice_captain": false,
+      "live_points": 3,
+      "minutes_played": 90,
+      "multiplier": 2,
+      "name": "B.Fernandes",
+      "played": true,
+      "position": "MID",
+      "projected_bonus": 0,
+      "team": "MUN"
+    },
+    {
+      "bonus_projection": {
+        "bps": 35,
+        "bps_behind_bonus": 0,
+        "bps_rank": 1,
+        "match": "ARS vs MUN",
+        "narrative": "Bonus confirmed: 3 pts",
+        "projected_bonus": 0
+      },
+      "bonus_status": "confirmed",
+      "chance_of_playing": null,
+      "confirmed_bonus": 3,
+      "contributed_points": 7,
+      "element_id": 4,
+      "is_captain": false,
+      "is_vice_captain": true,
+      "live_points": 7,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "Gabriel",
+      "played": true,
+      "position": "DEF",
+      "projected_bonus": 0,
+      "team": "ARS"
+    },
+    {
+      "bonus_projection": {
+        "bps": 35,
+        "bps_behind_bonus": 0,
+        "bps_rank": 1,
+        "match": "ARS vs MUN",
+        "narrative": "Bonus confirmed: 3 pts",
+        "projected_bonus": 0
+      },
+      "bonus_status": "confirmed",
+      "chance_of_playing": null,
+      "confirmed_bonus": 3,
+      "contributed_points": 7,
+      "element_id": 13,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 7,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "Rice",
+      "played": true,
+      "position": "MID",
+      "projected_bonus": 0,
+      "team": "ARS"
+    },
+    {
+      "bonus_projection": {
+        "bps": 45,
+        "bps_behind_bonus": 0,
+        "bps_rank": 1,
+        "match": "AVL vs CHE",
+        "narrative": "On track for 3 bonus (45 BPS, rank 1)",
+        "projected_bonus": 3
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 9,
+      "element_id": 155,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 9,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "Enzo",
+      "played": true,
+      "position": "MID",
+      "projected_bonus": 3,
+      "team": "CHE"
+    },
+    {
+      "bonus_projection": {
+        "bps": 20,
+        "bps_behind_bonus": 0,
+        "bps_rank": 3,
+        "match": "ARS vs MUN",
+        "narrative": "Bonus confirmed: 1 pts",
+        "projected_bonus": 0
+      },
+      "bonus_status": "confirmed",
+      "chance_of_playing": null,
+      "confirmed_bonus": 1,
+      "contributed_points": 4,
+      "element_id": 5,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 4,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "J.Timber",
+      "played": true,
+      "position": "DEF",
+      "projected_bonus": 0,
+      "team": "ARS"
+    },
+    {
+      "bonus_projection": {
+        "bps": 30,
+        "bps_behind_bonus": 0,
+        "bps_rank": 2,
+        "match": "AVL vs CHE",
+        "narrative": "On track for 2 bonus (30 BPS, rank 2)",
+        "projected_bonus": 2
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 6,
+      "element_id": 31,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 6,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "Konsa",
+      "played": true,
+      "position": "DEF",
+      "projected_bonus": 2,
+      "team": "AVL"
+    },
+    {
+      "bonus_projection": {
+        "bps": 10,
+        "bps_behind_bonus": 0,
+        "bps_rank": 3,
+        "match": "AVL vs CHE",
+        "narrative": "On track for 1 bonus (10 BPS, rank 3)",
+        "projected_bonus": 1
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 2,
+      "element_id": 30,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 2,
+      "minutes_played": 90,
+      "multiplier": 1,
+      "name": "Digne",
+      "played": true,
+      "position": "DEF",
+      "projected_bonus": 1,
+      "team": "AVL"
+    },
+    {
+      "bonus_projection": {
+        "bps": 0,
+        "bps_behind_bonus": 0,
+        "bps_rank": null,
+        "match": "",
+        "narrative": "No BPS data available",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 401,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 0,
+      "minutes_played": 0,
+      "multiplier": 1,
+      "name": "Marmoush",
+      "played": false,
+      "position": "FWD",
+      "projected_bonus": 0,
+      "team": "MCI"
+    },
+    {
+      "bonus_projection": {
+        "bps": 0,
+        "bps_behind_bonus": 0,
+        "bps_rank": null,
+        "match": "",
+        "narrative": "No BPS data available",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 379,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 0,
+      "minutes_played": 0,
+      "multiplier": 1,
+      "name": "Isak",
+      "played": false,
+      "position": "FWD",
+      "projected_bonus": 0,
+      "team": "LIV"
+    },
+    {
+      "bonus_projection": {
+        "bps": 0,
+        "bps_behind_bonus": 0,
+        "bps_rank": null,
+        "match": "",
+        "narrative": "No BPS data available",
+        "projected_bonus": 0
+      },
+      "bonus_status": "projected",
+      "chance_of_playing": null,
+      "confirmed_bonus": 0,
+      "contributed_points": 0,
+      "element_id": 38,
+      "is_captain": false,
+      "is_vice_captain": false,
+      "live_points": 0,
+      "minutes_played": 0,
+      "multiplier": 1,
+      "name": "A.Garc\u00eda",
+      "played": false,
+      "position": "DEF",
+      "projected_bonus": 0,
+      "team": "AVL"
+    }
+  ],
+  "team_id": 999001,
+  "top_scorer": {
+    "name": "Gabriel",
+    "points": 7,
+    "team": "ARS"
+  }
+}

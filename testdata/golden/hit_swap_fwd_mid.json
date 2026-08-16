@@ -1,0 +1,92 @@
+{
+  "analysis": {
+    "confidence": "low",
+    "hit_cost": -4,
+    "hit_worth_it": false,
+    "net_after_hit": -4.92,
+    "player_in_expected_points": 14.18,
+    "player_out_expected_points": 15.1,
+    "projected_gain": -0.92
+  },
+  "gameweek": 1,
+  "gameweeks_projected": 5,
+  "player_in": {
+    "cost": 12.0,
+    "expected_points_projected": 14.18,
+    "fixtures": [
+      {
+        "fdr": 2,
+        "gameweek": 1,
+        "opponent": "HUL(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 2,
+        "opponent": "IPS(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 3,
+        "opponent": "EVE(A)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 4,
+        "opponent": "MCI(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 5,
+        "opponent": "FUL(A)"
+      }
+    ],
+    "form": 0.0,
+    "id": 426,
+    "name": "B.Fernandes",
+    "points_per_game": 6.7,
+    "position": "MID",
+    "status": "a",
+    "team": "MUN",
+    "total_points": 235
+  },
+  "player_out": {
+    "cost": 15.5,
+    "expected_points_projected": 15.1,
+    "fixtures": [
+      {
+        "fdr": 3,
+        "gameweek": 1,
+        "opponent": "BOU(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 2,
+        "opponent": "CRY(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 3,
+        "opponent": "COV(H)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 4,
+        "opponent": "MUN(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 5,
+        "opponent": "SUN(H)"
+      }
+    ],
+    "form": 0.0,
+    "id": 411,
+    "name": "Haaland",
+    "points_per_game": 6.8,
+    "position": "FWD",
+    "status": "a",
+    "team": "MCI",
+    "total_points": 239
+  },
+  "verdict": "Not worth it. B.Fernandes is only projected to outscore Haaland by -0.92 points over 5 GWs. After the -4 hit, you'd lose ~4.92 points."
+}

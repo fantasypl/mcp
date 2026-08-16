@@ -1,0 +1,344 @@
+package algo
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/ajitem/fpl-intelligence/internal/fpl"
+)
+
+// dgwIntelExpectations mirrors testdata/dgw_intel_expectations.json, generated
+// by running the Python implementation over the same inputs used in
+// tests/test_dgw_intel.py.
+type dgwIntelExpectations struct {
+	Match map[string]*string `json:"match"`
+	Text  []TextIntel        `json:"text"`
+	Merge []map[string][]int `json:"merge"`
+}
+
+func TestMatchTeamNameMatchesPython(t *testing.T) {
+	want := loadJSON[dgwIntelExpectations](t, testdataPath("dgw_intel_expectations.json"))
+
+	for input, expected := range want.Match {
+		t.Run(input, func(t *testing.T) {
+			got, ok := MatchTeamName(input)
+			switch {
+			case expected == nil && ok:
+				t.Errorf("MatchTeamName(%q) = %q, want no match", input, got)
+			case expected != nil && !ok:
+				t.Errorf("MatchTeamName(%q) = no match, want %q", input, *expected)
+			case expected != nil && got != *expected:
+				t.Errorf("MatchTeamName(%q) = %q, want %q", input, got, *expected)
+			}
+		})
+	}
+}
+
+// The exact text fixtures from tests/test_dgw_intel.py, in the same order as
+// testdata/dgw_intel_expectations.json so cases line up by index.
+var dgwIntelTextCases = []string{
+	"The biggest Double Gameweek 33 of the season features Arsenal and Chelsea.",
+	"DGW33 is expected to include Liverpool and Man City.",
+	"DGW 36 could see Man City play twice.",
+	"Blank Gameweek 34 will see Arsenal and Liverpool miss out due to FA Cup.",
+	"BGW31 affects Arsenal and Wolves who have no fixture.",
+	"Double Gameweek 26 has been confirmed with Arsenal playing twice.",
+	"DGW33 is expected to be the biggest double.",
+	"DGW33 will feature Chelsea and Arsenal playing twice. " +
+		"Later, DGW36 could include Man City with their rescheduled match.",
+	"BGW34 will see Arsenal and Chelsea blank. Their fixtures move to DGW33 instead.",
+	"This is a regular article about football with no gameweek predictions.",
+	"DGW0 and DGW39 and DGW99 should all be ignored.",
+	"Blank Gameweek 31 (BGW31), which takes place on the same weekend as the " +
+		"EFL Cup final. Arsenal and Manchester City are the finalists, so Arsenal vs " +
+		"Wolverhampton Wanderers and Manchester City vs Crystal Palace will be postponed. " +
+		"These fixtures are likely to be rescheduled into Double Gameweek 33.",
+}
+
+func TestExtractDGWBGWMatchesPython(t *testing.T) {
+	want := loadJSON[dgwIntelExpectations](t, testdataPath("dgw_intel_expectations.json"))
+	if len(want.Text) != len(dgwIntelTextCases) {
+		t.Fatalf("expectations cover %d cases, test has %d", len(want.Text), len(dgwIntelTextCases))
+	}
+
+	for i, text := range dgwIntelTextCases {
+		got := ExtractDGWBGWFromText(text)
+		w := want.Text[i]
+
+		if !mentionMapsEqual(got.DGWs, w.DGWs) {
+			t.Errorf("case %d dgws:\n got  %+v\n want %+v", i, got.DGWs, w.DGWs)
+		}
+		if !mentionMapsEqual(got.BGWs, w.BGWs) {
+			t.Errorf("case %d bgws:\n got  %+v\n want %+v", i, got.BGWs, w.BGWs)
+		}
+	}
+}
+
+func mentionMapsEqual(a, b map[string]GWMention) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, av := range a {
+		bv, ok := b[k]
+		if !ok || av.Status != bv.Status || !stringSlicesEqual(av.Teams, bv.Teams) {
+			return false
+		}
+	}
+	return true
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// The trap this case exists to catch: "rescheduled" contains "scheduled" as a
+// bare substring, and the confirm-word check in both implementations is
+// substring matching, not whole-word. So a sentence about a *re*scheduled
+// match confirms the mention even though nothing was actually confirmed. This
+// is the reference's real behaviour, not a bug introduced here — reproducing
+// it exactly is the point of a byte-for-byte port.
+func TestConfirmWordMatchesSubstringNotWholeWord(t *testing.T) {
+	got := ExtractDGWBGWFromText("DGW36 could include Man City with their rescheduled match.")
+	if got.DGWs["36"].Status != "confirmed" {
+		t.Errorf("status = %q, want %q (substring match on \"scheduled\" inside \"rescheduled\")",
+			got.DGWs["36"].Status, "confirmed")
+	}
+}
+
+// Overlapping context windows are also reference behaviour: two GW mentions
+// close enough together in the text share overlapping ±100/+200 char windows,
+// so each mention picks up teams named near the *other* mention too.
+func TestOverlappingContextWindowsShareTeams(t *testing.T) {
+	got := ExtractDGWBGWFromText(dgwIntelTextCases[7]) // "multiple_dgws_in_text"
+	for _, gw := range []string{"33", "36"} {
+		teams := got.DGWs[gw].Teams
+		if len(teams) != 3 {
+			t.Errorf("DGW%s picked up %v, want all 3 teams from both overlapping mentions", gw, teams)
+		}
+	}
+}
+
+func TestMergeIntelWithAPIPredictionsMatchesPython(t *testing.T) {
+	want := loadJSON[dgwIntelExpectations](t, testdataPath("dgw_intel_expectations.json"))
+
+	teams := map[int]*fpl.Team{
+		1: {ID: 1, ShortName: "ARS"},
+		2: {ID: 2, ShortName: "CHE"},
+		3: {ID: 3, ShortName: "MCI"},
+		4: {ID: 4, ShortName: "LIV"},
+	}
+
+	cases := []struct {
+		name  string
+		api   map[int][]int
+		intel *CommunityIntel
+	}{
+		{"empty intel", map[int][]int{33: {1}}, &CommunityIntel{}},
+		{
+			"adds new teams",
+			map[int][]int{33: {1}},
+			&CommunityIntel{DGWs: map[string]SourcedMention{"33": {Teams: []string{"CHE", "MCI"}}}},
+		},
+		{
+			"adds new gameweek",
+			map[int][]int{33: {1}},
+			&CommunityIntel{DGWs: map[string]SourcedMention{"36": {Teams: []string{"MCI"}}}},
+		},
+		{
+			"no duplicates",
+			map[int][]int{33: {1}},
+			&CommunityIntel{DGWs: map[string]SourcedMention{"33": {Teams: []string{"ARS"}}}},
+		},
+		{
+			"unknown team ignored",
+			map[int][]int{},
+			&CommunityIntel{DGWs: map[string]SourcedMention{"33": {Teams: []string{"XYZ"}}}},
+		},
+	}
+
+	if len(cases) != len(want.Merge) {
+		t.Fatalf("have %d cases, expectations cover %d", len(cases), len(want.Merge))
+	}
+
+	for i, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := MergeIntelWithAPIPredictions(tc.api, tc.intel, teams)
+			w := want.Merge[i]
+
+			if len(got) != len(w) {
+				t.Fatalf("got %d gameweeks, want %d: got=%v want=%v", len(got), len(w), got, w)
+			}
+			for gwStr, wantIDs := range w {
+				gw := atoiT(t, gwStr)
+				gotIDs := got[gw]
+				if !intSlicesEqual(sortedCopy(gotIDs), wantIDs) {
+					t.Errorf("gw %d: got %v, want %v", gw, gotIDs, wantIDs)
+				}
+			}
+		})
+	}
+}
+
+func atoiT(t *testing.T, s string) int {
+	t.Helper()
+	n := 0
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			t.Fatalf("not a number: %q", s)
+		}
+		n = n*10 + int(r-'0')
+	}
+	return n
+}
+
+func sortedCopy(s []int) []int {
+	out := append([]int(nil), s...)
+	for i := 1; i < len(out); i++ {
+		for j := i; j > 0 && out[j-1] > out[j]; j-- {
+			out[j-1], out[j] = out[j], out[j-1]
+		}
+	}
+	return out
+}
+
+func intSlicesEqual(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// A club with no matching team ID must not appear in the result, and must not
+// cause the whole gameweek to be dropped if other teams in it did resolve.
+func TestMergeSkipsUnresolvedTeamsWithoutDroppingOthers(t *testing.T) {
+	teams := map[int]*fpl.Team{1: {ID: 1, ShortName: "ARS"}}
+	intel := &CommunityIntel{DGWs: map[string]SourcedMention{
+		"33": {Teams: []string{"ARS", "ZZZ"}},
+	}}
+	got := MergeIntelWithAPIPredictions(map[int][]int{}, intel, teams)
+	if len(got[33]) != 1 || got[33][0] != 1 {
+		t.Errorf("got %v, want [1]", got[33])
+	}
+}
+
+// The invalid-gameweek guard (0, 39, 99) must reject out-of-range numbers
+// without panicking on the surrounding text.
+func TestOutOfRangeGameweeksIgnored(t *testing.T) {
+	got := ExtractDGWBGWFromText("DGW0 and DGW39 and DGW99 should all be ignored.")
+	if len(got.DGWs) != 0 {
+		t.Errorf("got %v, want no matches", got.DGWs)
+	}
+}
+
+// --- Fetch behaviour: caching and per-source fault tolerance ---
+
+func TestFetchCachesAcrossCalls(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.Write([]byte("<html><body>no gameweeks here</body></html>"))
+	}))
+	defer srv.Close()
+
+	f := NewDGWIntelFetcher()
+	f.sources = []intelSource{{Name: "test", URL: srv.URL}}
+	clock := time.Now()
+	f.now = func() time.Time { return clock }
+
+	if _, err := f.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if hits != 1 {
+		t.Errorf("upstream hits = %d, want 1 (second call should be cached)", hits)
+	}
+
+	clock = clock.Add(intelCacheTTL + time.Second)
+	if _, err := f.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if hits != 2 {
+		t.Errorf("upstream hits = %d, want 2 after cache expiry", hits)
+	}
+}
+
+// One source failing must not fail the whole fetch, and must be recorded in
+// Errors rather than silently swallowed — the caller (chip strategy) treats
+// this feature as best-effort and needs to know when it degraded.
+func TestFetchToleratesOneSourceFailing(t *testing.T) {
+	ok := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Double Gameweek 33 features Arsenal."))
+	}))
+	defer ok.Close()
+	broken := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer broken.Close()
+
+	f := NewDGWIntelFetcher()
+	f.sources = []intelSource{
+		{Name: "broken", URL: broken.URL},
+		{Name: "ok", URL: ok.URL},
+	}
+
+	got, err := f.Fetch(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Errors) != 1 {
+		t.Errorf("errors = %v, want exactly one", got.Errors)
+	}
+	if _, ok := got.DGWs["33"]; !ok {
+		t.Error("the working source's data should still be present")
+	}
+	if len(got.SourcesChecked) != 2 {
+		t.Errorf("sources_checked = %v, want both sources recorded", got.SourcesChecked)
+	}
+}
+
+// An official source upgrades a mention to confirmed even when the text
+// itself uses no confirming language.
+func TestOfficialSourceUpgradesConfirmation(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("DGW33 might include Arsenal."))
+	}))
+	defer srv.Close()
+
+	f := NewDGWIntelFetcher()
+	f.sources = []intelSource{{Name: "premierleague.com", URL: srv.URL, Official: true}}
+
+	got, err := f.Fetch(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DGWs["33"].Status != "confirmed" {
+		t.Errorf("status = %q, want confirmed (official source)", got.DGWs["33"].Status)
+	}
+}
+
+func TestStripHTMLRemovesScriptsAndTags(t *testing.T) {
+	html := `<html><head><script>evil()</script><style>.x{}</style></head>` +
+		`<body>Double <b>Gameweek</b> 33 features Arsenal.</body></html>`
+	text := stripHTML(html)
+	if got := ExtractDGWBGWFromText(text); len(got.DGWs) != 1 {
+		t.Errorf("expected the tag-stripped text to still parse: %q -> %+v", text, got)
+	}
+}

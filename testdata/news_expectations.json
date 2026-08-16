@@ -1,0 +1,3950 @@
+[
+ {
+  "id": 1,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 2,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 3,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 4,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 5,
+  "news": "Groin injury - Expected back 21 Aug",
+  "news_added": "2026-07-23T12:01:23.272929Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 6,
+  "news": "Back injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.289376Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 7,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 8,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 9,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 10,
+  "news": "Knee injury - Expected back 21 Aug",
+  "news_added": "2026-07-23T12:01:23.305229Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 11,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 12,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 13,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 14,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 15,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 16,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 17,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 18,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 19,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 20,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 21,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 22,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 23,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 24,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 25,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 26,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 27,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 557,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 28,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 29,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 30,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 31,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 32,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 33,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 34,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 35,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 36,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 37,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 38,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 39,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 41,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 42,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 44,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 45,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 46,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 47,
+  "news": "Knee injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.337269Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 48,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.352497Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 49,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 50,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 51,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 52,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 53,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 54,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 55,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 56,
+  "news": "Shoulder injury - Expected back 23 Aug",
+  "news_added": "2026-07-23T12:01:23.368701Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 160,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 57,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 58,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 59,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 60,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 61,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 62,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 63,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 64,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 65,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 66,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 67,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 68,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 69,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 70,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 71,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 72,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 73,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 74,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 75,
+  "news": "Suspended until 29 Aug",
+  "news_added": "2026-07-24T17:30:10.035483Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 76,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 77,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 78,
+  "news": "Foot injury - Unknown return date",
+  "news_added": "2026-07-29T17:30:09.796802Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 79,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 80,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 81,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 82,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 83,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 84,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 85,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 86,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 87,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 88,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 89,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 90,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 91,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 92,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 93,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 94,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 95,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 96,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 97,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 98,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 99,
+  "news": "Knee injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.384798Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 100,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.400917Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 101,
+  "news": "has departed the club as a free agent.",
+  "news_added": "2026-07-23T12:01:23.416721Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 102,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 103,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 105,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 106,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 107,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 108,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 109,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 110,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 111,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 113,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 114,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 115,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 116,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 117,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 118,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 119,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 120,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 121,
+  "news": "Hamstring injury - Unknown return date",
+  "news_added": "2026-07-24T18:30:10.661894Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 122,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 123,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 124,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 125,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 126,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 127,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 128,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 129,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 130,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 131,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 132,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 133,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 134,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 135,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 136,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 137,
+  "news": "Knee injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.432796Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 138,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 139,
+  "news": "Ankle injury - Expected back 10 Oct",
+  "news_added": "2026-07-23T12:01:23.448357Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 328,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 504,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 40,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 140,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 141,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 142,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 143,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 144,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 145,
+  "news": "Suspended until 6 Sep",
+  "news_added": "2026-07-23T12:01:23.464591Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 146,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 147,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 148,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 149,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 150,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 151,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 152,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 153,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 154,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 155,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 156,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 157,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 158,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 159,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 161,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 163,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 164,
+  "news": "Unspecified injury - 75% chance of playing",
+  "news_added": "2026-07-24T20:30:10.609931Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 165,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 166,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 167,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 168,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 169,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 170,
+  "news": "Hamstring injury - 75% chance of playing",
+  "news_added": "2026-07-24T20:30:10.622380Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 560,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 561,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 104,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 171,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 172,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 173,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 174,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 175,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 176,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 177,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 178,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 179,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 180,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 181,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 182,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 183,
+  "news": "Shoulder injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.481435Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 184,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 185,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 186,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 187,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 188,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 189,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 190,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 191,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 192,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 193,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 194,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 195,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 196,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 197,
+  "news": "Has joined KVC Westerlo on loan for the rest of the season",
+  "news_added": "2026-07-28T12:58:50.001768Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 198,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 199,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 200,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 201,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 202,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 203,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 204,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 205,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 206,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 207,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 208,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 209,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 210,
+  "news": "Ankle injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.498963Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 211,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 212,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 213,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 214,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 215,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 216,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 217,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 218,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 219,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 220,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 221,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 222,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 223,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 224,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 225,
+  "news": "has returned to Getafe CF",
+  "news_added": "2026-07-23T12:18:56.275922Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 555,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 226,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 227,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 228,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 229,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 230,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 231,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 232,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 233,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 234,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 235,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 236,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 237,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 239,
+  "news": "Groin injury - Expected back 22 Aug",
+  "news_added": "2026-07-25T14:30:10.455878Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 240,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 241,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 242,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 243,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 244,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 245,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 246,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 247,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 248,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 249,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 250,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 251,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 252,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 253,
+  "news": "Suspended until 29 Aug",
+  "news_added": "2026-07-23T12:01:23.516350Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 254,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 255,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 256,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 257,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 258,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 261,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 262,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 263,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 264,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 265,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 266,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 267,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 268,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 269,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 270,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 271,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 272,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 273,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 274,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 275,
+  "news": "Has joined Grimsby Town on loan for the rest of the season",
+  "news_added": "2026-07-29T13:00:27.959925Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 276,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 277,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 278,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 279,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 280,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 281,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 282,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 283,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 284,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 285,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 286,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 287,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 288,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 289,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 290,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 291,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.532635Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 292,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 293,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 294,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 295,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 296,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 297,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 298,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 299,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 556,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 563,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 259,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 300,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 301,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 302,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 303,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 304,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 305,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 306,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 307,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 308,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 309,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 310,
+  "news": "Muscular injury - Unknown return date",
+  "news_added": "2026-07-29T18:00:10.305484Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 311,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 312,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-29T18:00:10.319370Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 313,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 314,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 315,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 316,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 317,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 318,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 319,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 320,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 321,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 322,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 323,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 324,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 554,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 562,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 564,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 260,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 326,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 327,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 329,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 330,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 331,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 332,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 333,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 334,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 335,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 336,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 337,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 338,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 339,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 340,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 341,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 342,
+  "news": "Has joined New England Revolution permanently",
+  "news_added": "2026-07-28T12:59:09.492431Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 343,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 344,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 345,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 346,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 347,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 348,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 349,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-29T18:00:10.338170Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 350,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 351,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 352,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 353,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 354,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-29T18:00:10.351066Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 355,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 356,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 357,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 358,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 359,
+  "news": "Muscular injury - Unknown return date",
+  "news_added": "2026-07-26T08:30:10.078473Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 360,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.565711Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 361,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 362,
+  "news": "",
+  "news_added": "2026-07-23T12:01:23.581126Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 363,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.596909Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 364,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 365,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 366,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 367,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 368,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 369,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 370,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 371,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 372,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 373,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 374,
+  "news": "Ankle injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.612529Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 375,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 376,
+  "news": "Hamstring injury - Expected back 23 Aug",
+  "news_added": "2026-07-23T12:01:23.628373Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 377,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 378,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 379,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 380,
+  "news": "Achilles injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.643771Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 381,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 382,
+  "news": "Unspecified injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.659279Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 383,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 238,
+  "news": "Foot injury - 75% chance of playing",
+  "news_added": "2026-07-29T10:00:10.492904Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 384,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 385,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 386,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 387,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 388,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 389,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 390,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 391,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 392,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 393,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 394,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 395,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 396,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 397,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 398,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 399,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 400,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 401,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 402,
+  "news": "Back injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.675537Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 403,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 404,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 405,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 406,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 407,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 408,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 409,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 410,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 411,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 481,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 43,
+  "news": "Hamstring injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.321726Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 162,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 325,
+  "news": "Unspecified injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.549136Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 412,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 413,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 414,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 415,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 416,
+  "news": "Back injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.690880Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 417,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 418,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 419,
+  "news": "Thigh injury - 75% chance of playing",
+  "news_added": "2026-07-24T20:00:10.337107Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 420,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 421,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 422,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 423,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 424,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 425,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 426,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 427,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 428,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 429,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 430,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 431,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 432,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 433,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.706702Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 434,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 435,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 436,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 437,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 438,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 439,
+  "news": "Shin injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.722029Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 440,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 441,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 442,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 443,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 444,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 445,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 446,
+  "news": "",
+  "news_added": "2026-07-23T12:01:23.737715Z",
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 447,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 448,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 449,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 450,
+  "news": "Calf injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.753221Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 451,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 452,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 453,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 454,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 456,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 457,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 458,
+  "news": "Thigh injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.769696Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 459,
+  "news": "Leg injury - Expected back 30 Aug",
+  "news_added": "2026-07-23T12:01:23.785456Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 460,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 461,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 462,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 463,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 464,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 465,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 466,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 559,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 467,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 468,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 469,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 470,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 471,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 472,
+  "news": "Muscle injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.801183Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 473,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 474,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 475,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.816304Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 476,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 477,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 478,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 479,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 480,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 482,
+  "news": "Thigh injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.832709Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 483,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 484,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 485,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 486,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 487,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 488,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 489,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 490,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 491,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 492,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 493,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 558,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 112,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 455,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 494,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 495,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 496,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 497,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 498,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 499,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 500,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 501,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 502,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 503,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 505,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 506,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 507,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 508,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 509,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 510,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 511,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 512,
+  "news": "Thigh injury - 75% chance of playing",
+  "news_added": "2026-07-23T12:01:23.848657Z",
+  "penalty": -2.0,
+  "negative": true
+ },
+ {
+  "id": 513,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.864304Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 514,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 515,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 516,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 517,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.879434Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 518,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 519,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 520,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 521,
+  "news": "Knee injury - Unknown return date",
+  "news_added": "2026-07-23T12:01:23.895175Z",
+  "penalty": -3.0,
+  "negative": true
+ },
+ {
+  "id": 522,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 523,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 524,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 525,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 526,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 527,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 528,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 529,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 530,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 531,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 532,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 533,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 534,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 535,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 536,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 537,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 538,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 539,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 540,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 541,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 542,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 543,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 544,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 545,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 546,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 547,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 548,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 549,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 550,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 551,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 552,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ },
+ {
+  "id": 553,
+  "news": "",
+  "news_added": null,
+  "penalty": 0.0,
+  "negative": false
+ }
+]

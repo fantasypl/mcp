@@ -1,0 +1,138 @@
+{
+  "chips_remaining": [
+    "Wildcard",
+    "Bench Boost",
+    "Free Hit"
+  ],
+  "chips_used": [
+    {
+      "chip": "Triple Captain",
+      "gameweek": 1
+    }
+  ],
+  "community_intel": {
+    "predicted_bgws": {
+      "7": {
+        "sources": [
+          "allaboutfpl.com"
+        ],
+        "status": "predicted",
+        "teams": [
+          "NFO"
+        ]
+      }
+    },
+    "predicted_dgws": {
+      "8": {
+        "sources": [
+          "allaboutfpl.com"
+        ],
+        "status": "predicted",
+        "teams": [
+          "AVL"
+        ]
+      }
+    },
+    "source_errors": [
+      "premierleague.com: failed to fetch"
+    ],
+    "sources": [
+      "premierleague.com",
+      "allaboutfpl.com"
+    ]
+  },
+  "gameweek": 1,
+  "pending_dgws": {
+    "summary": "2 teams have postponed fixtures that will create future DGWs. Consider waiting for official scheduling before using Triple Captain or Bench Boost.",
+    "teams": [
+      {
+        "likely_dgw_gameweeks": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "team": "ARS",
+        "team_id": 1,
+        "unscheduled_fixtures": [
+          "NEW (home)"
+        ]
+      },
+      {
+        "likely_dgw_gameweeks": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "team": "NEW",
+        "team_id": 17,
+        "unscheduled_fixtures": [
+          "ARS (away)"
+        ]
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "chip": "Wildcard",
+      "chip_code": "wildcard",
+      "confidence_score": 79.4,
+      "gw_details": {
+        "avg_fdr": 3.0,
+        "dgw_teams": 0,
+        "fixture_count": 10,
+        "predicted_dgw_teams": 2
+      },
+      "reasoning": "Wildcard\u2192Bench Boost combo: rebuild squad and bench for GW5 mega DGW (2 confirmed + 2 predicted DGW teams). 1 injured/doubtful (J.Timber).",
+      "recommended_gameweek": 4,
+      "squad_issues": {
+        "injured_or_doubtful": [
+          "J.Timber"
+        ],
+        "poor_form_tough_fixtures": []
+      }
+    },
+    {
+      "chip": "Bench Boost",
+      "chip_code": "bboost",
+      "confidence_score": 44.5,
+      "gw_details": {
+        "avg_fdr": 3.0,
+        "dgw_teams": 2,
+        "fixture_count": 11,
+        "predicted_dgw_teams": 2
+      },
+      "reasoning": "2 teams have confirmed DGW. 2 teams have potential DGW (postponed fixtures pending rescheduling). 11 fixtures scheduled. avg FDR 3.0. use Wildcard in GW4 to rebuild bench specifically for this DGW.",
+      "recommended_gameweek": 5
+    },
+    {
+      "chip": "Free Hit",
+      "chip_code": "freehit",
+      "confidence_score": 12.2,
+      "gw_details": {
+        "avg_fdr": 3.0,
+        "blank_teams": 2,
+        "dgw_teams": 0,
+        "fixture_count": 9,
+        "predicted_dgw_teams": 2
+      },
+      "reasoning": "2 teams have no fixture (blank GW). 2 teams likely to have DGW.",
+      "recommended_gameweek": 6
+    }
+  ],
+  "scan_window": "GW2-GW11",
+  "team_id": 999001
+}

@@ -1,0 +1,72 @@
+{
+  "analysis": {
+    "confidence": "low",
+    "hit_cost": -4,
+    "hit_worth_it": false,
+    "net_after_hit": -3.45,
+    "player_in_expected_points": 8.08,
+    "player_out_expected_points": 7.53,
+    "projected_gain": 0.55
+  },
+  "gameweek": 1,
+  "gameweeks_projected": 3,
+  "player_in": {
+    "cost": 8.0,
+    "expected_points_projected": 8.08,
+    "fixtures": [
+      {
+        "fdr": 2,
+        "gameweek": 1,
+        "opponent": "COV(H)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 2,
+        "opponent": "AVL(A)"
+      },
+      {
+        "fdr": 4,
+        "gameweek": 3,
+        "opponent": "CHE(H)"
+      }
+    ],
+    "form": 0.0,
+    "id": 4,
+    "name": "Gabriel",
+    "points_per_game": 6.5,
+    "position": "DEF",
+    "status": "a",
+    "team": "ARS",
+    "total_points": 209
+  },
+  "player_out": {
+    "cost": 8.5,
+    "expected_points_projected": 7.53,
+    "fixtures": [
+      {
+        "fdr": 3,
+        "gameweek": 1,
+        "opponent": "BOU(H)"
+      },
+      {
+        "fdr": 3,
+        "gameweek": 2,
+        "opponent": "CRY(A)"
+      },
+      {
+        "fdr": 2,
+        "gameweek": 3,
+        "opponent": "COV(H)"
+      }
+    ],
+    "form": 0.0,
+    "id": 397,
+    "name": "Semenyo",
+    "points_per_game": 5.5,
+    "position": "MID",
+    "status": "a",
+    "team": "MCI",
+    "total_points": 202
+  },
+  "verdict": "Not worth it. Gabriel is only projected to outscore Semenyo by 0.55 points over 3 GWs. After the -4 hit, you'd lose ~3.45 points."
+}

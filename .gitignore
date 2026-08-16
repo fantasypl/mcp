@@ -1,0 +1,22 @@
+# Reference checkout of the Python implementation. Cloned on demand by
+# `make reference`; 115 MB and not ours to vendor.
+/reference/
+
+# Build output
+/bin/
+/dist/
+
+# Runtime state: snapshots, backtest cache, tuned weights. Schema-compatible
+# with the Python implementation's data/ directory — see the plan. Regenerated
+# by fplctl, and the GW snapshots are irreplaceable, so back these up rather
+# than relying on git.
+/data/
+
+# Local caches for Part B data sources (FPL-Core-Insights CSVs, ClubElo,
+# vaastav corpus). Fetched on demand.
+/.cache/
+
+.DS_Store
+
+# JetBrains IDE project files
+/.idea/

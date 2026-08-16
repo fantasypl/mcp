@@ -1,0 +1,775 @@
+{
+  "current_gameweek": 1,
+  "gameweeks_ahead": 3,
+  "num_players_to_target": 10,
+  "players_to_target": [
+    {
+      "cost": 5.5,
+      "form": 0.0,
+      "name": "Lewis-Potter",
+      "points_per_game": 3.2,
+      "position": "MID",
+      "selected_by_pct": 0.5,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 6.0,
+      "form": 0.0,
+      "name": "Schade",
+      "points_per_game": 3.6,
+      "position": "MID",
+      "selected_by_pct": 2.4,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 6.5,
+      "form": 0.0,
+      "name": "O.Dango",
+      "points_per_game": 4.2,
+      "position": "MID",
+      "selected_by_pct": 1.4,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 5.5,
+      "form": 0.0,
+      "name": "Damsgaard",
+      "points_per_game": 3.4,
+      "position": "MID",
+      "selected_by_pct": 0.7,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 5.5,
+      "form": 0.0,
+      "name": "Jensen",
+      "points_per_game": 2.7,
+      "position": "MID",
+      "selected_by_pct": 0.1,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 5.0,
+      "form": 0.0,
+      "name": "Janelt",
+      "points_per_game": 3.0,
+      "position": "MID",
+      "selected_by_pct": 0.1,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 5.0,
+      "form": 0.0,
+      "name": "Yarmoliuk",
+      "points_per_game": 2.8,
+      "position": "MID",
+      "selected_by_pct": 1.5,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 5.0,
+      "form": 0.0,
+      "name": "Dasilva",
+      "points_per_game": 1.0,
+      "position": "MID",
+      "selected_by_pct": 0.0,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 6.0,
+      "form": 0.0,
+      "name": "Anthony",
+      "points_per_game": 0.0,
+      "position": "MID",
+      "selected_by_pct": 0.2,
+      "team": "BRE",
+      "team_full_name": "Brentford"
+    },
+    {
+      "cost": 7.5,
+      "form": 0.0,
+      "name": "Wirtz",
+      "points_per_game": 3.8,
+      "position": "MID",
+      "selected_by_pct": 10.5,
+      "team": "LIV",
+      "team_full_name": "Liverpool"
+    }
+  ],
+  "position_filter": "MID",
+  "target_gameweeks": [
+    1,
+    2,
+    3
+  ],
+  "teams_by_difficulty": [
+    {
+      "adjusted_difficulty": 1.47,
+      "avg_difficulty": 1.46,
+      "fixture_count": 3,
+      "fixture_variance": 0.06,
+      "fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "opponent": "HUL",
+          "venue": "A",
+          "weighted_fdr": 1.4
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "IPS",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "EVE",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 1,
+      "team": "MUN",
+      "team_id": 16,
+      "team_name": "Man Utd"
+    },
+    {
+      "adjusted_difficulty": 1.47,
+      "avg_difficulty": 1.46,
+      "fixture_count": 3,
+      "fixture_variance": 0.06,
+      "fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "opponent": "IPS",
+          "venue": "A",
+          "weighted_fdr": 1.4
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "FUL",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "BRE",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 2,
+      "team": "SUN",
+      "team_id": 20,
+      "team_name": "Sunderland"
+    },
+    {
+      "adjusted_difficulty": 1.52,
+      "avg_difficulty": 1.51,
+      "fixture_count": 3,
+      "fixture_variance": 0.06,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "TOT",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "LEE",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "opponent": "SUN",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        }
+      ],
+      "rank": 3,
+      "team": "BRE",
+      "team_id": 4,
+      "team_name": "Brentford"
+    },
+    {
+      "adjusted_difficulty": 1.52,
+      "avg_difficulty": 1.51,
+      "fixture_count": 3,
+      "fixture_variance": 0.06,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "BOU",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "CRY",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "opponent": "COV",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        }
+      ],
+      "rank": 4,
+      "team": "MCI",
+      "team_id": 15,
+      "team_name": "Man City"
+    },
+    {
+      "adjusted_difficulty": 1.58,
+      "avg_difficulty": 1.58,
+      "fixture_count": 3,
+      "fixture_variance": 0.03,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "NEW",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "NFO",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "opponent": "IPS",
+          "venue": "A",
+          "weighted_fdr": 1.4
+        }
+      ],
+      "rank": 5,
+      "team": "LIV",
+      "team_id": 14,
+      "team_name": "Liverpool"
+    },
+    {
+      "adjusted_difficulty": 1.61,
+      "avg_difficulty": 1.6,
+      "fixture_count": 3,
+      "fixture_variance": 0.04,
+      "fixtures": [
+        {
+          "fdr": 2.2,
+          "gameweek": 1,
+          "opponent": "MUN",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "COV",
+          "venue": "A",
+          "weighted_fdr": 1.4
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "AVL",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        }
+      ],
+      "rank": 6,
+      "team": "HUL",
+      "team_id": 11,
+      "team_name": "Hull City"
+    },
+    {
+      "adjusted_difficulty": 1.61,
+      "avg_difficulty": 1.6,
+      "fixture_count": 3,
+      "fixture_variance": 0.08,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "BRE",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "NEW",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "NFO",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 7,
+      "team": "TOT",
+      "team_id": 19,
+      "team_name": "Spurs"
+    },
+    {
+      "adjusted_difficulty": 1.67,
+      "avg_difficulty": 1.64,
+      "fixture_count": 3,
+      "fixture_variance": 0.18,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "AVL",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "CHE",
+          "venue": "A",
+          "weighted_fdr": 2.2
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "opponent": "LEE",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        }
+      ],
+      "rank": 8,
+      "team": "BHA",
+      "team_id": 5,
+      "team_name": "Brighton"
+    },
+    {
+      "adjusted_difficulty": 1.67,
+      "avg_difficulty": 1.64,
+      "fixture_count": 3,
+      "fixture_variance": 0.18,
+      "fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "opponent": "LEE",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "LIV",
+          "venue": "A",
+          "weighted_fdr": 2.2
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "TOT",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        }
+      ],
+      "rank": 9,
+      "team": "NFO",
+      "team_id": 18,
+      "team_name": "Nott'm Forest"
+    },
+    {
+      "adjusted_difficulty": 1.7,
+      "avg_difficulty": 1.69,
+      "fixture_count": 3,
+      "fixture_variance": 0.04,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "BHA",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "ARS",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "opponent": "HUL",
+          "venue": "A",
+          "weighted_fdr": 1.4
+        }
+      ],
+      "rank": 10,
+      "team": "AVL",
+      "team_id": 2,
+      "team_name": "Aston Villa"
+    },
+    {
+      "adjusted_difficulty": 1.71,
+      "avg_difficulty": 1.71,
+      "fixture_count": 3,
+      "fixture_variance": 0.02,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "NFO",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "BRE",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "BHA",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 11,
+      "team": "LEE",
+      "team_id": 13,
+      "team_name": "Leeds"
+    },
+    {
+      "adjusted_difficulty": 1.73,
+      "avg_difficulty": 1.73,
+      "fixture_count": 3,
+      "fixture_variance": 0.02,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "CRY",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "BOU",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 3,
+          "opponent": "MUN",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        }
+      ],
+      "rank": 12,
+      "team": "EVE",
+      "team_id": 9,
+      "team_name": "Everton"
+    },
+    {
+      "adjusted_difficulty": 1.73,
+      "avg_difficulty": 1.73,
+      "fixture_count": 3,
+      "fixture_variance": 0.02,
+      "fixtures": [
+        {
+          "fdr": 2.2,
+          "gameweek": 1,
+          "opponent": "CHE",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "SUN",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "CRY",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        }
+      ],
+      "rank": 13,
+      "team": "FUL",
+      "team_id": 10,
+      "team_name": "Fulham"
+    },
+    {
+      "adjusted_difficulty": 1.73,
+      "avg_difficulty": 1.73,
+      "fixture_count": 3,
+      "fixture_variance": 0.02,
+      "fixtures": [
+        {
+          "fdr": 2.2,
+          "gameweek": 1,
+          "opponent": "LIV",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "TOT",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "BOU",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        }
+      ],
+      "rank": 14,
+      "team": "NEW",
+      "team_id": 17,
+      "team_name": "Newcastle"
+    },
+    {
+      "adjusted_difficulty": 1.78,
+      "avg_difficulty": 1.75,
+      "fixture_count": 3,
+      "fixture_variance": 0.18,
+      "fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "opponent": "COV",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "AVL",
+          "venue": "A",
+          "weighted_fdr": 2.2
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 3,
+          "opponent": "CHE",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        }
+      ],
+      "rank": 15,
+      "team": "ARS",
+      "team_id": 1,
+      "team_name": "Arsenal"
+    },
+    {
+      "adjusted_difficulty": 1.78,
+      "avg_difficulty": 1.75,
+      "fixture_count": 3,
+      "fixture_variance": 0.18,
+      "fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "opponent": "SUN",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "MUN",
+          "venue": "A",
+          "weighted_fdr": 2.2
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 3,
+          "opponent": "LIV",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        }
+      ],
+      "rank": 16,
+      "team": "IPS",
+      "team_id": 12,
+      "team_name": "Ipswich Town"
+    },
+    {
+      "adjusted_difficulty": 1.82,
+      "avg_difficulty": 1.82,
+      "fixture_count": 3,
+      "fixture_variance": 0.0,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "EVE",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 2,
+          "opponent": "MCI",
+          "venue": "H",
+          "weighted_fdr": 1.87
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "FUL",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 17,
+      "team": "CRY",
+      "team_id": 8,
+      "team_name": "Crystal Palace"
+    },
+    {
+      "adjusted_difficulty": 1.91,
+      "avg_difficulty": 1.86,
+      "fixture_count": 3,
+      "fixture_variance": 0.33,
+      "fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "opponent": "FUL",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "BHA",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 2.6,
+          "gameweek": 3,
+          "opponent": "ARS",
+          "venue": "A",
+          "weighted_fdr": 2.6
+        }
+      ],
+      "rank": 18,
+      "team": "CHE",
+      "team_id": 6,
+      "team_name": "Chelsea"
+    },
+    {
+      "adjusted_difficulty": 2.01,
+      "avg_difficulty": 1.98,
+      "fixture_count": 3,
+      "fixture_variance": 0.21,
+      "fixtures": [
+        {
+          "fdr": 2.6,
+          "gameweek": 1,
+          "opponent": "MCI",
+          "venue": "A",
+          "weighted_fdr": 2.6
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "opponent": "EVE",
+          "venue": "H",
+          "weighted_fdr": 1.53
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "opponent": "NEW",
+          "venue": "A",
+          "weighted_fdr": 1.8
+        }
+      ],
+      "rank": 19,
+      "team": "BOU",
+      "team_id": 3,
+      "team_name": "Bournemouth"
+    },
+    {
+      "adjusted_difficulty": 2.2,
+      "avg_difficulty": 2.13,
+      "fixture_count": 3,
+      "fixture_variance": 0.44,
+      "fixtures": [
+        {
+          "fdr": 2.6,
+          "gameweek": 1,
+          "opponent": "ARS",
+          "venue": "A",
+          "weighted_fdr": 2.6
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "opponent": "HUL",
+          "venue": "H",
+          "weighted_fdr": 1.19
+        },
+        {
+          "fdr": 2.6,
+          "gameweek": 3,
+          "opponent": "MCI",
+          "venue": "A",
+          "weighted_fdr": 2.6
+        }
+      ],
+      "rank": 20,
+      "team": "COV",
+      "team_id": 7,
+      "team_name": "Coventry City"
+    }
+  ]
+}
