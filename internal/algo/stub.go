@@ -3,7 +3,7 @@ package algo
 import (
 	"context"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // stubClient serves deterministic, in-memory FPL payloads for tests and

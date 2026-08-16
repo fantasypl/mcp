@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // auditCheck's field names and JSON tags match data/accuracy_audit.json's

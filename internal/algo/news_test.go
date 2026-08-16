@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // newsExpectation mirrors one row of testdata/news_expectations.json,

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/store"
+	"github.com/fantasypl/mcp/internal/store"
 )
 
 // optimizerFixtureLayout points at testdata/optimizer_fixture/data — a small

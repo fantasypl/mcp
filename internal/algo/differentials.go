@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Differentials surfaces under-owned players whose output is running ahead of

@@ -1,6 +1,6 @@
 package algo
 
-import "github.com/ajitem/fpl-intelligence/internal/fpl"
+import "github.com/fantasypl/mcp/internal/fpl"
 
 // RoundRobinFixtures creates the deterministic fixture shape used by the
 // offline scenarios: the first half of the participating IDs is paired with

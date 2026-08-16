@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 func testdataPath(parts ...string) string {

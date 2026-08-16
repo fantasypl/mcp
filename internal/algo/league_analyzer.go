@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // League analysis answers "who's going to win this mini-league?" without

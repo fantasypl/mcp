@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Double and blank gameweeks are the single biggest wrinkle in season planning

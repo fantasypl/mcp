@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Rival intelligence answers "how do I beat the managers around me in this

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Squad Scout surfaces the parts of FPL's own data that most managers never

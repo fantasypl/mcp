@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ajitem/fpl-intelligence/internal/golden"
+	"github.com/fantasypl/mcp/internal/golden"
 )
 
 // The parity gate for the keystone algorithm. chips, scout and transfers all

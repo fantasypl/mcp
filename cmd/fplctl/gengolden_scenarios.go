@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 func scenarioBootstrap(path string, current int, injured map[int]bool) (*fpl.Bootstrap, error) {

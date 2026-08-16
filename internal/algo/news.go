@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // The FPL `news` field is free text like "Hamstring - Expected back 15 Mar",

@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Sort stability is a correctness requirement, not a preference: tied scores

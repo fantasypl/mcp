@@ -1,4 +1,4 @@
-module github.com/ajitem/fpl-intelligence
+module github.com/fantasypl/mcp
 
 go 1.25.0
 

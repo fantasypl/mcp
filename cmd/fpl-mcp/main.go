@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/config"
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/config"
+	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/store"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/store"
 )
 
 // runOptimize forces a fresh search (ignoring any cache-freshness check) and

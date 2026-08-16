@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
-	"github.com/ajitem/fpl-intelligence/internal/golden"
+	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/golden"
 )
 
 // syntheticTeamID matches the fixed team_id scripts/make_squad_fixture.py's

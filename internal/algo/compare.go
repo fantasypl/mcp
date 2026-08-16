@@ -7,7 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Fuzzy-matches 2-4 player names against web_name (and, failing that, full

@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // evalCSVColumns is data/evaluation.csv's fixed column order — a

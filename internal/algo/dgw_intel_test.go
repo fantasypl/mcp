@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // dgwIntelExpectations mirrors testdata/dgw_intel_expectations.json,

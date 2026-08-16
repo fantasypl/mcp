@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Captain Pick algorithm v3.0 — multiplicative fixture model.

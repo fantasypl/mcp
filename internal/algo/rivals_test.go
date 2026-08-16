@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
-	"github.com/ajitem/fpl-intelligence/internal/golden"
+	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/golden"
 )
 
 const rivalsUserTeamID = 999002

@@ -16,7 +16,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // ptr returns a pointer to v — for constructing *int/*string literals inline,

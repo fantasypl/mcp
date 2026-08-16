@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ajitem/fpl-intelligence/internal/algo"
-	"github.com/ajitem/fpl-intelligence/internal/fpl"
-	"github.com/ajitem/fpl-intelligence/internal/golden"
+	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/golden"
 )
 
 const syntheticTeamID = 999001
