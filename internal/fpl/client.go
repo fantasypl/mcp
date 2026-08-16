@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -292,4 +293,109 @@ func (c *Client) ManagerTransfers(ctx context.Context, teamID int) ([]ManagerTra
 // EventStatus returns GET /event-status/ — whether bonus points are confirmed.
 func (c *Client) EventStatus(ctx context.Context) (*EventStatusResponse, error) {
 	return fetch[*EventStatusResponse](ctx, c, "/event-status/", EntryTTL)
+}
+
+// ManagerStatus is a manager's auto-detected status for the current
+// gameweek, derived from their picks and season history rather than fetched
+// directly: bank, free transfers, chips used and remaining, and rank.
+type ManagerStatus struct {
+	Bank                float64    `json:"bank"`
+	FreeTransfers       int        `json:"free_transfers"`
+	OverallRank         int        `json:"overall_rank"`
+	TotalPoints         int        `json:"total_points"`
+	CurrentGameweek     int        `json:"current_gameweek"`
+	NextGameweek        int        `json:"next_gameweek"`
+	ChipsUsed           []ChipUsed `json:"chips_used"`
+	ChipsRemaining      []string   `json:"chips_remaining"`
+	ChipActiveThisGW    *string    `json:"chip_active_this_gw"`
+	TransfersMadeThisGW int        `json:"transfers_made_this_gw"`
+	PointsOnBenchThisGW int        `json:"points_on_bench_this_gw"`
+}
+
+// ChipUsed is one chip play, as reported in ManagerStatus.ChipsUsed.
+type ChipUsed struct {
+	Name     string `json:"name"`
+	Gameweek int    `json:"gameweek"`
+}
+
+// allChips are the four chips available each half-season. FPL resets the
+// full set after gameweek 19, so a chip played in gameweek 5 is available
+// again in gameweek 20.
+var allChips = []string{"3xc", "bboost", "freehit", "wildcard"}
+
+const chipHalfwayGW = 19
+
+// ManagerStatus fetches a manager's current-gameweek picks and season
+// history and derives bank, free transfers, and remaining chips from them.
+//
+// Free transfer logic: a wildcard or free hit active this gameweek resets
+// to 1; zero transfers made last gameweek means it rolled over, estimated
+// at 2 (the true count needs the prior gameweek's balance, which isn't
+// available here); otherwise 1.
+func (c *Client) ManagerStatus(ctx context.Context, teamID int, b *Bootstrap) (*ManagerStatus, error) {
+	currentGW := b.CurrentGameweek()
+
+	picks, err := c.TeamPicks(ctx, teamID, currentGW)
+	if err != nil {
+		return nil, err
+	}
+	history, err := c.TeamHistory(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+
+	eh := picks.EntryHistory
+	bank := float64(eh.Bank) / 10
+
+	var chipThisGW *string
+	for _, ch := range history.Chips {
+		if ch.Event == currentGW {
+			name := ch.Name
+			chipThisGW = &name
+			break
+		}
+	}
+
+	const maxFreeTransfers = 5
+	var freeTransfers int
+	switch {
+	case chipThisGW != nil && (*chipThisGW == "wildcard" || *chipThisGW == "freehit"):
+		freeTransfers = 1
+	case eh.EventTransfers == 0:
+		freeTransfers = min(maxFreeTransfers, 2)
+	default:
+		freeTransfers = 1
+	}
+
+	usedThisHalf := map[string]bool{}
+	for _, ch := range history.Chips {
+		if (currentGW > chipHalfwayGW) == (ch.Event > chipHalfwayGW) {
+			usedThisHalf[ch.Name] = true
+		}
+	}
+	var chipsRemaining []string
+	for _, ch := range allChips {
+		if !usedThisHalf[ch] {
+			chipsRemaining = append(chipsRemaining, ch)
+		}
+	}
+
+	chipsUsed := make([]ChipUsed, 0, len(history.Chips))
+	for _, ch := range history.Chips {
+		chipsUsed = append(chipsUsed, ChipUsed{Name: ch.Name, Gameweek: ch.Event})
+	}
+
+	return &ManagerStatus{
+		Bank:                math.Round(bank*10) / 10,
+		FreeTransfers:       freeTransfers,
+		OverallRank:         eh.OverallRank,
+		TotalPoints:         eh.TotalPoints,
+		CurrentGameweek:     currentGW,
+		NextGameweek:        b.NextGameweek(),
+		ChipsUsed:           chipsUsed,
+		ChipsRemaining:      chipsRemaining,
+		ChipActiveThisGW:    chipThisGW,
+		TransfersMadeThisGW: eh.EventTransfers,
+		PointsOnBenchThisGW: eh.PointsOnBench,
+	}, nil
 }
