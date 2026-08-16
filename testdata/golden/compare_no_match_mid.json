@@ -1,0 +1,12 @@
+{
+  "details": [
+    "No match found for 'Nonexistentplayerxyz'."
+  ],
+  "error": "Could not match all player names.",
+  "matched": [
+    {
+      "matched_name": "Haaland",
+      "query": "Haaland"
+    }
+  ]
+}

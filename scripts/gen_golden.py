@@ -82,6 +82,9 @@ def install_stub(bootstrap_name):
             return _load("event_status")
         if path == f"/entry/{SYNTHETIC_TEAM_ID}/event/1/picks/":
             return _load("picks_squad1")
+        if path.startswith("/element-summary/") and path.endswith("/"):
+            player_id = path.strip("/").split("/")[-1]
+            return _load(f"player_summary_{player_id}")
         raise AssertionError(
             f"algorithm reached un-stubbed FPL path {path!r} — add a frozen "
             "payload for it before golden-filing this algorithm"
@@ -100,6 +103,7 @@ def install_stub(bootstrap_name):
 
 def cases():
     from app.algorithms.captain import get_captain_picks
+    from app.algorithms.compare import compare_players
     from app.algorithms.differentials import get_differentials
     from app.algorithms.fixtures import get_fixture_outlook
     from app.algorithms.hit_analyzer import analyze_hit
@@ -124,6 +128,21 @@ def cases():
         ("transfers_1ft", get_transfer_suggestions, {"team_id": SYNTHETIC_TEAM_ID, "free_transfers": 1, "bank_m": 0.5}),
         ("transfers_2ft", get_transfer_suggestions, {"team_id": SYNTHETIC_TEAM_ID, "free_transfers": 2, "bank_m": 0.0}),
         ("scout", get_squad_scout, {"team_id": SYNTHETIC_TEAM_ID}),
+        (
+            "compare_haaland_fernandes",
+            compare_players,
+            {"player_names": ["Haaland", "B.Fernandes"], "gameweeks_ahead": 4},
+        ),
+        (
+            "compare_not_enough_names",
+            compare_players,
+            {"player_names": ["Haaland"], "gameweeks_ahead": 4},
+        ),
+        (
+            "compare_no_match",
+            compare_players,
+            {"player_names": ["Haaland", "Nonexistentplayerxyz"], "gameweeks_ahead": 4},
+        ),
     ]
 
 

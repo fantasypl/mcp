@@ -1,0 +1,14 @@
+{
+  "history": [
+    {"was_home": true, "minutes": 90, "total_points": 12},
+    {"was_home": false, "minutes": 90, "total_points": 6},
+    {"was_home": true, "minutes": 90, "total_points": 9},
+    {"was_home": false, "minutes": 78, "total_points": 2},
+    {"was_home": true, "minutes": 90, "total_points": 14},
+    {"was_home": false, "minutes": 90, "total_points": 8},
+    {"was_home": true, "minutes": 90, "total_points": 5},
+    {"was_home": false, "minutes": 90, "total_points": 11},
+    {"was_home": true, "minutes": 0, "total_points": 0},
+    {"was_home": false, "minutes": 90, "total_points": 3}
+  ]
+}

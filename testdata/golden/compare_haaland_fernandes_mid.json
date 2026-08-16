@@ -1,0 +1,127 @@
+{
+  "gameweek": 1,
+  "gameweeks_ahead": 4,
+  "players": [
+    {
+      "avg_fdr_next_4_gws": 1.8,
+      "away_form": 6.0,
+      "blank_gameweeks": [],
+      "captain_score": 10.705,
+      "chance_of_playing": 100,
+      "consistency_score": 5.4,
+      "cost": 15.5,
+      "defensive_contribution_per_90": 3.17,
+      "ep_next": 4.0,
+      "form": 5.4,
+      "full_name": "Erling Haaland",
+      "home_away_insight": "Stronger at home (avg 10.0 vs 6.0 away)",
+      "home_form": 10.0,
+      "ict_index": 302.3,
+      "id": 411,
+      "match_confidence": "exact",
+      "name": "Haaland",
+      "net_transfers_this_gw": 0,
+      "news": null,
+      "ownership_pct": 75.3,
+      "points_per_game": 6.8,
+      "position": "FWD",
+      "query": "Haaland",
+      "status": "a",
+      "team": "MCI",
+      "team_full_name": "Man City",
+      "total_points": 239,
+      "transfer_pressure": "Stable",
+      "upcoming_fixtures": [
+        {
+          "fdr": 1.8,
+          "gameweek": 1,
+          "is_home": true,
+          "opponent": "BOU(H)"
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 2,
+          "is_home": false,
+          "opponent": "CRY(A)"
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 3,
+          "is_home": true,
+          "opponent": "COV(H)"
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 4,
+          "is_home": false,
+          "opponent": "MUN(A)"
+        }
+      ],
+      "value_score": 15.42,
+      "xa_per_90": 0.081,
+      "xg_per_90": 0.777,
+      "xgc_per_90": null
+    },
+    {
+      "avg_fdr_next_4_gws": 1.7,
+      "away_form": 4.5,
+      "blank_gameweeks": [],
+      "captain_score": 11.977,
+      "chance_of_playing": 100,
+      "consistency_score": 7.8,
+      "cost": 12.0,
+      "defensive_contribution_per_90": 8.43,
+      "ep_next": 4.0,
+      "form": 7.8,
+      "full_name": "Bruno Borges Fernandes",
+      "home_away_insight": "Stronger at home (avg 9.2 vs 4.5 away)",
+      "home_form": 9.2,
+      "ict_index": 381.4,
+      "id": 426,
+      "match_confidence": "exact",
+      "name": "B.Fernandes",
+      "net_transfers_this_gw": 0,
+      "news": null,
+      "ownership_pct": 48.8,
+      "points_per_game": 6.7,
+      "position": "MID",
+      "query": "B.Fernandes",
+      "status": "a",
+      "team": "MUN",
+      "team_full_name": "Man Utd",
+      "total_points": 235,
+      "transfer_pressure": "Stable",
+      "upcoming_fixtures": [
+        {
+          "fdr": 1.4,
+          "gameweek": 1,
+          "is_home": false,
+          "opponent": "HUL(A)"
+        },
+        {
+          "fdr": 1.4,
+          "gameweek": 2,
+          "is_home": true,
+          "opponent": "IPS(H)"
+        },
+        {
+          "fdr": 1.8,
+          "gameweek": 3,
+          "is_home": false,
+          "opponent": "EVE(A)"
+        },
+        {
+          "fdr": 2.2,
+          "gameweek": 4,
+          "is_home": true,
+          "opponent": "MCI(H)"
+        }
+      ],
+      "value_score": 19.58,
+      "xa_per_90": 0.361,
+      "xg_per_90": 0.317,
+      "xgc_per_90": null
+    }
+  ],
+  "verdict": "B.Fernandes is the clear pick \u2014 higher captain score (12.0 vs 10.7), strong recent form (7.8), excellent upcoming fixtures, best value at 12.0m, strong xG/90 (0.32)."
+}
