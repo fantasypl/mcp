@@ -103,3 +103,14 @@ func (s *stubClient) PlayerSummary(_ context.Context, playerID int) (*fpl.Player
 	}
 	return p, nil
 }
+func (s *stubClient) ManagerStatus(ctx context.Context, teamID int, b *fpl.Bootstrap) (*fpl.ManagerStatus, error) {
+	picks, err := s.TeamPicks(ctx, teamID, b.CurrentGameweek())
+	if err != nil {
+		return nil, err
+	}
+	history, err := s.TeamHistory(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	return fpl.DeriveManagerStatus(picks, history, b), nil
+}

@@ -78,6 +78,9 @@ func (c *btFileClient) ManagerTransfers(context.Context, int) ([]fpl.ManagerTran
 func (c *btFileClient) PlayerSummary(context.Context, int) (*fpl.PlayerSummary, error) {
 	return nil, fmt.Errorf("not needed for captain picks")
 }
+func (c *btFileClient) ManagerStatus(context.Context, int, *fpl.Bootstrap) (*fpl.ManagerStatus, error) {
+	return nil, fmt.Errorf("not needed for captain picks")
+}
 
 type btActualEntry struct {
 	WebName  string `json:"web_name"`

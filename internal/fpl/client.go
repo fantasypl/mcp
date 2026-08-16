@@ -327,11 +327,6 @@ const chipHalfwayGW = 19
 
 // ManagerStatus fetches a manager's current-gameweek picks and season
 // history and derives bank, free transfers, and remaining chips from them.
-//
-// Free transfer logic: a wildcard or free hit active this gameweek resets
-// to 1; zero transfers made last gameweek means it rolled over, estimated
-// at 2 (the true count needs the prior gameweek's balance, which isn't
-// available here); otherwise 1.
 func (c *Client) ManagerStatus(ctx context.Context, teamID int, b *Bootstrap) (*ManagerStatus, error) {
 	currentGW := b.CurrentGameweek()
 
@@ -343,7 +338,20 @@ func (c *Client) ManagerStatus(ctx context.Context, teamID int, b *Bootstrap) (*
 	if err != nil {
 		return nil, err
 	}
+	return DeriveManagerStatus(picks, history, b), nil
+}
 
+// DeriveManagerStatus computes a manager's status from already-fetched
+// picks and history — the pure half of ManagerStatus, split out so a stub
+// Client backed by canned fixtures can produce the same result without a
+// second copy of this logic.
+//
+// Free transfer logic: a wildcard or free hit active this gameweek resets
+// to 1; zero transfers made last gameweek means it rolled over, estimated
+// at 2 (the true count needs the prior gameweek's balance, which isn't
+// available here); otherwise 1.
+func DeriveManagerStatus(picks *TeamPicks, history *TeamHistory, b *Bootstrap) *ManagerStatus {
+	currentGW := b.CurrentGameweek()
 	eh := picks.EntryHistory
 	bank := float64(eh.Bank) / 10
 
@@ -397,5 +405,5 @@ func (c *Client) ManagerStatus(ctx context.Context, teamID int, b *Bootstrap) (*
 		ChipActiveThisGW:    chipThisGW,
 		TransfersMadeThisGW: eh.EventTransfers,
 		PointsOnBenchThisGW: eh.PointsOnBench,
-	}, nil
+	}
 }

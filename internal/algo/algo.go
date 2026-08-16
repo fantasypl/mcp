@@ -51,6 +51,7 @@ type Client interface {
 	LeagueStandings(ctx context.Context, leagueID int) (*fpl.LeagueStandings, error)
 	ManagerTransfers(ctx context.Context, teamID int) ([]fpl.ManagerTransfer, error)
 	PlayerSummary(ctx context.Context, playerID int) (*fpl.PlayerSummary, error)
+	ManagerStatus(ctx context.Context, teamID int, b *fpl.Bootstrap) (*fpl.ManagerStatus, error)
 }
 
 // Engine holds everything the algorithms need as explicit state.
