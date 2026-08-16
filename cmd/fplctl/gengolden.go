@@ -11,16 +11,35 @@ import (
 
 	"github.com/ajitem/fpl-intelligence/internal/algo"
 	"github.com/ajitem/fpl-intelligence/internal/fpl"
+	"github.com/ajitem/fpl-intelligence/internal/golden"
 )
 
 const syntheticTeamID = 999001
 
+// knownGoldenDrift lists generated files whose current committed content is
+// known to differ from a fresh regeneration, pending a deliberate decision.
+// rivals_scenario's differentials list ties on form with no further
+// tiebreak beyond player_id, and the currently committed golden reflects an
+// upstream player mix that predates the deterministic tiebreak — see
+// formatPlayerList in internal/algo/rivals.go. Re-baselining changes
+// behavior, so it's deferred rather than folded into this fixture cleanup.
+// --check reports these paths but does not fail on them.
+var knownGoldenDrift = map[string]bool{
+	filepath.Join("rivals_scenario", "bootstrap.json"): true,
+	filepath.Join("rivals_scenario", "fixtures.json"):  true,
+	filepath.Join("rivals_scenario", "golden.json"):    true,
+}
+
 func runGenGolden(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("gengolden", flag.ContinueOnError)
-	which := fs.String("which", "all", "golden set: basic, live, or all")
+	which := fs.String("which", "all", "golden set: basic, live, chips, league, rivals, or all")
 	out := fs.String("out", "", "output directory (defaults to testdata)")
+	check := fs.Bool("check", false, "verify testdata/ matches a fresh regeneration; makes no writes, ignores -which/-out")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if *check {
+		return runGenGoldenCheck(ctx)
 	}
 	if *which != "basic" && *which != "live" && *which != "chips" && *which != "league" && *which != "rivals" && *which != "all" {
 		return fmt.Errorf("--which must be basic, live, chips, league, rivals, or all")
@@ -188,4 +207,67 @@ func genLive(ctx context.Context, out string) error {
 		return err
 	}
 	return writeGolden(filepath.Join(out, "live_scenario", "golden.json"), v)
+}
+
+// runGenGoldenCheck regenerates every golden set into a scratch directory
+// and compares it against the committed testdata/ tree, without writing
+// anything back. It is the guard against silently drifting or truncating
+// the frozen, unrefetchable fixtures under testdata/: run it before trusting
+// a `fplctl gengolden` write.
+func runGenGoldenCheck(ctx context.Context) error {
+	tmp, err := os.MkdirTemp("", "fplctl-gengolden-check-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+
+	for _, gen := range []func(context.Context, string) error{genBasic, genLive, genChips, genLeague, genRivals} {
+		if err := gen(ctx, tmp); err != nil {
+			return fmt.Errorf("generate: %w", err)
+		}
+	}
+
+	var failed, deferred int
+	walkErr := filepath.Walk(tmp, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		rel, err := filepath.Rel(tmp, path)
+		if err != nil {
+			return err
+		}
+		committed := filepath.Join("testdata", rel)
+		want, err := golden.Load(committed)
+		if err != nil {
+			fmt.Printf("NEW      %s (no committed file to compare)\n", rel)
+			return nil
+		}
+		got, err := golden.Load(path)
+		if err != nil {
+			return err
+		}
+		ms := golden.Diff(want, got, golden.Epsilon)
+		if len(ms) == 0 {
+			return nil
+		}
+		if knownGoldenDrift[rel] {
+			deferred++
+			fmt.Printf("DEFERRED %s: %d mismatch(es) — known drift, tracked separately (see knownGoldenDrift)\n", rel, len(ms))
+			return nil
+		}
+		failed++
+		fmt.Printf("MISMATCH %s\n%s", rel, golden.Format(ms, 10))
+		return nil
+	})
+	if walkErr != nil {
+		return walkErr
+	}
+	if deferred > 0 {
+		fmt.Printf("\n%d file(s) show known, deferred drift.\n", deferred)
+	}
+	if failed > 0 {
+		return fmt.Errorf("%d file(s) differ from a fresh regeneration; run 'fplctl gengolden' and review the diff before committing", failed)
+	}
+	fmt.Println("gengolden --check: testdata/ matches a fresh regeneration.")
+	return nil
 }

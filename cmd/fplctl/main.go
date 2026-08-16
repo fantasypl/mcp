@@ -58,6 +58,7 @@ Usage:
   fplctl backtest [--gw N | --dir DIR --from N --to N] [--top N] [--root DIR]
   fplctl evaluate --gw N [--root DIR]
   fplctl audit [--team-id N] [--root DIR]
+  fplctl gengolden [--which SET] [--out DIR] | --check
 
 Run 'fplctl <subcommand> -h' for subcommand-specific flags.
 `)
