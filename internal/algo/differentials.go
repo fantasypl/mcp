@@ -58,6 +58,15 @@ type DifferentialStats struct {
 	TotalPoints   int     `json:"total_points"`
 }
 
+// DifferentialScore exposes differentialScore for callers outside the
+// package. evaluate_gw.py and accuracy_audit.py both inline this same
+// formula directly against their own ownership/status filters (narrower than
+// Differentials' — see fplctl's evaluate.go) rather than calling
+// get_differentials, so fplctl needs the scoring primitive on its own.
+func DifferentialScore(p *fpl.Player, fixtures []TeamFixture, ownershipPct float64) float64 {
+	return differentialScore(p, fixtures, ownershipPct)
+}
+
 // differentialScore weighs recent output against how many managers already own
 // the player. Fixture difficulty is averaged so a double gameweek is judged on
 // its overall run rather than its first match.

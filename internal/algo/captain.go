@@ -399,6 +399,61 @@ type scoredPlayer struct {
 	fixtures []TeamFixture
 }
 
+// ScoredPlayer pairs a player with its raw captain score and that
+// gameweek's fixtures — the uncapped, unfiltered form CaptainPicks builds
+// internally before excluding blank-gameweek players and applying the
+// max-2-per-club business rule. Exported for callers (fplctl's evaluate and
+// audit subcommands) that need the same raw scoring evaluate_gw.py and
+// accuracy_audit.py apply directly, without either of CaptainPicks' rules.
+type ScoredPlayer struct {
+	Player   *fpl.Player
+	Score    float64
+	Fixtures []TeamFixture
+}
+
+// ScoreAllPlayers ports the scoring loop evaluate_gw.py and accuracy_audit.py
+// both inline directly from captain.py's _score_player/_build_fixture_map,
+// rather than calling get_captain_picks: every player is scored, including
+// ones with no fixture this gameweek (scorePlayer's blanking penalty handles
+// those), and the result is stable-sorted descending by score with no
+// per-club cap. gameweek is optional; nil selects the next gameweek.
+func (e *Engine) ScoreAllPlayers(ctx context.Context, gameweek *int) ([]ScoredPlayer, error) {
+	bootstrap, err := e.client.Bootstrap(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fixtures, err := e.client.Fixtures(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	gw := bootstrap.NextGameweek()
+	if gameweek != nil {
+		gw = *gameweek
+	}
+
+	teams := teamsByID(bootstrap)
+	fixtureMap := buildFixtureMap(fixtures, gw, teams)
+
+	scored := make([]ScoredPlayer, 0, len(bootstrap.Elements))
+	for i := range bootstrap.Elements {
+		p := &bootstrap.Elements[i]
+		pf := fixtureMap[p.Team]
+		scored = append(scored, ScoredPlayer{Player: p, Score: e.scorePlayer(p, pf), Fixtures: pf})
+	}
+	slices.SortStableFunc(scored, func(a, b ScoredPlayer) int {
+		switch {
+		case a.Score > b.Score:
+			return -1
+		case a.Score < b.Score:
+			return 1
+		default:
+			return 0
+		}
+	})
+	return scored, nil
+}
+
 // CaptainPicks ports captain.get_captain_picks.
 //
 // gameweek is optional; nil selects the next gameweek. topN defaults to 5 when

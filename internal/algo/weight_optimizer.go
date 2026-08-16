@@ -29,6 +29,12 @@ import (
 // scoring paths is exactly the kind of change that belongs in the backtested
 // redesign pass, not here.
 
+// OptimizerBaseWeights exposes optimizerBaseWeights for callers outside the
+// package (fplctl's optimize subcommand needs it to report deltas and to
+// populate OptimizedWeightsCache.BaseWeights itself, the same way
+// GetOptimizedWeights does internally).
+func OptimizerBaseWeights() map[string]float64 { return optimizerBaseWeights() }
+
 // optimizerBaseWeights are the weight optimizer's own starting point — see the
 // package comment for why this differs from DefaultWeights().
 func optimizerBaseWeights() map[string]float64 {
