@@ -37,6 +37,12 @@ type TeamHistory struct {
 type HistoryGameweek struct {
 	Event  int `json:"event"`
 	Points int `json:"points"`
+
+	// Value is total team value in tenths (squad + bank, not squad alone —
+	// see ManagerHub's squad-value calculation) and Bank is the bank
+	// balance in tenths, both as of this gameweek.
+	Value int `json:"value"`
+	Bank  int `json:"bank"`
 }
 
 // ChipUsage is one chip play recorded in a manager's history.

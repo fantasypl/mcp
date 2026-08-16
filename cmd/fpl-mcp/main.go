@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -134,7 +135,7 @@ func main() {
 		return nil, call(func() (any, error) { return engine.FixtureOutlook(ctx, clamp(n, 1, 10), p) }, "Failed to get fixture outlook. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "price_predictions", Description: "Predict likely FPL price rises and falls."}, func(ctx context.Context, _ *mcp.CallToolRequest, _ priceIn) (*mcp.CallToolResult, any, error) {
-		return nil, call(func() (any, error) { return engine.PricePredictions(ctx, 10) }, "Failed to get price predictions. The FPL API may be temporarily unavailable — try again."), nil
+		return nil, call(func() (any, error) { return engine.PricePredictions(ctx, 0) }, "Failed to get price predictions. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "transfer_suggestions", Description: "Get transfer recommendations for an FPL team."}, func(ctx context.Context, _ *mcp.CallToolRequest, in transferIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
@@ -208,7 +209,7 @@ func main() {
 		}
 		return nil, call(func() (any, error) { return engine.SquadScout(ctx, in.TeamID) }, "Failed to scout squad. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "fpl_manager_hub", Description: "Complete FPL intelligence report for a manager's team."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hubIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "fpl_manager_hub", Description: "Complete FPL intelligence report for a manager's team. THIS IS THE BEST STARTING POINT."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hubIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
@@ -216,20 +217,8 @@ func main() {
 			in.GameweeksAhead = 5
 		}
 		return nil, call(func() (any, error) {
-			a, e := engine.CaptainPicks(ctx, nil, 5)
-			if e != nil {
-				return nil, e
-			}
-			b, e := engine.TransferSuggestions(ctx, in.TeamID, 1, 0)
-			if e != nil {
-				return nil, e
-			}
-			c, e := engine.SquadScout(ctx, in.TeamID)
-			if e != nil {
-				return nil, e
-			}
-			return map[string]any{"team_id": in.TeamID, "captain_recommendation": a, "transfer_suggestions": b, "squad_scout": c}, nil
-		}, "Failed to analyze team. Check that the team ID is correct and try again."), nil
+			return engine.ManagerHub(ctx, in.TeamID, clamp(in.GameweeksAhead, 1, 10))
+		}, fmt.Sprintf("Failed to analyze team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	addResources(s, client)
 	if err := s.Run(ctx, &mcp.StdioTransport{}); err != nil {
