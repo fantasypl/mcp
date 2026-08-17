@@ -132,10 +132,10 @@ type HubPricePredictions struct {
 // every other team-scoped algorithm runs in parallel against the same
 // gameweek's bootstrap and fixtures.
 //
-// Three sequential stages, each internally parallel — mirroring
-// mcp_server._fpl_manager_hub_impl's three asyncio.gather calls, since the
-// second stage needs current_gw from the first and the third needs
-// free_transfers/bank from the second:
+// Three sequential stages, each internally parallel: the second stage
+// needs current_gw from the first, and the third needs free_transfers/bank
+// from the second, so each stage's calls only run concurrently with each
+// other, not across stages:
 //
 //  1. bootstrap + fixtures
 //  2. manager status + this gameweek's picks + season history

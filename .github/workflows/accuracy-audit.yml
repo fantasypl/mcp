@@ -1,0 +1,42 @@
+name: Accuracy Audit
+
+# Runs twice a week (Mon + Thu 08:00 UTC) to catch data integrity issues
+# before each GW cycle, plus on every push touching an algorithm.
+
+on:
+  schedule:
+    - cron: "0 8 * * 1,4"
+  push:
+    branches: [main]
+    paths:
+      - "internal/algo/**"
+      - "cmd/fpl-mcp/**"
+      - "cmd/fplctl/audit.go"
+  workflow_dispatch:
+    inputs:
+      team_id:
+        description: "FPL team ID for team-dependent tools"
+        default: "5293026"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run accuracy audit
+        run: go run ./cmd/fplctl audit -team-id ${{ github.event.inputs.team_id || '5293026' }}
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accuracy-audit-report
+          path: |
+            data/accuracy_audit.json
+            data/accuracy_audit.csv

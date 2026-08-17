@@ -9,8 +9,8 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// validTeam / validLeague / validGW / errResult — ports test_mcp_tools.py's
-// TestValidateTeamId, TestValidateGameweek, and TestErrorHelper.
+// validTeam / validLeague / validGW / errResult — the input-validation
+// helpers every tool handler calls before touching the FPL client.
 // ---------------------------------------------------------------------------
 
 func TestValidTeam(t *testing.T) {
@@ -150,9 +150,9 @@ func isError(m map[string]any) bool {
 }
 
 // ---------------------------------------------------------------------------
-// Per-tool validation — ports test_mcp_tools.py's per-tool test classes.
-// Every case here must be rejected before any fpl.Client call, so a live
-// fpl.NewClient() in callTool never actually reaches the network.
+// Per-tool validation. Every case here must be rejected before any
+// fpl.Client call, so a live fpl.NewClient() in callTool never actually
+// reaches the network.
 // ---------------------------------------------------------------------------
 
 func TestToolValidation(t *testing.T) {

@@ -1,0 +1,91 @@
+name: GW Snapshot & Weight Optimizer
+
+# Two jobs on separate cadences, rather than one cron per gameweek deadline
+# (38 hand-computed timestamps that need updating every season — which the
+# reference Python workflow this replaced had already let go stale).
+#
+# snapshot: fplctl snapshot auto-detects the next upcoming gameweek and is
+# safe to run repeatedly, so running it daily needs no deadline-tracking at
+# all — worst case it just re-captures the same still-upcoming gameweek.
+#
+# evaluate-and-optimize: runs after gameweeks are typically finished
+# (Monday/Thursday, matching accuracy-audit.yml's cadence) — evaluates
+# accuracy for every finished gameweek, audits data integrity, then
+# re-tunes weights over the rolling window.
+
+on:
+  schedule:
+    - cron: "0 8 * * *"     # snapshot — daily 08:00 UTC
+    - cron: "0 6 * * 1,4"   # evaluate + audit + optimize — Mon/Thu 06:00 UTC
+  workflow_dispatch: # allow manual trigger of both jobs
+
+jobs:
+  snapshot:
+    if: github.event.schedule == '0 8 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build fplctl
+        run: go build -o bin/fplctl ./cmd/fplctl
+
+      - name: Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: data/
+          key: fpl-data-${{ github.run_number }}
+          restore-keys: |
+            fpl-data-
+
+      - name: Take GW snapshot
+        run: bin/fplctl snapshot
+
+      - name: Save data cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/
+          key: fpl-data-${{ github.run_number }}
+
+  evaluate-and-optimize:
+    if: github.event.schedule == '0 6 * * 1,4' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build fplctl
+        run: go build -o bin/fplctl ./cmd/fplctl
+
+      - name: Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: data/
+          key: fpl-data-${{ github.run_number }}
+          restore-keys: |
+            fpl-data-
+
+      - name: Evaluate finished gameweeks
+        run: bin/fplctl evaluate -all || true
+
+      - name: Run accuracy audit
+        run: bin/fplctl audit || true
+
+      - name: Run weight optimizer
+        run: bin/fplctl optimize
+
+      - name: Save data cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/
+          key: fpl-data-${{ github.run_number }}

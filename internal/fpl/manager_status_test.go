@@ -54,10 +54,9 @@ func historyJSON(chips ...ChipUsage) string {
 	return b + `]}`
 }
 
-// TestManagerStatusChipReset ports the chip half-reset cases from
-// test_fpl_client.py's TestManagerStatus: FPL resets all chips after GW19,
-// so a chip's gameweek determines whether it counts against the current
-// half, not just whether it was ever played.
+// TestManagerStatusChipReset covers the chip half-reset logic: FPL resets
+// all chips after GW19, so a chip's gameweek determines whether it counts
+// against the current half, not just whether it was ever played.
 func TestManagerStatusChipReset(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -157,9 +156,8 @@ func TestManagerStatusBankConvertedToMillions(t *testing.T) {
 }
 
 // TestManagerStatusAllChipsUsedGivesEmptySlice guards against a nil slice
-// marshaling to JSON null: Python's sorted(set() - used) always returns [],
-// even when every chip is used, and callers depend on chips_remaining being
-// iterable rather than null.
+// marshaling to JSON null: chips_remaining must stay an empty list, not
+// null, even when every chip is used, so callers can always iterate it.
 func TestManagerStatusAllChipsUsedGivesEmptySlice(t *testing.T) {
 	c := managerStatusServer(t, picksJSON(1, 50), historyJSON(
 		ChipUsage{Name: "wildcard", Event: 20}, ChipUsage{Name: "bboost", Event: 20},

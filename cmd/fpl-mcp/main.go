@@ -100,6 +100,10 @@ func call(fn func() (any, error), message string) any {
 	return out
 }
 
+// version is set via -ldflags "-X main.version=..." by the release
+// workflow; "dev" identifies a locally built binary.
+var version = "dev"
+
 func main() {
 	log.SetOutput(os.Stderr)
 	log.SetFlags(0)
@@ -114,7 +118,7 @@ func main() {
 // main so tests can drive it over an in-memory transport instead of stdio.
 func newServer(client *fpl.Client) *mcp.Server {
 	engine := algo.NewEngine(client)
-	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: "1.0.0"}, &mcp.ServerOptions{Instructions: instructions})
+	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {
 			return nil, errResult(e), nil
