@@ -50,20 +50,6 @@ All notable changes to this project are documented here.
 
   The variant never beat baseline in any slice. `internal/algo/captain.go` is unchanged. The measurement harness (`fplctl backtest -minutes`) stays in the tree — a different window size or combination method is worth trying before concluding recency signal can't help here at all, but that's future work, not assumed to be the fix.
 
-### Measured, pending a shipping decision
-
-- **Cross-competition fixture congestion — small, consistent improvement, not yet shipped.** Part B's plan flagged that FPL's API has no knowledge of Champions League/Europa League/Conference League/EFL Cup fixtures, so a team playing again on three days' rest after a midweek European tie looks no harder a fixture than normal. Built via `fplctl backtest -seasons ... -congestion`: fetches each gameweek's already-merged, cross-competition `fixtures.csv` (verified live that `By Gameweek/GW{n}/fixtures.csv` already combines every competition's fixtures for that gameweek, avoiding a much larger per-competition probe that reliably tripped rate limits), and bumps a team's FDR by 1 (clamped to 5) for any Premier League fixture following a match within 3 days, via the same substitution-only design as the Elo and minutes experiments — `blendFDR` itself is untouched.
-
-  Cross-competition data is likewise 2025-26-only, so held out by gameweek range:
-
-  | | Baseline | Congestion variant |
-  |---|---:|---:|
-  | Full season (33 GW, GW6-38): #1 pick total pts | 192 | 195 |
-  | First half (GW6-21, 16 GW): #1 pick total pts | 115 | 117 |
-  | Second half (GW22-38, 17 GW): #1 pick total pts | 77 | 78 |
-
-  The variant matched or beat baseline in every slice — the only one of the three Phase 9/10 experiments so far where that's true. The effect is small (roughly +1.5% on the #1 pick's points, "best of top 5" unchanged in every slice — the adjustment nudges rank among near-ties more than it changes who's competitive), from a single season with an untuned threshold (3 days) and bump size (+1 FDR). Whether that's enough to ship, given it can't yet be cross-season validated, is a call worth making deliberately rather than folding in automatically.
-
 ### Shipped
 
 - **Shot-level finishing regression (xG vs xGOT) in `differential_finder`.** Part B's plan: aggregate `expected_goals` conflates a player having bad chances, having good chances that miss the target, and having good on-target shots the keeper saves — only shot-level xG vs xGOT (post-shot, on-target-only) separates these, distinguishing "good chances, bad finishing" (due to regress up — buy) from "overperforming, due regression" (sell). Unlike the Elo/minutes/congestion experiments, this isn't a captain-pick fixture-multiplier input, so `fplctl finishing-regression` validated it differently: compute each player's finishing luck (actual goals minus summed xGOT, on-target Premier League shots only) through a split gameweek, group the most-underperforming ("buy") and most-overperforming ("sell") players, then compare their actual FPL output over the rest of the season via the new `vaastav.Corpus.FuturePoints`.
@@ -76,6 +62,10 @@ All notable changes to this project are documented here.
   The buy group outscored the sell group in both splits tested — a larger, more consistent edge than the congestion signal's. The computation itself now lives in `internal/insights.Client.FinishingLuck` (shared by `fplctl finishing-regression` and production), surfaced via `Engine.FinishingLuckSource` — nil by default (unlike `IntelFetcher`, since there's no safe "always call it" fallback across the ~20 existing `NewEngine` call sites in tests), wired to a real `*insights.Client` in `cmd/fpl-mcp`'s `newServer`. `differential_finder`'s output gains an optional `finishing_regression` field (`buy`/`sell`/`neutral`, with the underlying delta) and a matching note in `why` when present.
 
   Deliberately informational rather than folded into `differentialScore`: the backtest validated "buy beats sell in aggregate," not a specific weight for the ranking formula — doing that would need its own backtest-justified tuning, separate from "the signal exists at all." Also single-season (`shots.csv` is 2025-26-only), so this degrades to no signal — never an error — for any other season, including live 2026-27 today; it activates automatically once/if that season's shot data appears.
+
+- **Cross-competition fixture congestion flag on `fixture_outlook`.** The measurement (`fplctl backtest -congestion`, see prior entries in this changelog for the full result) matched or beat baseline captain-pick outcome in every slice tested, but on data with the same limitation finishing regression had: single-season only (`fixtures.csv`'s cross-competition coverage is 2025-26-only) and an untuned threshold (3 days) and bump size (+1 FDR) — neither cleared the "backtest across seasons" bar the project holds weighted scoring changes to. Shipped the same way finishing regression was: as an informational signal, not folded into `blendFDR` or `AdjustedDifficulty`'s ranking, since doing that would need its own separately-justified tuning.
+
+  The computation lives in `internal/insights.Client.TeamFixtureCalendar` and `insights.RestDaysBefore` (the production home for logic `fplctl backtest -congestion` used to keep privately — the backtest command now calls the same functions, so the measurement and the shipped signal can't drift apart), surfaced via `Engine.CongestionSource` — nil by default, matching `FinishingLuckSource`'s pattern exactly, wired to the same `*insights.Client` instance in `cmd/fpl-mcp`'s `newServer`. `fixture_outlook`'s output gains an optional `congested` flag on each `OutlookFixture`: true when that team played within `insights.ShortRestThresholdDays` (3) days before the fixture, across every competition. `FDR`/`WeightedFDR`/`AdjustedDifficulty` are unaffected.
 
 ### Fixed
 

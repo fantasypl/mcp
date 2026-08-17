@@ -89,6 +89,20 @@ type Engine struct {
 	// so even wired in, this degrades to no signal for seasons it doesn't
 	// cover, exactly like a nil source.
 	FinishingLuckSource FinishingLuckSource
+
+	// CongestionSource follows FinishingLuckSource's pattern exactly, for the
+	// same reasons: nil by default, wired to a real *insights.Client only by
+	// cmd/fpl-mcp, and degrading to no signal (rather than an error) for any
+	// season olbauday/FPL-Core-Insights' cross-competition fixtures.csv
+	// doesn't cover (2025-26 only as of this writing). Measured via fplctl
+	// backtest -congestion (see CHANGELOG.md): a congested-fixture FDR bump
+	// matched or beat the baseline captain-pick outcome in every slice
+	// tested, but the effect is small, single-season, and the threshold/bump
+	// size are untuned — so FixtureOutlook surfaces it as an informational
+	// flag rather than folding it into blendFDR, the same "signal exists,
+	// weighting it doesn't (yet)" distinction FinishingRegression draws in
+	// differentials.go.
+	CongestionSource CongestionSource
 }
 
 // intelFetcher is the subset of *DGWIntelFetcher chip strategy needs — an
@@ -103,6 +117,14 @@ type intelFetcher interface {
 // pattern.
 type FinishingLuckSource interface {
 	FinishingLuck(ctx context.Context, season string, fromGW, toGW int) (map[int]insights.FinishingDelta, error)
+}
+
+// CongestionSource is the subset of *insights.Client FixtureOutlook needs
+// for the cross-competition congestion signal — an interface so tests can
+// substitute a stub with no network access, matching FinishingLuckSource's
+// pattern.
+type CongestionSource interface {
+	TeamFixtureCalendar(ctx context.Context, season string, fromGW, toGW int) (map[int][]time.Time, error)
 }
 
 // NewEngine returns an Engine with the hand-tuned default weights.

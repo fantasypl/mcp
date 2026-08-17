@@ -4,8 +4,10 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/insights"
 )
 
 // Fixture Outlook — ranks teams by aggregate fixture difficulty over the next
@@ -21,6 +23,13 @@ type OutlookFixture struct {
 	Venue       string  `json:"venue"`
 	FDR         float64 `json:"fdr"`
 	WeightedFDR float64 `json:"weighted_fdr"`
+	// Congested is the cross-competition fixture-congestion signal (see
+	// Engine.CongestionSource's doc): true when this team played a match
+	// within insights.ShortRestThresholdDays days beforehand, across every
+	// competition. Present only when CongestionSource is configured and the
+	// season has cross-competition coverage; informational, not folded into
+	// FDR/WeightedFDR/AdjustedDifficulty.
+	Congested bool `json:"congested,omitempty"`
 }
 
 type TeamOutlook struct {
@@ -87,6 +96,11 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 
 	teams := teamsByID(bootstrap)
 	teamFixtures := make(map[int][]OutlookFixture, len(bootstrap.Teams))
+	calendar := e.congestionCalendar(ctx, currentGW, currentGW+gameweeksAhead-1)
+	codeByTeamID := make(map[int]int, len(bootstrap.Teams))
+	for i := range bootstrap.Teams {
+		codeByTeamID[bootstrap.Teams[i].ID] = bootstrap.Teams[i].Code
+	}
 
 	for i := range fixtures {
 		f := &fixtures[i]
@@ -94,6 +108,7 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		if !ok || !inTarget[gw] {
 			continue
 		}
+		kt, ktErr := time.Parse(time.RFC3339, f.KickoffTime)
 
 		// Note this differs from captain.go: the outlook blends against the
 		// opponent's *attack* strength, where captaincy blends against their
@@ -103,12 +118,19 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		awayFDR := blendFDR(float64(f.TeamADifficulty),
 			strengthOr(teams[f.TeamH], func(t *fpl.Team) int { return t.StrengthAttackHome }))
 
+		homeCongested, awayCongested := false, false
+		if ktErr == nil {
+			homeCongested = isCongested(calendar, codeByTeamID[f.TeamH], kt)
+			awayCongested = isCongested(calendar, codeByTeamID[f.TeamA], kt)
+		}
+
 		teamFixtures[f.TeamH] = append(teamFixtures[f.TeamH], OutlookFixture{
 			Gameweek:    gw,
 			Opponent:    shortName(teams[f.TeamA]),
 			Venue:       "H",
 			FDR:         homeFDR,
 			WeightedFDR: homeFDR * homeWeight,
+			Congested:   homeCongested,
 		})
 		teamFixtures[f.TeamA] = append(teamFixtures[f.TeamA], OutlookFixture{
 			Gameweek:    gw,
@@ -116,6 +138,7 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 			Venue:       "A",
 			FDR:         awayFDR,
 			WeightedFDR: awayFDR,
+			Congested:   awayCongested,
 		})
 	}
 
@@ -264,4 +287,38 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		NumPlayersToTarget: len(targets),
 		PlayersToTarget:    targets,
 	}, nil
+}
+
+// congestionCalendar best-effort fetches each team's cross-competition
+// fixture calendar covering the outlook window, plus one gameweek of
+// context before it so the first target gameweek's rest-days check has a
+// prior fixture to compare against. Returns nil (no signal for anyone) if
+// CongestionSource isn't configured or the fetch fails for any reason —
+// this is enrichment, never allowed to break FixtureOutlook, matching
+// finishingLuckMap's contract in differentials.go.
+func (e *Engine) congestionCalendar(ctx context.Context, fromGW, toGW int) map[int][]time.Time {
+	if e.CongestionSource == nil {
+		return nil
+	}
+	probeFrom := fromGW - 1
+	if probeFrom < 1 {
+		probeFrom = 1
+	}
+	calendar, err := e.CongestionSource.TeamFixtureCalendar(ctx, currentInsightsSeason(e.Now()), probeFrom, toGW)
+	if err != nil {
+		return nil
+	}
+	return calendar
+}
+
+// isCongested reports whether team code's calendar shows a fixture within
+// insights.ShortRestThresholdDays days before ref. A missing calendar or
+// unknown team code (code == 0, e.g. a club without an FPL-Core-Insights
+// mapping) reports false rather than erroring.
+func isCongested(calendar map[int][]time.Time, code int, ref time.Time) bool {
+	if calendar == nil || code == 0 {
+		return false
+	}
+	rest, ok := insights.RestDaysBefore(calendar[code], ref)
+	return ok && rest <= insights.ShortRestThresholdDays
 }
