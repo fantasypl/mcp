@@ -2,7 +2,9 @@
   "current": [
     {
       "event": 1,
-      "points": 40
+      "points": 40,
+      "value": 0,
+      "bank": 0
     }
   ],
   "chips": []
