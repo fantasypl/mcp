@@ -21,14 +21,19 @@ const playermatchstatsCSV = `player_id,match_id,minutes_played,start_min,finish_
 266,25-26-prem-manchester-united-vs-arsenal,90,0,90,1
 `
 
+const clFixturesCSV = `gameweek,kickoff_time,home_team,away_team,match_id,tournament
+4,2025-09-16T16:45:00+00:00,3,,25-26-champions-league-arsenal-vs-athletic-club,champions-league
+`
+
 func newTestServer(t *testing.T, hits *int) *httptest.Server {
 	t.Helper()
 	// Go's net/http decodes %20 back to a literal space in r.URL.Path, so
 	// keys here use the decoded form even though the client requests the
 	// %20-escaped one.
 	files := map[string]string{
-		"/2025-2026/teams.csv":                            teamsCSV,
-		"/2025-2026/By Gameweek/GW1/playermatchstats.csv": playermatchstatsCSV,
+		"/2025-2026/teams.csv":                                       teamsCSV,
+		"/2025-2026/By Gameweek/GW1/playermatchstats.csv":            playermatchstatsCSV,
+		"/2025-2026/By Tournament/Champions League/GW4/fixtures.csv": clFixturesCSV,
 	}
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if hits != nil {
@@ -48,6 +53,7 @@ func newClient(t *testing.T, srv *httptest.Server) *Client {
 	c := NewClient(filepath.Join(t.TempDir(), "cache"))
 	c.BaseURL = srv.URL
 	c.HTTP = srv.Client()
+	c.RetryBackoff = time.Millisecond // keep retry tests fast
 	return c
 }
 
@@ -98,6 +104,30 @@ func TestGameweekFileSpaceInPath(t *testing.T) {
 	}
 }
 
+func TestTournamentGameweekFile(t *testing.T) {
+	srv := newTestServer(t, nil)
+	defer srv.Close()
+	c := newClient(t, srv)
+
+	rows, err := c.TournamentGameweekFile(context.Background(), "2025-2026", "Champions League", 4, "fixtures.csv")
+	if err != nil {
+		t.Fatalf("TournamentGameweekFile: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("rows = %d, want 1", len(rows))
+	}
+	if rows[0]["home_team"] != "3" {
+		t.Errorf("home_team = %q, want %q (Arsenal's FPL code)", rows[0]["home_team"], "3")
+	}
+
+	// A competition round that doesn't fall in this gameweek is the normal
+	// case, not an error.
+	_, err = c.TournamentGameweekFile(context.Background(), "2025-2026", "Champions League", 5, "fixtures.csv")
+	if !errors.Is(err, ErrNotAvailable) {
+		t.Fatalf("err = %v, want ErrNotAvailable", err)
+	}
+}
+
 func TestGameweekFileNotAvailable(t *testing.T) {
 	srv := newTestServer(t, nil)
 	defer srv.Close()
@@ -111,6 +141,43 @@ func TestGameweekFileNotAvailable(t *testing.T) {
 		t.Fatalf("err = %v, want ErrNotAvailable", err)
 	}
 }
+
+// TestFetchRetriesTransientFailures guards against the real bug found
+// verifying this package against the live GitHub CDN: a transport-level
+// error (a request that fails before any HTTP status is even returned —
+// timeout, reset, etc.) bypassed retry entirely, only status-code failures
+// like 503 were retried. A single flaky request used to fail the whole
+// fetch outright.
+func TestFetchRetriesTransientFailures(t *testing.T) {
+	var calls int
+	rt := roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		calls++
+		if calls < 3 {
+			return nil, errors.New("simulated transport failure")
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       http.NoBody,
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	c := NewClient(t.TempDir())
+	c.HTTP = &http.Client{Transport: rt}
+	c.RetryBackoff = time.Millisecond
+
+	_, err := c.GameweekFile(context.Background(), "2025-2026", 1, "lineups.csv")
+	if err != nil {
+		t.Fatalf("GameweekFile should succeed after retrying transport failures: %v", err)
+	}
+	if calls != 3 {
+		t.Fatalf("calls = %d, want 3 (2 failures + 1 success)", calls)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func TestFetchRespectsCacheTTL(t *testing.T) {
 	var hits int

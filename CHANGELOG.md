@@ -18,6 +18,9 @@ All notable changes to this project are documented here.
 - `internal/clubelo`: client for clubelo.com's historical Elo (needed to back-test an Elo-driven fixture multiplier across past seasons — FPL-Core-Insights' `teams.csv:elo` only carries a current snapshot). The formerly-keyless CSV API at `api.clubelo.com` is unreachable from this environment (both HTTP and HTTPS hang outbound — looks like a network-egress restriction, not the service being down), so this scrapes clubelo.com's public club pages instead: the current-Elo header line, plus a recent Elo history (~4 seasons as of writing) from an embedded Vega-Lite chart JSON blob, which is a real structured payload rather than table-cell scraping. Team identity (`SlugFor`) is a verified table, not a guess — every slug was read from a real href on the live `https://clubelo.com/ENG` page, including newly-promoted Sunderland. Smoke-tested end-to-end against the live site for five clubs. The table also covers five clubs relegated before 2026-27 (Leicester, Southampton, Luton, Sheffield United, Ipswich), each verified individually, so historical seasons back-test correctly.
 - `fplctl backtest -seasons ... -elo`: runs the unmodified captain algorithm twice per gameweek — once against FPL's own dynamic team strength, once with an Elo-derived value substituted or blended in (`cmd/fplctl/elo_backtest.go`) — and reports both, split by tuning vs. held-out season. Kept as reusable measurement tooling regardless of the result below.
 - `fplctl backtest -seasons ... -minutes`: the same measurement pattern (`cmd/fplctl/minutes_backtest.go`) for a recent-start-rate minutes signal — see the rejected result below.
+- `internal/insights.TournamentGameweekFile`: fetches a per-gameweek CSV scoped to one competition (`By Tournament/{competition}/GW{n}/`), for isolating European/cup fixtures from the Premier League.
+- `internal/insights` now retries HTTP 429/502/503/504 *and* outright transport-level failures (a request that times out before any response headers arrive) with linear backoff, and disables HTTP keep-alives by default. Verified live: raw.githubusercontent.com is unreliable enough under sequential load from this project's environment that a bare request — even via plain `curl`, retried a few times — regularly needs more than one attempt to succeed, and a pooled/reused connection started hanging consistently after roughly two dozen requests in a row.
+- `fplctl backtest -seasons ... -congestion`: the same measurement pattern (`cmd/fplctl/congestion_backtest.go`) for a cross-competition fixture-congestion signal — see the result below, pending a decision on whether to ship it.
 
 ### Measured and rejected
 
@@ -44,6 +47,20 @@ All notable changes to this project are documented here.
   | Second half (GW22-38, 17 GW): #1 pick total pts | 77 | 77 (tie) |
 
   The variant never beat baseline in any slice. `internal/algo/captain.go` is unchanged. The measurement harness (`fplctl backtest -minutes`) stays in the tree — a different window size or combination method is worth trying before concluding recency signal can't help here at all, but that's future work, not assumed to be the fix.
+
+### Measured, pending a shipping decision
+
+- **Cross-competition fixture congestion — small, consistent improvement, not yet shipped.** Part B's plan flagged that FPL's API has no knowledge of Champions League/Europa League/Conference League/EFL Cup fixtures, so a team playing again on three days' rest after a midweek European tie looks no harder a fixture than normal. Built via `fplctl backtest -seasons ... -congestion`: fetches each gameweek's already-merged, cross-competition `fixtures.csv` (verified live that `By Gameweek/GW{n}/fixtures.csv` already combines every competition's fixtures for that gameweek, avoiding a much larger per-competition probe that reliably tripped rate limits), and bumps a team's FDR by 1 (clamped to 5) for any Premier League fixture following a match within 3 days, via the same substitution-only design as the Elo and minutes experiments — `blendFDR` itself is untouched.
+
+  Cross-competition data is likewise 2025-26-only, so held out by gameweek range:
+
+  | | Baseline | Congestion variant |
+  |---|---:|---:|
+  | Full season (33 GW, GW6-38): #1 pick total pts | 192 | 195 |
+  | First half (GW6-21, 16 GW): #1 pick total pts | 115 | 117 |
+  | Second half (GW22-38, 17 GW): #1 pick total pts | 77 | 78 |
+
+  The variant matched or beat baseline in every slice — the only one of the three Phase 9/10 experiments so far where that's true. The effect is small (roughly +1.5% on the #1 pick's points, "best of top 5" unchanged in every slice — the adjustment nudges rank among near-ties more than it changes who's competitive), from a single season with an untuned threshold (3 days) and bump size (+1 FDR). Whether that's enough to ship, given it can't yet be cross-season validated, is a call worth making deliberately rather than folding in automatically.
 
 ### Fixed
 

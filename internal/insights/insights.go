@@ -52,20 +52,37 @@ var ErrNotAvailable = errors.New("insights: not available")
 
 // Client fetches and disk-caches FPL-Core-Insights CSVs.
 type Client struct {
-	CacheDir string
-	BaseURL  string
-	TTL      time.Duration
-	HTTP     *http.Client
+	CacheDir     string
+	BaseURL      string
+	TTL          time.Duration
+	HTTP         *http.Client
+	RetryBackoff time.Duration // linear backoff unit; see MaxRetries
+	MaxRetries   int
 
 	// now is injected for deterministic TTL tests.
 	now func() time.Time
 }
 
 // NewClient returns a Client caching fetched CSVs under cacheDir.
+//
+// Keep-alives are deliberately disabled: verified live, a sequential burst
+// of requests over a pooled/reused connection to raw.githubusercontent.com
+// starts hanging (context deadline exceeded) after roughly two dozen
+// requests, every time, at the same point — while a fresh connection per
+// request (matching plain curl, which never reuses a connection across
+// separate invocations) never fails. Congestion's cross-competition probe
+// is exactly this shape (~190 sequential requests), so a fresh connection
+// per request is worth the small extra handshake cost.
 func NewClient(cacheDir string) *Client {
 	return &Client{
 		CacheDir: cacheDir, BaseURL: DefaultBaseURL, TTL: DefaultTTL,
-		HTTP: &http.Client{Timeout: 30 * time.Second}, now: time.Now,
+		HTTP: &http.Client{
+			Timeout:   30 * time.Second,
+			Transport: &http.Transport{DisableKeepAlives: true},
+		},
+		RetryBackoff: defaultRetryBackoff,
+		MaxRetries:   defaultMaxRetries,
+		now:          time.Now,
 	}
 }
 
@@ -78,6 +95,55 @@ func (c *Client) seasonFile(ctx context.Context, season, file string) ([]byte, e
 // gameweekFile fetches a per-gameweek file under "By Gameweek/GW{n}/".
 func (c *Client) gameweekFile(ctx context.Context, season string, gw int, file string) ([]byte, error) {
 	return c.fetch(ctx, fmt.Sprintf("%s/By Gameweek/GW%d/%s", season, gw, file))
+}
+
+// tournamentGameweekFile fetches a per-gameweek file under
+// "By Tournament/{competition}/GW{n}/" — e.g. competition "Champions League"
+// for European fixtures. Unlike "By Gameweek", a competition's own GW
+// numbers are sparse (only the Premier League gameweeks a round actually
+// falls in have a directory), so ErrNotAvailable is the normal, expected
+// result for most gameweeks — see GameweekFile's doc.
+func (c *Client) tournamentGameweekFile(ctx context.Context, season, competition string, gw int, file string) ([]byte, error) {
+	return c.fetch(ctx, fmt.Sprintf("%s/By Tournament/%s/GW%d/%s", season, competition, gw, file))
+}
+
+// defaultMaxRetries and defaultRetryBackoff (Client.MaxRetries/RetryBackoff)
+// exist because raw.githubusercontent.com is unreliable under sequential
+// load from this project's environment — verified live: a cold-cache probe
+// of many files back to back (the congestion feature's per-gameweek fixture
+// fetch) hits HTTP 429, transient 502/503/504s, and outright transport-level
+// timeouts (a request that never gets a response at all, even via plain
+// curl retried a few times) often enough that a single request without
+// retry is not reliable. All of these are retried with linear backoff;
+// every other non-200, non-404 status is not, since retrying those
+// wouldn't help.
+const (
+	defaultMaxRetries   = 8
+	defaultRetryBackoff = 3 * time.Second
+)
+
+// isRetryableStatus reports whether resp's status is worth retrying:
+// rate-limited or a transient upstream/gateway failure.
+func isRetryableStatus(status int) bool {
+	switch status {
+	case http.StatusTooManyRequests, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	default:
+		return false
+	}
+}
+
+// sleepCtx sleeps for d, or returns early with ctx's error if it's
+// cancelled first.
+func sleepCtx(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-t.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // fetch returns relPath's bytes from the on-disk cache if present and
@@ -101,24 +167,49 @@ func (c *Client) fetch(ctx context.Context, relPath string) ([]byte, error) {
 	// listing — so a plain replace is enough; no need for full path
 	// segment-escaping.
 	reqURL := c.BaseURL + "/" + strings.ReplaceAll(relPath, " ", "%20")
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("fetch %s: %w", relPath, err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrNotAvailable
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetch %s: status %d", relPath, resp.StatusCode)
-	}
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read %s: %w", relPath, err)
+
+	var b []byte
+	for attempt := 0; ; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.HTTP.Do(req)
+		if err != nil {
+			// A transport-level failure (connection timeout, reset, DNS hiccup)
+			// never even reaches the status-code check below, but is exactly as
+			// retryable as a 503 — verified live, raw.githubusercontent.com
+			// intermittently times out on individual requests under this
+			// sandbox's network conditions, succeeding on a bare retry.
+			if ctx.Err() == nil && attempt < c.MaxRetries {
+				if sleepErr := sleepCtx(ctx, c.RetryBackoff*time.Duration(attempt+1)); sleepErr != nil {
+					return nil, sleepErr
+				}
+				continue
+			}
+			return nil, fmt.Errorf("fetch %s: %w", relPath, err)
+		}
+		if isRetryableStatus(resp.StatusCode) && attempt < c.MaxRetries {
+			resp.Body.Close()
+			if err := sleepCtx(ctx, c.RetryBackoff*time.Duration(attempt+1)); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if resp.StatusCode == http.StatusNotFound {
+			resp.Body.Close()
+			return nil, ErrNotAvailable
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("fetch %s: status %d", relPath, resp.StatusCode)
+		}
+		b, err = io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", relPath, err)
+		}
+		break
 	}
 
 	if err := os.MkdirAll(filepath.Dir(cachePath), 0o755); err != nil {
@@ -183,6 +274,20 @@ func (c *Client) SeasonFile(ctx context.Context, season, file string) ([]map[str
 // or a gameweek not yet played.
 func (c *Client) GameweekFile(ctx context.Context, season string, gw int, file string) ([]map[string]string, error) {
 	b, err := c.gameweekFile(ctx, season, gw, file)
+	if err != nil {
+		return nil, err
+	}
+	return decodeCSV(b)
+}
+
+// TournamentGameweekFile fetches and decodes a per-gameweek CSV scoped to a
+// specific competition (e.g. "Champions League", "EFL Cup") rather than the
+// combined "By Gameweek" view — the only way to isolate European/cup
+// fixtures from Premier League ones. Returns ErrNotAvailable when that
+// competition has no round falling in gw, which is the normal case for most
+// gameweeks (a competition's rounds are sparse across the season).
+func (c *Client) TournamentGameweekFile(ctx context.Context, season, competition string, gw int, file string) ([]map[string]string, error) {
+	b, err := c.tournamentGameweekFile(ctx, season, competition, gw, file)
 	if err != nil {
 		return nil, err
 	}
