@@ -21,8 +21,11 @@ type captainIn struct {
 	Gameweek *int `json:"gameweek,omitempty" jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
 }
 type diffIn struct {
-	MaxOwnershipPct float64 `json:"max_ownership_pct,omitempty" jsonschema:"Maximum ownership percentage (0.1-100). Default 10."`
-	Gameweek        *int    `json:"gameweek,omitempty"           jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
+	// A pointer, not a plain float64: 0.0 is a valid but out-of-range value
+	// (below the 0.1 minimum) distinct from "the caller didn't set this
+	// field", and only a pointer lets the handler tell them apart.
+	MaxOwnershipPct *float64 `json:"max_ownership_pct,omitempty" jsonschema:"Maximum ownership percentage (0.1-100). Default 10."`
+	Gameweek        *int     `json:"gameweek,omitempty"           jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
 }
 type fixtureIn struct {
 	GameweeksAhead int    `json:"gameweeks_ahead,omitempty" jsonschema:"How many gameweeks to look ahead (1-10). Default 5."`
@@ -100,9 +103,17 @@ func call(fn func() (any, error), message string) any {
 func main() {
 	log.SetOutput(os.Stderr)
 	log.SetFlags(0)
-	client := fpl.NewClient()
+	s := newServer(fpl.NewClient())
+	if err := s.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// newServer builds the MCP server and registers every tool, resource, and
+// prompt against client, without connecting a transport — split out from
+// main so tests can drive it over an in-memory transport instead of stdio.
+func newServer(client *fpl.Client) *mcp.Server {
 	engine := algo.NewEngine(client)
-	ctx := context.Background()
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: "1.0.0"}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {
@@ -111,16 +122,17 @@ func main() {
 		return nil, call(func() (any, error) { return engine.CaptainPicks(ctx, in.Gameweek, 5) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "differential_finder", Description: "Find underowned FPL players who are outperforming their ownership percentage.\n\nUSE THIS WHEN the user asks: \"Find me a differential\", \"Who are the hidden gems?\", \"Low-owned players performing well?\", or wants to climb the rankings with unique picks."}, func(ctx context.Context, _ *mcp.CallToolRequest, in diffIn) (*mcp.CallToolResult, any, error) {
-		if in.MaxOwnershipPct == 0 {
-			in.MaxOwnershipPct = 10
+		maxOwnershipPct := 10.0
+		if in.MaxOwnershipPct != nil {
+			maxOwnershipPct = *in.MaxOwnershipPct
 		}
 		if e := validGW(in.Gameweek); e != "" {
 			return nil, errResult(e), nil
 		}
-		if in.MaxOwnershipPct < .1 || in.MaxOwnershipPct > 100 {
+		if maxOwnershipPct < .1 || maxOwnershipPct > 100 {
 			return nil, errResult("max_ownership_pct must be between 0.1 and 100."), nil
 		}
-		return nil, call(func() (any, error) { return engine.Differentials(ctx, in.MaxOwnershipPct, in.Gameweek, 10) }, "Failed to find differentials. The FPL API may be temporarily unavailable — try again."), nil
+		return nil, call(func() (any, error) { return engine.Differentials(ctx, maxOwnershipPct, in.Gameweek, 10) }, "Failed to find differentials. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "fixture_outlook", Description: "Rank all 20 Premier League teams by upcoming fixture difficulty.\n\nUSE THIS WHEN the user asks: \"Who has easy fixtures?\", \"Which teams to target?\", \"Best defenders to buy for the next 5 weeks?\", or any fixture-planning question."}, func(ctx context.Context, _ *mcp.CallToolRequest, in fixtureIn) (*mcp.CallToolResult, any, error) {
 		n := in.GameweeksAhead
@@ -224,9 +236,7 @@ func main() {
 	})
 	addResources(s, client)
 	addPrompts(s)
-	if err := s.Run(ctx, &mcp.StdioTransport{}); err != nil {
-		log.Fatal(err)
-	}
+	return s
 }
 
 func maxf(v, lo float64) float64 {
