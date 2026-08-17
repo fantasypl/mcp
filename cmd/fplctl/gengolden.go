@@ -16,20 +16,6 @@ import (
 
 const syntheticTeamID = 999001
 
-// knownGoldenDrift lists generated files whose current committed content is
-// known to differ from a fresh regeneration, pending a deliberate decision.
-// rivals_scenario's differentials list ties on form with no further
-// tiebreak beyond player_id, and the currently committed golden reflects an
-// upstream player mix that predates the deterministic tiebreak — see
-// formatPlayerList in internal/algo/rivals.go. Re-baselining changes
-// behavior, so it's deferred rather than folded into this fixture cleanup.
-// --check reports these paths but does not fail on them.
-var knownGoldenDrift = map[string]bool{
-	filepath.Join("rivals_scenario", "bootstrap.json"): true,
-	filepath.Join("rivals_scenario", "fixtures.json"):  true,
-	filepath.Join("rivals_scenario", "golden.json"):    true,
-}
-
 func runGenGolden(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("gengolden", flag.ContinueOnError)
 	which := fs.String("which", "all", "golden set: basic, live, chips, league, rivals, or all")
@@ -227,7 +213,7 @@ func runGenGoldenCheck(ctx context.Context) error {
 		}
 	}
 
-	var failed, deferred int
+	var failed int
 	walkErr := filepath.Walk(tmp, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
@@ -250,20 +236,12 @@ func runGenGoldenCheck(ctx context.Context) error {
 		if len(ms) == 0 {
 			return nil
 		}
-		if knownGoldenDrift[rel] {
-			deferred++
-			fmt.Printf("DEFERRED %s: %d mismatch(es) — known drift, tracked separately (see knownGoldenDrift)\n", rel, len(ms))
-			return nil
-		}
 		failed++
 		fmt.Printf("MISMATCH %s\n%s", rel, golden.Format(ms, 10))
 		return nil
 	})
 	if walkErr != nil {
 		return walkErr
-	}
-	if deferred > 0 {
-		fmt.Printf("\n%d file(s) show known, deferred drift.\n", deferred)
 	}
 	if failed > 0 {
 		return fmt.Errorf("%d file(s) differ from a fresh regeneration; run 'fplctl gengolden' and review the diff before committing", failed)

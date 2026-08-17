@@ -1,1 +1,117 @@
-{"active_chip": null, "entry_history": {"bank": 5, "event_transfers": 1, "overall_rank": 1234567, "points_on_bench": 0, "total_points": 1374}, "picks": [{"element": 226, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 1}, {"element": 426, "is_captain": true, "is_vice_captain": false, "multiplier": 2, "position": 2}, {"element": 4, "is_captain": false, "is_vice_captain": true, "multiplier": 1, "position": 3}, {"element": 13, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 4}, {"element": 155, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 5}, {"element": 5, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 6}, {"element": 31, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 7}, {"element": 30, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 8}, {"element": 401, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 9}, {"element": 379, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 10}, {"element": 38, "is_captain": false, "is_vice_captain": false, "multiplier": 1, "position": 11}, {"element": 58, "is_captain": false, "is_vice_captain": false, "multiplier": 0, "position": 12}, {"element": 132, "is_captain": false, "is_vice_captain": false, "multiplier": 0, "position": 13}, {"element": 134, "is_captain": false, "is_vice_captain": false, "multiplier": 0, "position": 14}, {"element": 107, "is_captain": false, "is_vice_captain": false, "multiplier": 0, "position": 15}]}
+{
+  "picks": [
+    {
+      "element": 226,
+      "position": 1,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 426,
+      "position": 2,
+      "multiplier": 2,
+      "is_captain": true,
+      "is_vice_captain": false
+    },
+    {
+      "element": 4,
+      "position": 3,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": true
+    },
+    {
+      "element": 13,
+      "position": 4,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 155,
+      "position": 5,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 5,
+      "position": 6,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 31,
+      "position": 7,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 30,
+      "position": 8,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 401,
+      "position": 9,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 379,
+      "position": 10,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 38,
+      "position": 11,
+      "multiplier": 1,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 58,
+      "position": 12,
+      "multiplier": 0,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 132,
+      "position": 13,
+      "multiplier": 0,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 134,
+      "position": 14,
+      "multiplier": 0,
+      "is_captain": false,
+      "is_vice_captain": false
+    },
+    {
+      "element": 107,
+      "position": 15,
+      "multiplier": 0,
+      "is_captain": false,
+      "is_vice_captain": false
+    }
+  ],
+  "active_chip": null,
+  "entry_history": {
+    "bank": 5,
+    "event_transfers": 1,
+    "overall_rank": 1234567,
+    "total_points": 1374,
+    "points_on_bench": 0
+  }
+}

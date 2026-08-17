@@ -1,1 +1,16 @@
-[{"event": 2, "element_in": 3, "element_in_cost": 45, "element_out": 1, "element_out_cost": 50}, {"event": 5, "element_in": 7, "element_in_cost": 50, "element_out": 9, "element_out_cost": 45}]
+[
+  {
+    "event": 2,
+    "element_in": 3,
+    "element_in_cost": 45,
+    "element_out": 1,
+    "element_out_cost": 50
+  },
+  {
+    "event": 5,
+    "element_in": 7,
+    "element_in_cost": 50,
+    "element_out": 9,
+    "element_out_cost": 45
+  }
+]
