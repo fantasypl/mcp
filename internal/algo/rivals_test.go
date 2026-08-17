@@ -22,7 +22,7 @@ func newRivalsEngine(t *testing.T) *Engine {
 	t.Helper()
 	dir := func(name string) string { return testdataPath("rivals_scenario", name) }
 
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, dir("bootstrap.json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, dir("fixtures.json")),
 		leagues: map[int]*fpl.LeagueStandings{
@@ -226,7 +226,7 @@ func TestRivalAnalysisErrorShapes(t *testing.T) {
 	fixtures := loadJSON[[]fpl.Fixture](t, testdataPath("fixtures.json"))
 
 	t.Run("league not found", func(t *testing.T) {
-		c := &stubClient{bootstrap: bootstrap, fixtures: fixtures,
+		c := &StubClient{bootstrap: bootstrap, fixtures: fixtures,
 			leagues: map[int]*fpl.LeagueStandings{1: {League: fpl.LeagueInfo{ID: 1}}}}
 		got, err := NewEngine(c).RivalAnalysis(context.Background(), 1, 999)
 		if err != nil {
@@ -238,7 +238,7 @@ func TestRivalAnalysisErrorShapes(t *testing.T) {
 	})
 
 	t.Run("team not found in league", func(t *testing.T) {
-		c := &stubClient{bootstrap: bootstrap, fixtures: fixtures,
+		c := &StubClient{bootstrap: bootstrap, fixtures: fixtures,
 			leagues: map[int]*fpl.LeagueStandings{
 				1: {
 					League:    fpl.LeagueInfo{ID: 1, Name: "Some League"},

@@ -42,7 +42,7 @@ func newChipsEngine(t *testing.T) *Engine {
 	t.Helper()
 	dir := func(name string) string { return testdataPath("chips_scenario", name) }
 
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, dir("bootstrap.json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, dir("fixtures.json")),
 		picks: map[picksKey]*fpl.TeamPicks{
@@ -72,7 +72,7 @@ func TestChipStrategyMatchesGolden(t *testing.T) {
 func TestChipStrategyNoChipsRemaining(t *testing.T) {
 	e := newChipsEngine(t)
 	// Override history so every chip has been used this half.
-	c := e.client.(*stubClient)
+	c := e.client.(*StubClient)
 	c.history[999001] = &fpl.TeamHistory{
 		Chips: []fpl.ChipUsage{
 			{Name: "wildcard", Event: 1}, {Name: "bboost", Event: 1},

@@ -14,7 +14,7 @@ import (
 // vs projected bonus, and a bench too small to cover every unused starter.
 func newLiveEngine(t *testing.T) *Engine {
 	t.Helper()
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap:   loadJSON[*fpl.Bootstrap](t, testdataPath("live_scenario", "bootstrap.json")),
 		fixtures:    loadJSON[[]fpl.Fixture](t, testdataPath("live_scenario", "fixtures.json")),
 		picks:       map[picksKey]*fpl.TeamPicks{{syntheticTeamID, 1}: loadJSON[*fpl.TeamPicks](t, testdataPath("live_scenario", "picks.json"))},

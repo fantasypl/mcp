@@ -40,7 +40,7 @@ var goldenClock = time.Date(2026, 7, 30, 12, 0, 0, 0, time.UTC)
 // only way to exercise the form term and detect_streak.
 func newEngine(t *testing.T, fixture string) *Engine {
 	t.Helper()
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, testdataPath("bootstrap_"+fixture+".json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, testdataPath("fixtures.json")),
 	}

@@ -14,7 +14,7 @@ import (
 // match histories, not real ones; see testdata/player_summary_{411,426}.json.
 func newCompareEngine(t *testing.T, fixture string) *Engine {
 	t.Helper()
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, testdataPath("bootstrap_"+fixture+".json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, testdataPath("fixtures.json")),
 		playerSummaries: map[int]*fpl.PlayerSummary{

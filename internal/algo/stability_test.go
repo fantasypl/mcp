@@ -53,7 +53,7 @@ func TestTiedScoresPreserveInputOrder(t *testing.T) {
 		})
 	}
 
-	e := NewEngine(&stubClient{bootstrap: bs, fixtures: fixtures})
+	e := NewEngine(&StubClient{bootstrap: bs, fixtures: fixtures})
 	e.Now = func() time.Time { return goldenClock }
 
 	res, err := e.CaptainPicks(context.Background(), &gw, n)

@@ -19,7 +19,7 @@ const syntheticTeamID = 999001
 func newEngineWithSquad(t *testing.T, fixture string) *Engine {
 	t.Helper()
 	squad := loadJSON[*fpl.TeamPicks](t, testdataPath("picks_squad1.json"))
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, testdataPath("bootstrap_"+fixture+".json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, testdataPath("fixtures.json")),
 		picks:     map[picksKey]*fpl.TeamPicks{{syntheticTeamID, 1}: squad},

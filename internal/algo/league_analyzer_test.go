@@ -20,7 +20,7 @@ func newLeagueEngine(t *testing.T) *Engine {
 	t.Helper()
 	dir := func(name string) string { return testdataPath("league_scenario", name) }
 
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, dir("bootstrap.json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, dir("fixtures.json")),
 		leagues: map[int]*fpl.LeagueStandings{
@@ -56,7 +56,7 @@ func TestAnalyzeLeagueMatchesGolden(t *testing.T) {
 // A league with no standings at all must produce the distinct
 // LeagueNotFound shape, not a Go error.
 func TestAnalyzeLeagueNotFound(t *testing.T) {
-	c := &stubClient{
+	c := &StubClient{
 		bootstrap: loadJSON[*fpl.Bootstrap](t, testdataPath("bootstrap_preseason.json")),
 		fixtures:  loadJSON[[]fpl.Fixture](t, testdataPath("fixtures.json")),
 		leagues: map[int]*fpl.LeagueStandings{
