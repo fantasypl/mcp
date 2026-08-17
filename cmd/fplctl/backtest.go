@@ -50,10 +50,14 @@ func runBacktest(ctx context.Context, args []string) error {
 	seasons := fs.String("seasons", "", "comma-separated vaastav seasons, e.g. 2022-23,2023-24,2024-25 (corpus mode)")
 	holdout := fs.String("holdout", "", "corpus mode: season in -seasons to report separately, out-of-sample")
 	root := fs.String("root", ".", "corpus mode: project root; .cache/vaastav lives under this")
+	eloCompare := fs.Bool("elo", false, "corpus mode: also score an Elo-substituted variant and report both, for comparison")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
+	if *seasons != "" && *eloCompare {
+		return runBacktestEloCompare(ctx, *root, strings.Split(*seasons, ","), *holdout, *fromGW, *toGW)
+	}
 	if *seasons != "" {
 		return runBacktestCorpus(ctx, *root, strings.Split(*seasons, ","), *holdout, *fromGW, *toGW, *jsonOut)
 	}

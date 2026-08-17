@@ -255,10 +255,16 @@ func matchingBrace(b []byte, start int) (int, error) {
 }
 
 // slugByShortName maps FPL's stable team short_name to clubelo.com's own
-// URL slug for that club. Verified live against https://clubelo.com/ENG —
-// every value below was read as a real href on that page, not guessed.
-// A newly promoted club not yet in this table is a clean, named failure via
-// SlugFor rather than a silent miss.
+// URL slug for that club. Current 2026-27 clubs were verified live against
+// https://clubelo.com/ENG — every one of those was read as a real href on
+// that page. Clubs relegated out of the Premier League before 2026-27 (LEI,
+// SOU, LUT, SHU, IPS — needed to back-test across the seasons vaastav and
+// ClubElo's history window both cover) don't appear on that live-fixtures
+// page, so those five were verified individually instead: each URL was
+// fetched directly and confirmed to return a real club page with a
+// parseable Elo header. None of this table is guessed.
+// A club not yet in this table is a clean, named failure via SlugFor rather
+// than a silent miss.
 var slugByShortName = map[string]string{
 	"ARS": "Arsenal",
 	"AVL": "AstonVilla",
@@ -270,12 +276,17 @@ var slugByShortName = map[string]string{
 	"CRY": "CrystalPalace",
 	"EVE": "Everton",
 	"FUL": "Fulham",
+	"IPS": "Ipswich",
 	"LEE": "Leeds",
+	"LEI": "Leicester",
 	"LIV": "Liverpool",
+	"LUT": "Luton",
 	"MCI": "ManCity",
 	"MUN": "ManUnited",
 	"NEW": "Newcastle",
 	"NFO": "Forest",
+	"SHU": "SheffieldUnited",
+	"SOU": "Southampton",
 	"SUN": "Sunderland",
 	"TOT": "Tottenham",
 	"WHU": "WestHam",

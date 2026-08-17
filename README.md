@@ -65,7 +65,7 @@ The operational counterpart, for maintaining the weight-tuning and backtest pipe
 ```bash
 fplctl snapshot [--gw N] [--backfill] [--root DIR]
 fplctl optimize [--window N] [--root DIR]
-fplctl backtest [--gw N | --dir DIR --from N --to N | --seasons S1,S2,... --from N --to N [--holdout SEASON]] [--top N] [--root DIR]
+fplctl backtest [--gw N | --dir DIR --from N --to N | --seasons S1,S2,... --from N --to N [--holdout SEASON] [--elo]] [--top N] [--root DIR]
 fplctl evaluate --gw N [--root DIR]
 fplctl audit [--team-id N] [--root DIR]
 fplctl gengolden [--which SET] [--out DIR] | --check
