@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/insights"
 )
 
 // Differentials surfaces under-owned players whose output is running ahead of
@@ -32,13 +34,35 @@ type DifferentialResult struct {
 }
 
 type Differential struct {
-	Rank    int               `json:"rank"`
-	Player  DifferentialBrief `json:"player"`
-	Fixture *FixtureInfo      `json:"fixture"`
-	Score   float64           `json:"score"`
-	Stats   DifferentialStats `json:"stats"`
-	Why     string            `json:"why"`
-	Streak  Streak            `json:"streak"`
+	Rank                int                  `json:"rank"`
+	Player              DifferentialBrief    `json:"player"`
+	Fixture             *FixtureInfo         `json:"fixture"`
+	Score               float64              `json:"score"`
+	Stats               DifferentialStats    `json:"stats"`
+	Why                 string               `json:"why"`
+	Streak              Streak               `json:"streak"`
+	FinishingRegression *FinishingRegression `json:"finishing_regression,omitempty"`
+}
+
+// FinishingRegression is the shot-level buy/sell signal from
+// internal/insights.FinishingLuck: whether a player's on-target Premier
+// League shots are converting above or below what the shot model (xGOT)
+// expects. Present only when FinishingLuckSource is configured and the
+// current season has shots.csv coverage (2025-26 as of this writing) — see
+// Engine.FinishingLuckSource's doc. Measured via fplctl finishing-regression
+// (see CHANGELOG.md): players flagged "buy" outscored players flagged
+// "sell" in actual future FPL output across every split tested, so this is
+// informational reasoning, not (yet) a change to Score itself — folding it
+// into the ranking formula would need its own weight, backtest-justified
+// separately from "the signal exists at all."
+type FinishingRegression struct {
+	// Delta is actual on-target goals minus summed xGOT: negative means
+	// underperforming shot quality (due to regress up — buy), positive means
+	// overperforming it (due to regress down — sell).
+	Delta         float64 `json:"delta"`
+	Signal        string  `json:"signal"` // "buy", "sell", or "neutral"
+	ActualGoals   int     `json:"actual_goals"`
+	ShotsOnTarget int     `json:"shots_on_target"`
 }
 
 type DifferentialBrief struct {
@@ -93,9 +117,13 @@ func differentialScore(p *fpl.Player, fixtures []TeamFixture, ownershipPct float
 	return Round(score, 3)
 }
 
-// buildWhy explains why this player is a differential *now* rather than in the
-// abstract — ownership band, form, and what makes the coming gameweek suitable.
-func buildWhy(p *fpl.Player, fixtures []TeamFixture) string {
+// buildWhy explains why this player is a differential *now* rather than in
+// the abstract — ownership band, form, what makes the coming gameweek
+// suitable, and (when available) the finishing-regression signal. fr is nil
+// whenever FinishingLuckSource isn't configured or the player doesn't
+// qualify — existing callers that never set FinishingLuckSource are
+// unaffected, since fr is always nil for them.
+func buildWhy(p *fpl.Player, fixtures []TeamFixture, fr *FinishingRegression) string {
 	var parts []string
 
 	ownership := p.SelectedByPercent.Float()
@@ -153,6 +181,16 @@ func buildWhy(p *fpl.Player, fixtures []TeamFixture) string {
 		parts = append(parts, "on penalties")
 	}
 
+	if fr != nil {
+		sumXGOT := float64(fr.ActualGoals) - fr.Delta
+		switch fr.Signal {
+		case "buy":
+			parts = append(parts, fmt.Sprintf("shot data suggests finishing is due to improve (%d goals from %s xGOT on target)", fr.ActualGoals, FloatStr(Round(sumXGOT, 1))))
+		case "sell":
+			parts = append(parts, "shot data suggests recent finishing is running above shot quality")
+		}
+	}
+
 	return Capitalize(strings.Join(parts, ". "))
 }
 
@@ -181,6 +219,7 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, gw, teams)
+	finishingLuck := e.finishingLuckMap(ctx, bootstrap)
 
 	scored := make([]scoredPlayer, 0, len(bootstrap.Elements))
 	for i := range bootstrap.Elements {
@@ -218,6 +257,7 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 		s := scored[i]
 		p := s.player
 		team := teams[p.Team]
+		fr := finishingRegressionFor(finishingLuck[p.ID])
 
 		results = append(results, Differential{
 			Rank: len(results) + 1,
@@ -238,8 +278,9 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 				ICTIndex:      p.ICTIndex.Float(),
 				TotalPoints:   p.TotalPoints,
 			},
-			Why:    buildWhy(p, s.fixtures),
-			Streak: DetectStreak(p),
+			Why:                 buildWhy(p, s.fixtures, fr),
+			Streak:              DetectStreak(p),
+			FinishingRegression: fr,
 		})
 	}
 
@@ -250,6 +291,65 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 		NumDifferentials: len(results),
 		Differentials:    results,
 	}, nil
+}
+
+// finishingLuckMap best-effort fetches the finishing-regression signal for
+// the current season through the last fully-finished gameweek. Returns nil
+// (no signal for anyone) if FinishingLuckSource isn't configured, there's no
+// finished gameweek yet, or the fetch fails for any reason — this is
+// enrichment, never allowed to break Differentials itself. e.Now(), not
+// time.Now(), so tests that inject a fixed clock get a deterministic season
+// string too.
+func (e *Engine) finishingLuckMap(ctx context.Context, bootstrap *fpl.Bootstrap) map[int]insights.FinishingDelta {
+	if e.FinishingLuckSource == nil {
+		return nil
+	}
+	// CurrentGameweek() can be a gameweek still in progress; shots.csv for it
+	// may be incomplete (the source refreshes twice daily, not live), so this
+	// only aggregates through the gameweek before it — the same no-look-ahead
+	// discipline internal/vaastav uses for backtesting.
+	throughGW := bootstrap.CurrentGameweek() - 1
+	if throughGW < 1 {
+		return nil
+	}
+	luck, err := e.FinishingLuckSource.FinishingLuck(ctx, currentInsightsSeason(e.Now()), 1, throughGW)
+	if err != nil {
+		return nil
+	}
+	return luck
+}
+
+// currentInsightsSeason derives FPL-Core-Insights' season identifier
+// ("2025-2026") from now, using the Premier League's own August season
+// boundary.
+func currentInsightsSeason(now time.Time) string {
+	y := now.Year()
+	if now.Month() < time.August {
+		y--
+	}
+	return fmt.Sprintf("%d-%d", y, y+1)
+}
+
+// finishingRegressionFor converts a raw FinishingDelta into the "buy"/"sell"
+// signal Differentials surfaces, or nil if fl doesn't qualify (including the
+// zero value a missing map entry produces — a player with no shots this
+// season is indistinguishable from "not enough shots to trust," which is
+// the correct behavior either way).
+func finishingRegressionFor(fl insights.FinishingDelta) *FinishingRegression {
+	if !fl.Qualified() {
+		return nil
+	}
+	delta := Round(fl.Delta(), 2)
+	signal := "neutral"
+	switch {
+	case delta <= -1.0:
+		signal = "buy"
+	case delta >= 1.0:
+		signal = "sell"
+	}
+	return &FinishingRegression{
+		Delta: delta, Signal: signal, ActualGoals: fl.ActualGoals, ShotsOnTarget: fl.ShotsOnTarget,
+	}
 }
 
 // fixtureInfoFor renders a team's fixtures for a gameweek, with the first

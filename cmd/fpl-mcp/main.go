@@ -7,11 +7,13 @@ import (
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/insights"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -118,6 +120,12 @@ func main() {
 // main so tests can drive it over an in-memory transport instead of stdio.
 func newServer(client *fpl.Client) *mcp.Server {
 	engine := algo.NewEngine(client)
+	// Best-effort: the finishing-regression signal degrades to absent, never
+	// fatal, if the user's cache dir can't be resolved — see
+	// Engine.FinishingLuckSource's doc for why this isn't wired by default.
+	if cacheDir, err := os.UserCacheDir(); err == nil {
+		engine.FinishingLuckSource = insights.NewClient(filepath.Join(cacheDir, "fpl-mcp", "insights"))
+	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/insights"
 )
 
 // ptr returns a pointer to v — for constructing *int/*string literals inline,
@@ -74,6 +75,20 @@ type Engine struct {
 	// proceeds without it, because chip strategy treats this fetch as best-effort
 	// this call.
 	IntelFetcher intelFetcher
+
+	// FinishingLuckSource is unlike IntelFetcher: it defaults to nil rather
+	// than a real client, because Differentials has no equivalent of chip
+	// strategy's "always call it, treat failure as best-effort" contract to
+	// fall back on safely across every one of the ~20 existing NewEngine call
+	// sites in tests — a nil source means the feature is simply not
+	// configured, and Differentials skips it entirely rather than risking an
+	// accidental live network call from a test that doesn't know this field
+	// exists. cmd/fpl-mcp wires a real *insights.Client in after construction.
+	// The signal itself needs olbauday/FPL-Core-Insights' shots.csv, which
+	// only covers 2025-26 as of this writing (see internal/insights' doc) —
+	// so even wired in, this degrades to no signal for seasons it doesn't
+	// cover, exactly like a nil source.
+	FinishingLuckSource FinishingLuckSource
 }
 
 // intelFetcher is the subset of *DGWIntelFetcher chip strategy needs — an
@@ -82,7 +97,17 @@ type intelFetcher interface {
 	Fetch(ctx context.Context) (*CommunityIntel, error)
 }
 
+// FinishingLuckSource is the subset of *insights.Client Differentials needs
+// for the finishing-regression signal — an interface so tests can
+// substitute a stub with no network access, matching intelFetcher's
+// pattern.
+type FinishingLuckSource interface {
+	FinishingLuck(ctx context.Context, season string, fromGW, toGW int) (map[int]insights.FinishingDelta, error)
+}
+
 // NewEngine returns an Engine with the hand-tuned default weights.
+// FinishingLuckSource is left nil — see its doc comment for why callers who
+// want that feature wire it in explicitly rather than getting it by default.
 func NewEngine(c Client) *Engine {
 	return &Engine{client: c, weights: DefaultWeights(), Now: time.Now, IntelFetcher: NewDGWIntelFetcher()}
 }
