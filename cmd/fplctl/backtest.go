@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/fpl"
@@ -18,8 +19,17 @@ import (
 // predictive-validity check, distinct from the golden-file parity tests,
 // which only verify the implementation against the established outputs.
 //
-// Absorbed from the former cmd/backtest-demo prototype. Input is produced by
-// scripts/backtest_from_vaastav.py: a bootstrap reflecting genuine
+// Three modes:
+//   - single: one bootstrap/fixtures/actual JSON triple, given directly.
+//   - batch (-dir): testdata/backtest/gwN/... fixtures for one season,
+//     produced ahead of time by scripts/backtest_from_vaastav.py.
+//   - corpus (-seasons): reconstructs state on demand across many seasons
+//     via internal/vaastav — no fixtures to generate or commit — and, when
+//     -holdout names one of them, reports that season's accuracy separately
+//     from the rest, so a model change's out-of-sample accuracy can't be
+//     confused with the fit it was tuned on.
+//
+// All three score the same way: a bootstrap reflecting genuine
 // season-to-date state through gameweek N-1 (no look-ahead), the full
 // fixture list, and gameweek N's actual per-player results — deliberately
 // not the live-fetch approach, which scores past gameweeks against *today's*
@@ -33,19 +43,27 @@ func runBacktest(ctx context.Context, args []string) error {
 	topN := fs.Int("top", 10, "how many captain picks to show")
 
 	batchDir := fs.String("dir", "", "testdata/backtest root (batch mode)")
-	fromGW := fs.Int("from", 0, "first gameweek to predict (batch mode)")
-	toGW := fs.Int("to", 0, "last gameweek to predict (batch mode)")
-	jsonOut := fs.String("json", "", "batch mode: write the summary as JSON to this path")
+	fromGW := fs.Int("from", 0, "first gameweek to predict (batch/corpus mode)")
+	toGW := fs.Int("to", 0, "last gameweek to predict (batch/corpus mode)")
+	jsonOut := fs.String("json", "", "batch/corpus mode: write the summary as JSON to this path")
+
+	seasons := fs.String("seasons", "", "comma-separated vaastav seasons, e.g. 2022-23,2023-24,2024-25 (corpus mode)")
+	holdout := fs.String("holdout", "", "corpus mode: season in -seasons to report separately, out-of-sample")
+	root := fs.String("root", ".", "corpus mode: project root; .cache/vaastav lives under this")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
+	if *seasons != "" {
+		return runBacktestCorpus(ctx, *root, strings.Split(*seasons, ","), *holdout, *fromGW, *toGW, *jsonOut)
+	}
 	if *batchDir != "" {
 		return runBacktestBatch(*batchDir, *fromGW, *toGW, *jsonOut)
 	}
 	if *bootstrapPath == "" || *fixturesPath == "" || *gw == 0 {
 		return fmt.Errorf("usage: fplctl backtest -bootstrap FILE -fixtures FILE -gw N [-actual FILE] [-top N]\n" +
-			"   or: fplctl backtest -dir testdata/backtest -from N -to M [-json FILE]")
+			"   or: fplctl backtest -dir testdata/backtest -from N -to M [-json FILE]\n" +
+			"   or: fplctl backtest -seasons S1,S2,... -from N -to M [-holdout SEASON] [-json FILE]")
 	}
 	return runBacktestSingle(*bootstrapPath, *fixturesPath, *actualPath, *gw, *topN)
 }
