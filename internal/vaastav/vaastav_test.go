@@ -143,6 +143,32 @@ func TestBuildCaseReconstructsSeasonToDateState(t *testing.T) {
 	}
 }
 
+func TestFuturePointsSumsRangeAndCountsAppearances(t *testing.T) {
+	srv := newTestServer(t)
+	defer srv.Close()
+
+	c := NewCorpus(t.TempDir())
+	c.BaseURL = srv.URL
+	c.HTTP = srv.Client()
+
+	got, err := c.FuturePoints(context.Background(), "2099-00", 2, 3)
+	if err != nil {
+		t.Fatalf("FuturePoints: %v", err)
+	}
+
+	salah := got[1]
+	if salah.Points != 8 || salah.Minutes != 180 || salah.Appearances != 2 {
+		t.Errorf("Salah = %+v, want {Points:8 Minutes:180 Appearances:2}", salah)
+	}
+
+	// Haaland's GW3 row has 0 minutes (an unused substitute) — should count
+	// toward Points/Minutes but not Appearances.
+	haaland := got[2]
+	if haaland.Points != 12 || haaland.Minutes != 90 || haaland.Appearances != 1 {
+		t.Errorf("Haaland = %+v, want {Points:12 Minutes:90 Appearances:1}", haaland)
+	}
+}
+
 func TestBuildCaseRejectsGW1(t *testing.T) {
 	c := NewCorpus(t.TempDir())
 	if _, err := c.BuildCase(context.Background(), "2099-00", 1); err == nil {

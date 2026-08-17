@@ -393,6 +393,40 @@ func (c *Corpus) actualResults(ctx context.Context, season string, gw int) (map[
 	return out, nil
 }
 
+// FuturePoints sums actual points and minutes each player accrued across
+// [fromGW, toGW], keyed by FPL element id — the forward-looking counterpart
+// to BuildCase's backward-looking reconstruction, for validating a signal
+// against what players actually went on to score rather than backtesting a
+// single gameweek's captain pick.
+func (c *Corpus) FuturePoints(ctx context.Context, season string, fromGW, toGW int) (map[int]FuturePlayerPoints, error) {
+	out := make(map[int]FuturePlayerPoints)
+	for gw := fromGW; gw <= toGW; gw++ {
+		rows, err := c.csvRows(ctx, fmt.Sprintf("%s/gws/gw%d.csv", season, gw))
+		if err != nil {
+			return nil, fmt.Errorf("load gw%d: %w", gw, err)
+		}
+		for _, r := range rows {
+			eid := numInt(r["element"])
+			p := out[eid]
+			p.Points += numInt(r["total_points"])
+			p.Minutes += numInt(r["minutes"])
+			if numInt(r["minutes"]) > 0 {
+				p.Appearances++
+			}
+			out[eid] = p
+		}
+	}
+	return out, nil
+}
+
+// FuturePlayerPoints is one player's summed actual output over a gameweek
+// range.
+type FuturePlayerPoints struct {
+	Points      int
+	Minutes     int
+	Appearances int
+}
+
 func buildTeamsJSON(byID map[int]teamRow) []fpl.Team {
 	out := make([]fpl.Team, 0, len(byID))
 	for id, r := range byID {

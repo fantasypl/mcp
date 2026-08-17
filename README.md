@@ -69,6 +69,7 @@ fplctl backtest [--gw N | --dir DIR --from N --to N | --seasons S1,S2,... --from
 fplctl evaluate --gw N [--root DIR]
 fplctl audit [--team-id N] [--root DIR]
 fplctl gengolden [--which SET] [--out DIR] | --check
+fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N] [--root DIR]
 ```
 
 ## Development

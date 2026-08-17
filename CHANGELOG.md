@@ -21,6 +21,8 @@ All notable changes to this project are documented here.
 - `internal/insights.TournamentGameweekFile`: fetches a per-gameweek CSV scoped to one competition (`By Tournament/{competition}/GW{n}/`), for isolating European/cup fixtures from the Premier League.
 - `internal/insights` now retries HTTP 429/502/503/504 *and* outright transport-level failures (a request that times out before any response headers arrive) with linear backoff, and disables HTTP keep-alives by default. Verified live: raw.githubusercontent.com is unreliable enough under sequential load from this project's environment that a bare request — even via plain `curl`, retried a few times — regularly needs more than one attempt to succeed, and a pooled/reused connection started hanging consistently after roughly two dozen requests in a row.
 - `fplctl backtest -seasons ... -congestion`: the same measurement pattern (`cmd/fplctl/congestion_backtest.go`) for a cross-competition fixture-congestion signal — see the result below, pending a decision on whether to ship it.
+- `vaastav.Corpus.FuturePoints`: sums a player's actual points/minutes/appearances over a gameweek range — the forward-looking counterpart to `BuildCase`'s backward-looking reconstruction, for validating a signal against what players actually went on to score.
+- `fplctl finishing-regression` (`cmd/fplctl/finishing_regression.go`): a differently-shaped measurement than the three `-elo`/`-minutes`/`-congestion` experiments — those substitute an alternative input into the existing captain-pick formula, but a finishing-luck signal is a buy/sell classifier, not a scoring input, so this validates it as a cohort comparison against real future output instead. See the result below.
 
 ### Measured and rejected
 
@@ -61,6 +63,15 @@ All notable changes to this project are documented here.
   | Second half (GW22-38, 17 GW): #1 pick total pts | 77 | 78 |
 
   The variant matched or beat baseline in every slice — the only one of the three Phase 9/10 experiments so far where that's true. The effect is small (roughly +1.5% on the #1 pick's points, "best of top 5" unchanged in every slice — the adjustment nudges rank among near-ties more than it changes who's competitive), from a single season with an untuned threshold (3 days) and bump size (+1 FDR). Whether that's enough to ship, given it can't yet be cross-season validated, is a call worth making deliberately rather than folding in automatically.
+
+- **Shot-level finishing regression (xG vs xGOT) — a meaningfully stronger positive result, pending a decision on where it ships.** Part B's plan: aggregate `expected_goals` conflates a player having bad chances, having good chances that miss the target, and having good on-target shots the keeper saves — only shot-level xG vs xGOT (post-shot, on-target-only) separates these, distinguishing "good chances, bad finishing" (due to regress up — buy) from "overperforming, due regression" (sell). Unlike the other three experiments, this isn't a captain-pick fixture-multiplier input, so `fplctl finishing-regression` validates it differently: compute each player's finishing luck (actual goals minus summed xGOT, on-target Premier League shots only) through a split gameweek, group the most-underperforming ("buy") and most-overperforming ("sell") players, then compare their actual FPL output over the rest of the season via the new `vaastav.Corpus.FuturePoints`.
+
+  | Split | Buy pts/appearance | Sell pts/appearance | Buy edge |
+  |---|---:|---:|---:|
+  | GW1-20 → validated GW21-38 (n=15/group) | 4.06 | 3.75 | +8% |
+  | GW1-15 → validated GW16-38 (n=12/group) | 4.46 | 3.56 | +25% |
+
+  The buy group outscored the sell group in both splits tested — a larger, more consistent edge than the congestion signal's. This is a buy/sell classifier in the shape of `differential_finder`/`squad_scout`'s existing output, not a captain-pick scoring term, so shipping it means wiring it into those tools' reasoning rather than `internal/algo/captain.go` — not done here. Also single-season (`shots.csv` is 2025-26-only, same constraint as the minutes and congestion signals), so, like congestion, this is a real result awaiting a deliberate shipping decision, not yet wired into production.
 
 ### Fixed
 
