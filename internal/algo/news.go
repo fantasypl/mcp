@@ -96,10 +96,10 @@ func FormatNewsAge(newsAdded *string, now time.Time) string {
 
 	switch {
 	case days == 0:
-		switch {
-		case hours == 0:
+		switch hours {
+		case 0:
 			return "just now"
-		case hours == 1:
+		case 1:
 			return "1 hour ago"
 		default:
 			return fmt.Sprintf("%d hours ago", hours)

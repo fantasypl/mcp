@@ -1,0 +1,26 @@
+version: "2"
+
+linters:
+  enable:
+    - staticcheck
+    - unused
+    - errcheck
+  settings:
+    errcheck:
+      # A checked error on these calls is rarely actionable: response
+      # bodies and files are closed in defer for resource cleanup, not
+      # because a close failure changes program behavior.
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+        - io.Copy
+        - os.RemoveAll
+  exclusions:
+    rules:
+      # Test setup/assertion helpers routinely discard a call's error
+      # because a broken setup call fails the test's own assertions right
+      # after — checking it separately would be redundant, not safer.
+      - path: _test\.go
+        linters:
+          - errcheck

@@ -15,12 +15,10 @@ import (
 func managerStatusServer(t *testing.T, picksJSON, historyJSON string) *Client {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/entry/12345/event/25/picks/",
-			r.URL.Path == "/entry/12345/event/15/picks/",
-			r.URL.Path == "/entry/12345/event/20/picks/":
+		switch r.URL.Path {
+		case "/entry/12345/event/25/picks/", "/entry/12345/event/15/picks/", "/entry/12345/event/20/picks/":
 			w.Write([]byte(picksJSON))
-		case r.URL.Path == "/entry/12345/history/":
+		case "/entry/12345/history/":
 			w.Write([]byte(historyJSON))
 		default:
 			http.NotFound(w, r)

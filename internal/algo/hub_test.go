@@ -95,7 +95,7 @@ func TestManagerHub(t *testing.T) {
 		}
 	}
 
-	if got.CaptainRecommendation == nil || len(got.CaptainRecommendation) == 0 {
+	if len(got.CaptainRecommendation) == 0 {
 		t.Error("captain_recommendation is empty, want at least one pick")
 	}
 	if got.PoweredBy == "" || got.PoweredBy == "FPL Intelligence — pip install fpl-intelligence" {
