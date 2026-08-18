@@ -23,6 +23,8 @@ All notable changes to this project are documented here.
 - `fplctl backtest -seasons ... -congestion`: the same measurement pattern (`cmd/fplctl/congestion_backtest.go`) for a cross-competition fixture-congestion signal — see the result below, pending a decision on whether to ship it.
 - `vaastav.Corpus.FuturePoints`: sums a player's actual points/minutes/appearances over a gameweek range — the forward-looking counterpart to `BuildCase`'s backward-looking reconstruction, for validating a signal against what players actually went on to score.
 - `fplctl finishing-regression` (`cmd/fplctl/finishing_regression.go`): a differently-shaped measurement than the three `-elo`/`-minutes`/`-congestion` experiments — those substitute an alternative input into the existing captain-pick formula, but a finishing-luck signal is a buy/sell classifier, not a scoring input, so this validates it as a cohort comparison against real future output instead. See "Shipped" below for the result and where it landed.
+- `internal/insights.Client.TeamFixtureCalendar`/`RestDaysBefore`: production home for the congestion computation `fplctl backtest -congestion` used to keep as a private copy — see "Shipped" below for where and how it's wired in.
+- `internal/insights.Client.AveragePositions`/`ComputePositionDrift` and `fplctl role-change` (`cmd/fplctl/role_change_regression.go`): the same cohort-comparison shape as finishing-regression, applied to `average_positions.csv`'s x/y pitch coordinates — see the rejected result below.
 
 ### Measured and rejected
 
@@ -49,6 +51,17 @@ All notable changes to this project are documented here.
   | Second half (GW22-38, 17 GW): #1 pick total pts | 77 | 77 (tie) |
 
   The variant never beat baseline in any slice. `internal/algo/captain.go` is unchanged. The measurement harness (`fplctl backtest -minutes`) stays in the tree — a different window size or combination method is worth trying before concluding recency signal can't help here at all, but that's future work, not assumed to be the fix.
+
+- **Positional-drift role-change detection does not ship.** Part B's plan ranked `average_positions.csv` x/y drift as a way to catch a player moving into a more advanced role "before the box-score catches up" — a buy signal, the same shape as finishing regression. Verified live first: FPL-Core-Insights' `x` coordinate is already normalized to each team's own attacking direction (a home team's goalkeeper and an away team's averages both land at x≈9-13, not one near 0 and the other near 100), so a player's raw `x` is directly comparable across home/away without a flip — the computation itself (`internal/insights.Client.AveragePositions`, `ComputePositionDrift`) only needed the same per-gameweek-file and `-prem-`-match_id filtering pattern `FinishingLuck` already established.
+
+  Validated via `fplctl role-change` the same way as finishing regression: compute each qualifying player's drift (recent average `x` minus an earlier baseline average `x`, min. 3 Premier League appearances in each window) through a split gameweek, group the 15 largest-positive-drift players ("advanced" — pushed into a more attacking role) against the 15 players whose drift is closest to zero ("control"), then compare actual future FPL output via `vaastav.Corpus.FuturePoints`:
+
+  | Split | Advanced pts/appearance | Control pts/appearance | Advanced edge |
+  |---|---:|---:|---:|
+  | Baseline GW1-10 → recent GW11-20, validated GW21-38 (n=15/group) | 2.92 | 3.14 | -7% |
+  | Baseline GW1-7 → recent GW8-15, validated GW16-38 (n=15/group) | 2.76 | 2.94 | -6% |
+
+  The advanced group *underperformed* control in both splits — the opposite of the hypothesis. Two likely causes, neither yet run down: the top-drift ranking is visibly dominated by low-minutes players (several "advanced" entries had 0-3 future appearances, e.g. a big average-position swing from one or two substitute cameos rather than a genuine role change), and the control group is disproportionately goalkeepers (whose average position is near-static by construction, and who score reliably via clean sheets/saves), which isn't a clean same-role comparison. Neither `internal/algo` nor `cmd/fpl-mcp` was touched. The measurement harness (`fplctl role-change`) stays in the tree — a stricter per-window appearance minimum and excluding goalkeepers from the control group are worth trying before concluding pitch-position drift has no signal here, but that's future work, not assumed to be the fix.
 
 ### Shipped
 

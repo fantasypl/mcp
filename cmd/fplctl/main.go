@@ -36,6 +36,8 @@ func main() {
 		err = runGenGolden(ctx, args)
 	case "finishing-regression":
 		err = runFinishingRegression(ctx, args)
+	case "role-change":
+		err = runRoleChangeRegression(ctx, args)
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -62,6 +64,7 @@ Usage:
   fplctl audit [--team-id N] [--root DIR]
   fplctl gengolden [--which SET] [--out DIR] | --check
   fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N] [--root DIR]
+  fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-from N] [--split-gw N] [--to N] [--group-size N] [--root DIR]
 
 Run 'fplctl <subcommand> -h' for subcommand-specific flags.
 `)
