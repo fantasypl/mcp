@@ -103,6 +103,16 @@ type Engine struct {
 	// weighting it doesn't (yet)" distinction FinishingRegression draws in
 	// differentials.go.
 	CongestionSource CongestionSource
+
+	// RoleChangeSource follows the same nil-by-default pattern. Measured via
+	// fplctl role-change (see CHANGELOG.md): a player's average pitch
+	// position advancing by roleChangeDeltaThreshold or more between an
+	// earlier baseline window and a recent one predicted better future FPL
+	// output than a stable-position control group across 3 gameweek splits
+	// of 2025-26 (positive in 2, ~flat in the third, pooled edge +3.6%) —
+	// weaker, noisier evidence than finishing regression's or congestion's,
+	// but the same shape, so it ships the same way: informational only.
+	RoleChangeSource RoleChangeSource
 }
 
 // intelFetcher is the subset of *DGWIntelFetcher chip strategy needs — an
@@ -125,6 +135,17 @@ type FinishingLuckSource interface {
 // pattern.
 type CongestionSource interface {
 	TeamFixtureCalendar(ctx context.Context, season string, fromGW, toGW int) (map[int][]time.Time, error)
+}
+
+// RoleChangeSource is the subset of *insights.Client Differentials needs for
+// the positional-drift role-change signal — an interface so tests can
+// substitute a stub with no network access, matching FinishingLuckSource's
+// pattern. Differentials calls this twice (a baseline window and a recent
+// one) and combines the results itself via insights.ComputePositionDrift,
+// since the signal is inherently a two-window comparison rather than a
+// single aggregate.
+type RoleChangeSource interface {
+	AveragePositions(ctx context.Context, season string, fromGW, toGW int) (map[int]insights.PlayerPosition, error)
 }
 
 // NewEngine returns an Engine with the hand-tuned default weights.

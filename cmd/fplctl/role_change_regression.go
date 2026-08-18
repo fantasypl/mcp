@@ -40,6 +40,9 @@ func runRoleChangeRegression(ctx context.Context, args []string) error {
 	toGW := fs.Int("to", 38, "last gameweek of the validation window")
 	root := fs.String("root", ".", "project root; .cache/ lives under this")
 	groupSize := fs.Int("group-size", 15, "how many players in each of the advanced/control comparison groups")
+	minMatches := fs.Int("min-matches", 3, "minimum Premier League appearances required in each of the baseline/recent windows")
+	minAvgMinutes := fs.Float64("min-avg-minutes", 0, "minimum average minutes played per appearance in the recent window (0 = no floor); filters out cameo-dominated samples")
+	excludeGK := fs.Bool("exclude-gk", true, "exclude goalkeepers from both cohorts — their average position is structurally near-static, which otherwise stacks the control group with reliable-scoring GKs rather than genuinely stable-role outfielders")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -61,13 +64,27 @@ func runRoleChangeRegression(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("recent window: %w", err)
 	}
+	var recentMinutes map[int]insights.PlayerMinutes
+	if *minAvgMinutes > 0 {
+		recentMinutes, err = ins.PlayerMinutesInRange(ctx, insSeason, *recentFrom, *splitGW)
+		if err != nil {
+			return fmt.Errorf("recent-window minutes: %w", err)
+		}
+	}
 	drift := insights.ComputePositionDrift(baseline, recent)
 
 	var qualifying []insights.PositionDrift
 	for _, d := range drift {
-		if d.Qualified() {
-			qualifying = append(qualifying, d)
+		if d.BaselineMatches < *minMatches || d.RecentMatches < *minMatches {
+			continue
 		}
+		if *excludeGK && d.Position == "G" {
+			continue
+		}
+		if *minAvgMinutes > 0 && recentMinutes[d.PlayerID].AvgMinutes() < *minAvgMinutes {
+			continue
+		}
+		qualifying = append(qualifying, d)
 	}
 	sort.Slice(qualifying, func(i, j int) bool { return qualifying[i].DeltaX() > qualifying[j].DeltaX() })
 
@@ -97,16 +114,18 @@ func runRoleChangeRegression(ctx context.Context, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Positional drift: baseline GW%d-%d vs recent GW%d-%d, validated against GW%d-%d actual points.\n\n",
+	fmt.Printf("Positional drift: baseline GW%d-%d vs recent GW%d-%d, validated against GW%d-%d actual points.\n",
 		*baselineFrom, *baselineTo, *recentFrom, *splitGW, *splitGW+1, *toGW)
+	fmt.Printf("Filters: min-matches=%d min-avg-minutes=%.0f exclude-gk=%v (%d qualifying players)\n\n",
+		*minMatches, *minAvgMinutes, *excludeGK, len(qualifying))
 
 	printGroup := func(label string, group []insights.PositionDrift) (totalPts, totalApps int) {
 		fmt.Printf("-- %s --\n", label)
-		fmt.Printf("%-22s %8s %8s %8s | %8s %8s %8s\n", "Player", "BaseX", "RecentX", "DeltaX", "FutPts", "FutApps", "Pts/App")
+		fmt.Printf("%-22s %4s %8s %8s %8s | %8s %8s %8s\n", "Player", "Pos", "BaseX", "RecentX", "DeltaX", "FutPts", "FutApps", "Pts/App")
 		for _, d := range group {
 			fp := future[d.PlayerID]
-			fmt.Printf("%-22s %8.1f %8.1f %8.1f | %8d %8d %8.2f\n",
-				rcTruncate(d.Name, 22), d.BaselineX, d.RecentX, d.DeltaX(), fp.Points, fp.Appearances, rcPtsPerApp(fp))
+			fmt.Printf("%-22s %4s %8.1f %8.1f %8.1f | %8d %8d %8.2f\n",
+				rcTruncate(d.Name, 22), d.Position, d.BaselineX, d.RecentX, d.DeltaX(), fp.Points, fp.Appearances, rcPtsPerApp(fp))
 			totalPts += fp.Points
 			totalApps += fp.Appearances
 		}

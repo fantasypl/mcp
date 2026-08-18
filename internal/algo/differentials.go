@@ -42,6 +42,7 @@ type Differential struct {
 	Why                 string               `json:"why"`
 	Streak              Streak               `json:"streak"`
 	FinishingRegression *FinishingRegression `json:"finishing_regression,omitempty"`
+	RoleChange          *RoleChange          `json:"role_change,omitempty"`
 }
 
 // FinishingRegression is the shot-level buy/sell signal from
@@ -63,6 +64,27 @@ type FinishingRegression struct {
 	Signal        string  `json:"signal"` // "buy", "sell", or "neutral"
 	ActualGoals   int     `json:"actual_goals"`
 	ShotsOnTarget int     `json:"shots_on_target"`
+}
+
+// RoleChange is the positional-drift signal from
+// internal/insights.AveragePositions/ComputePositionDrift: a player whose
+// average pitch position has advanced meaningfully between an earlier
+// baseline window and a recent one — a possible role change (more advanced,
+// more attacking) before goals/assists/ICT catch up. Present only when
+// RoleChangeSource is configured, the season has average_positions.csv
+// coverage (2025-26 as of this writing), and the player isn't a goalkeeper
+// — see Engine.RoleChangeSource's doc. Measured via fplctl role-change (see
+// CHANGELOG.md): weaker, noisier evidence than FinishingRegression's (2 of
+// 3 gameweek splits positive, one roughly flat, pooled +3.6%), so like
+// FinishingRegression this is informational reasoning, not a change to
+// Score — folding it into the ranking formula would need its own weight,
+// backtest-justified separately, and this evidence isn't strong enough yet
+// to attempt that.
+type RoleChange struct {
+	// DeltaX is the recent window's average advancement minus the baseline
+	// window's — see internal/insights.PositionDrift.DeltaX.
+	DeltaX   float64 `json:"delta_x"`
+	Position string  `json:"position"`
 }
 
 type DifferentialBrief struct {
@@ -119,11 +141,11 @@ func differentialScore(p *fpl.Player, fixtures []TeamFixture, ownershipPct float
 
 // buildWhy explains why this player is a differential *now* rather than in
 // the abstract — ownership band, form, what makes the coming gameweek
-// suitable, and (when available) the finishing-regression signal. fr is nil
-// whenever FinishingLuckSource isn't configured or the player doesn't
-// qualify — existing callers that never set FinishingLuckSource are
-// unaffected, since fr is always nil for them.
-func buildWhy(p *fpl.Player, fixtures []TeamFixture, fr *FinishingRegression) string {
+// suitable, and (when available) the finishing-regression and role-change
+// signals. fr/rc are nil whenever the corresponding *Source isn't
+// configured or the player doesn't qualify — existing callers that never
+// set either are unaffected, since both are always nil for them.
+func buildWhy(p *fpl.Player, fixtures []TeamFixture, fr *FinishingRegression, rc *RoleChange) string {
 	var parts []string
 
 	ownership := p.SelectedByPercent.Float()
@@ -191,6 +213,10 @@ func buildWhy(p *fpl.Player, fixtures []TeamFixture, fr *FinishingRegression) st
 		}
 	}
 
+	if rc != nil {
+		parts = append(parts, fmt.Sprintf("average position has pushed %s yards further forward recently — possible role change", FloatStr(rc.DeltaX)))
+	}
+
 	return Capitalize(strings.Join(parts, ". "))
 }
 
@@ -220,6 +246,7 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, gw, teams)
 	finishingLuck := e.finishingLuckMap(ctx, bootstrap)
+	roleChange := e.roleChangeMap(ctx, bootstrap)
 
 	scored := make([]scoredPlayer, 0, len(bootstrap.Elements))
 	for i := range bootstrap.Elements {
@@ -258,6 +285,7 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 		p := s.player
 		team := teams[p.Team]
 		fr := finishingRegressionFor(finishingLuck[p.ID])
+		rc := roleChangeFor(roleChange[p.ID])
 
 		results = append(results, Differential{
 			Rank: len(results) + 1,
@@ -278,9 +306,10 @@ func (e *Engine) Differentials(ctx context.Context, maxOwnershipPct float64, gam
 				ICTIndex:      p.ICTIndex.Float(),
 				TotalPoints:   p.TotalPoints,
 			},
-			Why:                 buildWhy(p, s.fixtures, fr),
+			Why:                 buildWhy(p, s.fixtures, fr, rc),
 			Streak:              DetectStreak(p),
 			FinishingRegression: fr,
+			RoleChange:          rc,
 		})
 	}
 
@@ -350,6 +379,76 @@ func finishingRegressionFor(fl insights.FinishingDelta) *FinishingRegression {
 	return &FinishingRegression{
 		Delta: delta, Signal: signal, ActualGoals: fl.ActualGoals, ShotsOnTarget: fl.ShotsOnTarget,
 	}
+}
+
+// roleChangeRecentWindow is how many of the most recent gameweeks form the
+// "recent" window for the positional-drift signal — matches the recent
+// window (GW11-20) from the fplctl role-change split with the strongest
+// validated result (see CHANGELOG.md).
+const roleChangeRecentWindow = 10
+
+// roleChangeMinMatches and roleChangeDeltaThreshold are the qualification
+// bar validated via fplctl role-change -min-matches 5 -exclude-gk: fewer
+// matches in either window is dominated by cameo-appearance noise (see
+// CHANGELOG.md's refuted low-minutes-floor and GK-exclusion hypotheses —
+// raising the match count was the one lever that actually helped).
+// roleChangeDeltaThreshold (yards of average-position advancement) is set
+// near the ~15th-percentile cutoff observed across the three validated
+// splits (6.1-7.3), i.e. roughly the same slice of the qualifying pool the
+// backtest's "advanced" group was drawn from.
+const (
+	roleChangeMinMatches     = 5
+	roleChangeDeltaThreshold = 6.0
+)
+
+// roleChangeMap best-effort fetches the positional-drift signal for the
+// current season: a baseline window (season start through the gameweek
+// before the recent window) and a recent window
+// (roleChangeRecentWindow gameweeks, through the last fully-finished
+// gameweek — the same no-look-ahead cutoff finishingLuckMap uses). Returns
+// nil (no signal for anyone) if RoleChangeSource isn't configured, there
+// isn't yet enough season history for both windows, or either fetch fails —
+// this is enrichment, never allowed to break Differentials itself.
+func (e *Engine) roleChangeMap(ctx context.Context, bootstrap *fpl.Bootstrap) map[int]insights.PositionDrift {
+	if e.RoleChangeSource == nil {
+		return nil
+	}
+	throughGW := bootstrap.CurrentGameweek() - 1
+	recentFrom := throughGW - roleChangeRecentWindow + 1
+	if recentFrom < 2 {
+		return nil // not enough season history yet for a baseline window
+	}
+	season := currentInsightsSeason(e.Now())
+	baseline, err := e.RoleChangeSource.AveragePositions(ctx, season, 1, recentFrom-1)
+	if err != nil {
+		return nil
+	}
+	recent, err := e.RoleChangeSource.AveragePositions(ctx, season, recentFrom, throughGW)
+	if err != nil {
+		return nil
+	}
+	return insights.ComputePositionDrift(baseline, recent)
+}
+
+// roleChangeFor converts a raw PositionDrift into the role-change signal
+// Differentials surfaces, or nil if it doesn't qualify: too few matches in
+// either window, a goalkeeper (whose average position is structurally
+// near-static — see CHANGELOG.md), or drift below roleChangeDeltaThreshold.
+// Only positive drift (advancing) is surfaced — the backtest validated an
+// "advanced" cohort against a stable-position control, not a "dropped"
+// cohort, so a negative DeltaX isn't a signal this function can vouch for.
+func roleChangeFor(d insights.PositionDrift) *RoleChange {
+	if d.Position == "G" {
+		return nil
+	}
+	if d.BaselineMatches < roleChangeMinMatches || d.RecentMatches < roleChangeMinMatches {
+		return nil
+	}
+	delta := Round(d.DeltaX(), 1)
+	if delta < roleChangeDeltaThreshold {
+		return nil
+	}
+	return &RoleChange{DeltaX: delta, Position: d.Position}
 }
 
 // fixtureInfoFor renders a team's fixtures for a gameweek, with the first

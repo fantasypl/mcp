@@ -24,6 +24,13 @@ const minMatchesForPositionDrift = 3
 type PlayerPosition struct {
 	PlayerID int
 	Name     string
+	// Position is average_positions.csv's own position column (G/D/M/F) —
+	// whichever value was seen last across the window's matches. A player's
+	// listed position is effectively constant match to match, so this is
+	// for filtering (e.g. excluding goalkeepers, whose position is
+	// structurally near-static and not a meaningful "stable role" baseline
+	// to compare drift against), not itself a signal.
+	Position string
 	SumX     float64
 	SumY     float64
 	Matches  int
@@ -77,6 +84,7 @@ func (c *Client) AveragePositions(ctx context.Context, season string, fromGW, to
 			pp := out[id]
 			pp.PlayerID = id
 			pp.Name = row["player_name"]
+			pp.Position = row["position"]
 			pp.SumX += Float(row["x"])
 			pp.SumY += Float(row["y"])
 			pp.Matches++
@@ -95,8 +103,11 @@ func (c *Client) AveragePositions(ctx context.Context, season string, fromGW, to
 // into a more advanced role should show a positive drift before goals,
 // assists, and other box-score stats catch up.
 type PositionDrift struct {
-	PlayerID                       int
-	Name                           string
+	PlayerID int
+	Name     string
+	// Position is the recent window's PlayerPosition.Position — the
+	// player's current listed position, for filtering.
+	Position                       string
 	BaselineX, RecentX             float64
 	BaselineMatches, RecentMatches int
 }
@@ -127,6 +138,7 @@ func ComputePositionDrift(baseline, recent map[int]PlayerPosition) map[int]Posit
 		out[id] = PositionDrift{
 			PlayerID:        id,
 			Name:            r.Name,
+			Position:        r.Position,
 			BaselineX:       b.AvgX(),
 			RecentX:         r.AvgX(),
 			BaselineMatches: b.Matches,
