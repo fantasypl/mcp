@@ -96,6 +96,25 @@ func TestChipStrategyNoChipsRemaining(t *testing.T) {
 	}
 }
 
+// When the team's picks aren't fetchable (e.g. preseason, before GW1's
+// deadline has passed and FPL hasn't generated them yet) chip strategy must
+// degrade to an Error-carrying result, not propagate the raw client error —
+// matching SquadScout and TransferSuggestions.
+func TestChipStrategyPicksUnavailable(t *testing.T) {
+	e := newChipsEngine(t)
+	got, err := e.ChipStrategy(context.Background(), 999999)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	result, ok := got.(*ChipStrategyResult)
+	if !ok {
+		t.Fatalf("got %T, want *ChipStrategyResult", got)
+	}
+	if result.Error == "" {
+		t.Error("expected Error to be set when picks are unavailable")
+	}
+}
+
 // A best-effort community intel failure must not break chip strategy —
 // only narrow it back to API-only DGW/BGW predictions.
 func TestChipStrategyToleratesIntelFailure(t *testing.T) {

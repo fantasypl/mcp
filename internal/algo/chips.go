@@ -567,6 +567,8 @@ type NoChipsRemainingResult struct {
 }
 
 type ChipStrategyResult struct {
+	Error string `json:"error,omitempty"`
+
 	TeamID          int                  `json:"team_id"`
 	Gameweek        int                  `json:"gameweek"`
 	ScanWindow      string               `json:"scan_window"`
@@ -689,7 +691,9 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 
 	picks, err := e.client.TeamPicks(ctx, teamID, currentGW)
 	if err != nil {
-		return nil, err
+		return &ChipStrategyResult{
+			Error: fmt.Sprintf("Could not fetch picks for team %d. Check the team ID is correct.", teamID),
+		}, nil
 	}
 	history, err := e.client.TeamHistory(ctx, teamID)
 	if err != nil {

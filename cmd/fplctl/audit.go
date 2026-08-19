@@ -624,6 +624,9 @@ func auditChips(ctx context.Context, e *algo.Engine, bootstrap *fpl.Bootstrap, t
 		return []auditCheck{{tool, "tool_crash", false, "error", err.Error()}}
 	}
 	m := toMap(result)
+	if errMsg := mStr(m, "error"); errMsg != "" {
+		return []auditCheck{{tool, "picks_unavailable", false, "warning", errMsg}}
+	}
 	recs := mList(m, "recommendations")
 	currentGW := bootstrap.CurrentGameweek()
 
