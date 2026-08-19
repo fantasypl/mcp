@@ -3,6 +3,7 @@ package algo
 import (
 	"fmt"
 	"sort"
+	"time"
 )
 
 // The squad-selection branch-and-bound kernel — deliberately import-free
@@ -37,12 +38,41 @@ type SquadConstraints struct {
 
 	Locked     []int
 	MaxChanges int // -1 = unlimited
+
+	// TimeLimit caps how long Solve searches before giving up on proving
+	// optimality and returning its best incumbent so far instead — see
+	// Result.Optimal. Zero (the default) means no limit: Solve always
+	// returns a proven-optimal squad, exactly as it did before this field
+	// existed — every caller/test that never sets it is unaffected.
+	//
+	// This exists because bound() and clubCapBound() (see their doc
+	// comments) are each real, tight, provably-safe upper bounds, but on
+	// realistic FPL data — a generously-slack budget (most squads don't
+	// spend every last penny) combined with club-clustered top performers
+	// — neither alone, nor their min(), reliably prunes the search down to
+	// a tractable size: measured directly during development, some
+	// instances at real FPL scale (2/5/5/3 quota, ~180 candidates) still
+	// ran past a minute unbounded. Rather than chase a bound tight enough
+	// for every possible input (this file has a history of shipping and
+	// reverting bounds that turned out to be merely loose OR outright
+	// unsafe — see bound's doc comment), a time limit sidesteps the
+	// question entirely: the search already tracks its best feasible
+	// incumbent throughout (s.best), so stopping early and returning that
+	// is always a valid, fully-constraint-satisfying squad — just not
+	// guaranteed to be the best possible one.
+	TimeLimit time.Duration
 }
 
 // Result is one feasible squad and its total value.
 type Result struct {
 	Squad []Candidate
 	Value float64
+	// Optimal is false only when TimeLimit was set and reached before the
+	// search could prove optimality — Squad is still fully valid and
+	// feasible (the best one found before time ran out), just not
+	// guaranteed to be the best possible one. Always true when TimeLimit
+	// is zero (unlimited).
+	Optimal bool
 }
 
 // Solve returns the value-maximizing squad satisfying c's budget,
@@ -51,8 +81,31 @@ type Result struct {
 // candidates in some position, or the budget can't stretch to fill every
 // quota even with the cheapest available candidates.
 func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
-	if err := validateConstraints(c); err != nil {
+	s, err := solve(candidates, c)
+	if err != nil {
 		return Result{}, err
+	}
+	return s.best, nil
+}
+
+// solveDebug behaves exactly like Solve but also returns the number of
+// recurse() calls made — a deterministic, hardware-independent proxy for
+// search size, used by tests that need to regression-test pruning
+// effectiveness (wall-clock varies too much run to run to trust for that).
+func solveDebug(candidates []Candidate, c SquadConstraints) (Result, int, error) {
+	s, err := solve(candidates, c)
+	if err != nil {
+		return Result{}, 0, err
+	}
+	return s.best, s.nodeCount, nil
+}
+
+// solve is Solve's shared core, returning the solver itself (best result
+// plus internal search stats) rather than just the caller-facing Result —
+// Solve and solveDebug are thin wrappers over this.
+func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
+	if err := validateConstraints(c); err != nil {
+		return nil, err
 	}
 	locked := toSet(c.Locked)
 
@@ -67,7 +120,7 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 
 	for pos := 1; pos <= numPositions; pos++ {
 		if len(pruned[pos]) < c.PositionQuota[pos] {
-			return Result{}, fmt.Errorf("position %d: only %d candidates available, need %d", pos, len(pruned[pos]), c.PositionQuota[pos])
+			return nil, fmt.Errorf("position %d: only %d candidates available, need %d", pos, len(pruned[pos]), c.PositionQuota[pos])
 		}
 	}
 
@@ -86,13 +139,16 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 	// as early as possible. Within each position, value-descending, so the
 	// first combinations tried are near-optimal.
 	pool := make([]Candidate, 0, len(candidates))
+	var blockStart [5]int // pool index where each position's block begins — maps a node's idx to an offset within its position's own sorted list
 	for _, pos := range [...]int{1, 4, 3, 2} {
+		blockStart[pos] = len(pool)
 		pool = append(pool, byPositionSorted[pos]...)
 	}
 
-	// One knapsack-exact-count DP table per position, built once here and
-	// queried (O(1)) by bound() at every node — see buildPositionDP's doc
-	// comment for what it computes.
+	// A suffix family of knapsack-exact-count DP tables per position, built
+	// once here and queried (O(1) per lookup) by bound() at every node —
+	// see buildPositionSuffixDP's doc comment for what it computes and why
+	// a family (not one global table) is needed.
 	//
 	// Each table is sized to min(c.BudgetTenths, that position's own
 	// maximum possible cost) rather than c.BudgetTenths directly — table
@@ -103,7 +159,7 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 	// so capping there loses no correctness while keeping table size tied
 	// to real candidate prices instead of an arbitrary caller-supplied
 	// budget figure.
-	var dp [5]positionDP
+	var dpSuffix [5][]positionDP
 	totalMaxCost := 0
 	for pos := 1; pos <= numPositions; pos++ {
 		posMax := positionMaxCost(byPositionSorted[pos], c.PositionQuota[pos])
@@ -112,7 +168,7 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 		if posMax < tableBudget {
 			tableBudget = posMax
 		}
-		dp[pos] = buildPositionDP(byPositionSorted[pos], c.PositionQuota[pos], tableBudget)
+		dpSuffix[pos] = buildPositionSuffixDP(byPositionSorted[pos], c.PositionQuota[pos], tableBudget)
 	}
 
 	// bound's budget-sharing merge (see its doc comment) needs a single
@@ -132,7 +188,10 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 	for pos := 1; pos <= numPositions; pos++ {
 		row := make([]float64, mergeCap+1)
 		for b := 0; b <= mergeCap; b++ {
-			row[b] = dp[pos].bestValue(c.PositionQuota[pos], b)
+			// dpSuffix[pos][0] covers pos's entire candidate list (offset 0
+			// = nothing excluded yet) — the same table the old single
+			// global build produced.
+			row[b] = dpSuffix[pos][0].bestValue(c.PositionQuota[pos], b)
 		}
 		fullRow[pos] = row
 	}
@@ -146,16 +205,66 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 		suffixAfter[i] = mergeValueArrays(fullRow[blockOrder[i+1]], suffixAfter[i+1], mergeCap)
 	}
 
+	// Phase 2: an independent, club-cap-only bound, precomputed the same
+	// node-aware way as dpSuffix above — clubTopSuffix[pos][j] mirrors
+	// dpSuffix[pos][j] exactly, just tracking each club's top MaxPerClub
+	// values instead of a value/budget DP (see buildClubTopSuffix).
+	// clubTopAfter[bi] mirrors suffixAfter — the merged top values from
+	// every position strictly after blockOrder[bi], full lists, since
+	// those are always untouched at any node (same invariant bound's own
+	// doc comment relies on). clubTopByIdx[idx] is the final per-node
+	// combination, precomputed once per pool index (not per DFS node —
+	// see clubCapBound's doc comment for why that's sound and sufficient).
+	var clubTopSuffix [5][]map[int][]float64
+	for pos := 1; pos <= numPositions; pos++ {
+		clubTopSuffix[pos] = buildClubTopSuffix(byPositionSorted[pos], c.MaxPerClub)
+	}
+	var clubTopAfter [numPositions]map[int][]float64
+	clubTopAfter[numPositions-1] = map[int][]float64{}
+	for i := numPositions - 2; i >= 0; i-- {
+		afterPos := blockOrder[i+1]
+		clubTopAfter[i] = mergeClubTops(clubTopSuffix[afterPos][0], clubTopAfter[i+1], c.MaxPerClub)
+	}
+	clubTopByIdx := make([]map[int][]float64, len(pool))
+	for idx, cnd := range pool {
+		bi := blockIndexOf[cnd.Position]
+		j := idx - blockStart[cnd.Position]
+		clubTopByIdx[idx] = mergeClubTops(clubTopSuffix[cnd.Position][j], clubTopAfter[bi], c.MaxPerClub)
+	}
+
 	s := &solver{
-		pool: pool, dp: dp, mergeCap: mergeCap,
-		suffixAfter: suffixAfter, blockIndexOf: blockIndexOf,
+		pool: pool, dpSuffix: dpSuffix, blockStart: blockStart, mergeCap: mergeCap,
+		suffixAfter: suffixAfter, blockIndexOf: blockIndexOf, clubTopByIdx: clubTopByIdx,
 		locked: locked, c: c, best: Result{Value: negInf},
+	}
+	// Seed s.best with a cheap, ratio-greedy constructive squad before the
+	// exhaustive search starts — see greedyFeasibleSeed's doc comment for
+	// why this is safe (unlike a greedy BOUND, a greedy CONSTRUCTION only
+	// needs to be feasible, never provably tight) and why it's needed
+	// (value correlates with price in real FPL data — better players cost
+	// more — so the search's own value-descending branch order tends to
+	// try the priciest combinations first and can burn enormous time
+	// backtracking to ANY affordable complete squad, even before TimeLimit
+	// has a real incumbent to fall back on).
+	if seed, ok := greedyFeasibleSeed(byPositionSorted, c); ok {
+		s.best = seed
+	}
+	if c.TimeLimit > 0 {
+		s.deadline = time.Now().Add(c.TimeLimit)
 	}
 	s.recurse(0, nil, 0, c.PositionQuota, map[int]int{}, 0)
 
 	if s.best.Value == negInf {
-		return Result{}, fmt.Errorf("no feasible squad found under the given budget and constraints")
+		if s.timedOut {
+			return nil, fmt.Errorf("time limit (%v) reached before finding any feasible squad", c.TimeLimit)
+		}
+		return nil, fmt.Errorf("no feasible squad found under the given budget and constraints")
 	}
+	// Set once, here, rather than per-incumbent-update inside recurse:
+	// whatever s.best held when the search stopped is exactly what's
+	// returned, so "did the search finish" is all Optimal needs to
+	// capture — no per-update bookkeeping required.
+	s.best.Optimal = !s.timedOut
 
 	// Deterministic output ordering — the search itself doesn't guarantee
 	// one, and callers (golden fixtures in particular) need stability.
@@ -165,27 +274,130 @@ func Solve(candidates []Candidate, c SquadConstraints) (Result, error) {
 		}
 		return s.best.Squad[i].ID < s.best.Squad[j].ID
 	})
-	return s.best, nil
+	return s, nil
+}
+
+// greedyFeasibleSeed constructs a simple feasible squad, filling each
+// position's quota by value/price ratio (not raw value) — deliberately
+// budget-aware, unlike the search's own branch order (value-descending,
+// see Solve's doc comment on branch order), which on real FPL data tends
+// to try the priciest combinations first (value correlates with price:
+// better players cost more) and can spend enormous effort backtracking
+// before completing ANY affordable full squad. This exists purely to
+// seed s.best with a starting incumbent before the exhaustive search
+// begins, so a TimeLimit search always has a valid answer to fall back on
+// even if it times out before independently completing a path — measured
+// directly during development: without this, a real-scale (2/5/5/3
+// quota, ~180 candidates), realistically-slack-budget instance visited
+// 6.48M nodes in 3 seconds without completing a single leaf.
+//
+// This is a CONSTRUCTIVE heuristic, not a bound — it never participates
+// in pruning (bound() and clubCapBound() remain the only things recurse
+// prunes against, and both stay exact, safe upper bounds regardless of
+// what seeds s.best), so none of bound's "greedy is unsafe" cautionary
+// history applies: a greedy construction's only possible failure mode is
+// being suboptimal, never unsound, since ok=true is only ever returned
+// once every quota, budget, and club-cap check below has already passed.
+// Seeding a better initial incumbent only makes recurse's own pruning
+// kick in sooner — it cannot change what the search is capable of
+// eventually proving, only how quickly it gets there.
+//
+// Returns ok=false if this simple construction can't complete a feasible
+// squad (e.g. a position's cheapest-by-ratio candidates still don't fit
+// remaining budget) — harmless either way, since recurse's own exhaustive
+// search remains the source of truth regardless of whether a seed exists.
+func greedyFeasibleSeed(byPositionSorted [5][]Candidate, c SquadConstraints) (Result, bool) {
+	locked := toSet(c.Locked)
+	spent := 0
+	changesUsed := 0
+	clubCount := map[int]int{}
+	var squad []Candidate
+
+	for pos := 1; pos <= numPositions; pos++ {
+		group := append([]Candidate(nil), byPositionSorted[pos]...)
+		sort.Slice(group, func(i, j int) bool {
+			// Locked candidates first — free of MaxChanges cost, so
+			// there's never a reason to prefer a non-locked alternative
+			// over one already secured. Otherwise value/price descending.
+			li, lj := locked[group[i].ID], locked[group[j].ID]
+			if li != lj {
+				return li
+			}
+			return group[i].Value/float64(group[i].PriceTenths) > group[j].Value/float64(group[j].PriceTenths)
+		})
+
+		picked := 0
+		for _, cnd := range group {
+			if picked >= c.PositionQuota[pos] {
+				break
+			}
+			isLocked := locked[cnd.ID]
+			newChanges := changesUsed
+			if !isLocked {
+				newChanges++
+			}
+			if !isLocked && c.MaxChanges >= 0 && newChanges > c.MaxChanges {
+				continue
+			}
+			if spent+cnd.PriceTenths > c.BudgetTenths {
+				continue
+			}
+			if clubCount[cnd.Club]+1 > c.MaxPerClub {
+				continue
+			}
+			squad = append(squad, cnd)
+			spent += cnd.PriceTenths
+			clubCount[cnd.Club]++
+			changesUsed = newChanges
+			picked++
+		}
+		if picked < c.PositionQuota[pos] {
+			return Result{}, false
+		}
+	}
+	return Result{Squad: squad, Value: sumValue(squad)}, true
 }
 
 const negInf = -(1 << 62) // a value no real squad total can reach, used as "no result yet"
 
 type solver struct {
-	pool         []Candidate // branch order: position blocks, value-descending within each
-	dp           [5]positionDP
-	mergeCap     int                        // common budget range suffixAfter's rows are sized to
-	suffixAfter  [numPositions][]float64    // suffixAfter[i]: best combined value of every position after blockOrder[i], full quota, sharing budget
-	blockIndexOf [5]int                     // position -> its index in the fixed branch order
+	pool         []Candidate             // branch order: position blocks, value-descending within each
+	dpSuffix     [5][]positionDP         // dpSuffix[pos][j]: exact-count DP over pos's own sorted list from offset j onward — see buildPositionSuffixDP
+	blockStart   [5]int                  // pool index where each position's block begins — maps a node's idx to its offset j within that block
+	mergeCap     int                     // common budget range suffixAfter's rows are sized to
+	suffixAfter  [numPositions][]float64 // suffixAfter[i]: best combined value of every position after blockOrder[i], full quota, sharing budget
+	blockIndexOf [5]int                  // position -> its index in the fixed branch order
+	clubTopByIdx []map[int][]float64     // clubTopByIdx[idx]: club -> top MaxPerClub still-available values at that node — see clubCapBound
 	locked       map[int]bool
 	c            SquadConstraints
 	best         Result
+	nodeCount    int       // recurse() call count — see solveDebug
+	deadline     time.Time // zero = no limit; see SquadConstraints.TimeLimit
+	timedOut     bool      // set once the deadline is observed — see recurse's timeCheckInterval check
 }
+
+// timeCheckInterval is how many recurse() calls pass between deadline
+// checks, when a deadline is set — time.Now() isn't free, and a
+// once-per-node check would add real overhead across the millions of
+// nodes a hard instance can visit. This bounds how far the search can
+// overshoot its deadline (worst case: one interval's worth of work,
+// microseconds even at pathological scale) in exchange for negligible
+// per-node cost the rest of the time.
+const timeCheckInterval = 4096
 
 // recurse makes one include/exclude decision on pool[idx] per call — a
 // standard depth-first branch-and-bound over a fixed item order. chosen,
 // spent, posLeft, clubCount, and changesUsed together describe the partial
 // solution up to (not including) idx.
 func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int, clubCount map[int]int, changesUsed int) {
+	if s.timedOut {
+		return // already given up — cascade back up the call stack cheaply, no further work per frame
+	}
+	s.nodeCount++
+	if !s.deadline.IsZero() && s.nodeCount%timeCheckInterval == 0 && time.Now().After(s.deadline) {
+		s.timedOut = true
+		return
+	}
 	needed := 0
 	for _, n := range posLeft {
 		needed += n
@@ -201,8 +413,28 @@ func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int,
 		return // ran out of candidates with quota still unfilled — infeasible branch
 	}
 	cnd := s.pool[idx]
+	// j: cnd's offset within its own position's sorted list — every earlier
+	// candidate in this block (offsets < j) has already been decided
+	// (included, reflected in chosen/spent/posLeft, or excluded, gone for
+	// good) by the DFS reaching this node, so dpSuffix[cnd.Position][j] is
+	// exactly the right "still available" table to bound against.
+	j := idx - s.blockStart[cnd.Position]
+	currentDP := s.dpSuffix[cnd.Position][j]
 
-	if bound(s.dp, s.suffixAfter, s.blockIndexOf, s.mergeCap, cnd.Position, posLeft, s.c.BudgetTenths-spent, currentValue) <= s.best.Value {
+	// Two independent, differently-relaxed upper bounds on the same true
+	// value: posBound is exact on price/budget/position-quota, ignoring
+	// only the club cap; clBound is exact on the club cap alone, ignoring
+	// price/budget/position-quota entirely. Their min is still a valid
+	// upper bound (the real, fully-constrained optimum is <= both), and
+	// combining them this way needs no reasoning about their interaction —
+	// see clubCapBound's doc comment for why that matters here.
+	posBound := bound(currentDP, s.suffixAfter, s.blockIndexOf, s.mergeCap, cnd.Position, posLeft, s.c.BudgetTenths-spent, currentValue)
+	clBound := clubCapBound(s.clubTopByIdx[idx], clubCount, s.c.MaxPerClub, currentValue)
+	nodeBound := posBound
+	if clBound < nodeBound {
+		nodeBound = clBound
+	}
+	if nodeBound <= s.best.Value {
 		return // even the best possible completion can't beat the incumbent
 	}
 
@@ -265,7 +497,17 @@ func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int,
 // whether the per-position cap is exact or relaxed to a single combined
 // count. Solving each position's own exact-count/exact-budget problem via
 // DP (not greedy-by-ratio) has no such interaction to get wrong.
-func bound(dp [5]positionDP, suffixAfter [numPositions][]float64, blockIndexOf [5]int, mergeCap int, currentPos int, posLeft [5]int, budgetLeft int, currentValue float64) float64 {
+//
+// currentPosDP must be the caller's dpSuffix[currentPos][j] for cnd's own
+// offset j within currentPos's block (see recurse) — NOT a table built
+// over currentPos's full candidate list. Using the full-list table here
+// would let already-excluded-earlier-in-this-branch candidates count as
+// available, loosening the bound; the suffix-scoped table restricts
+// currentPosDP.bestValue to genuinely still-available candidates only,
+// so this stays a valid upper bound while being at least as tight as (and,
+// deep inside a large block, materially tighter than) a full-list table
+// would give.
+func bound(currentPosDP positionDP, suffixAfter [numPositions][]float64, blockIndexOf [5]int, mergeCap int, currentPos int, posLeft [5]int, budgetLeft int, currentValue float64) float64 {
 	bi := blockIndexOf[currentPos]
 	for pos := 1; pos <= numPositions; pos++ {
 		if pos != currentPos && blockIndexOf[pos] < bi && posLeft[pos] > 0 {
@@ -287,7 +529,7 @@ func bound(dp [5]positionDP, suffixAfter [numPositions][]float64, blockIndexOf [
 		if sv == unreachableValue {
 			continue
 		}
-		cv := dp[currentPos].bestValue(posLeft[currentPos], budgetLeft-b2)
+		cv := currentPosDP.bestValue(posLeft[currentPos], budgetLeft-b2)
 		if cv == unreachableValue {
 			continue
 		}
@@ -329,10 +571,9 @@ func mergeValueArrays(a, bb []float64, cap int) []float64 {
 	return out
 }
 
-// positionDP answers, for one position's candidate list: what's the best
-// total value from choosing exactly k of them with total cost ≤ b? Built
-// once per Solve call (O(candidates × quota × budget)), queried in O(1)
-// after that.
+// positionDP answers, for one candidate list: what's the best total value
+// from choosing exactly k of them with total cost ≤ b? Queried in O(1)
+// once built.
 type positionDP struct {
 	maxBudget int
 	// table[k][b] = best value for exactly k candidates costing <= b.
@@ -343,46 +584,205 @@ type positionDP struct {
 
 const unreachableValue = -1e18
 
-// buildPositionDP runs a standard 0/1 "exact count" knapsack DP over
-// candidates (already this position's pruned, deduplicated list), then
-// converts each row from "cost exactly b" to "cost at most b" via a prefix
-// max, so bestValue can look up any budget directly.
-func buildPositionDP(candidates []Candidate, quota int, maxBudget int) positionDP {
+// buildPositionSuffixDP builds one positionDP per suffix of candidates
+// (already this position's pruned, value-descending list): result[j]
+// answers "best value from exactly k of candidates[j:], costing <= b".
+// result[0] covers the whole list (what a single global table would have
+// been); result[len(candidates)] is the empty-selection table (k=0 only).
+//
+// This family — not one global table — exists so bound() can query, at
+// any branch-and-bound node, a table restricted to candidates NOT YET
+// decided in that branch. Candidates within one position's pool block are
+// visited value-descending in a fixed order, so "not yet decided" is
+// always a known suffix (see recurse's j = idx - blockStart[pos]). A
+// single global table let already-excluded-earlier-in-branch candidates
+// still count as available, loosening the bound exactly where large-quota
+// positions (MID, DEF) have the most in-block decision points to lose
+// precision over — see bound's doc comment for the pruning consequence.
+// Any suffix's table can never exceed the full-list table at the same
+// (k, budget): dropping candidates from consideration can only weakly
+// lower the best achievable value, never raise it — so every entry in
+// this family is provably a valid upper bound, and at least as tight as
+// (materially tighter than, deep in a block) the single table it replaces.
+//
+// Built backward, one candidate at a time: fold candidates[j] into a
+// single running "cost exactly b" table (same 0/1 knapsack update
+// buildPositionSuffixDP's single-table predecessor used), then snapshot a
+// non-destructive, "cost at most b"-converted copy as result[j]. Kept in
+// "exact" form between insertions (never prefix-maxed in place) so later
+// insertions stay correct — only each snapshot copy is converted. Total
+// cost is O(len(candidates) × quota × budget) — the same order building
+// ONE global table would have cost, not len(candidates) times worse,
+// since each insertion extends the previous step's table rather than
+// rebuilding from scratch.
+// clubCapBound computes an optimistic upper bound on additional value
+// achievable from the still-available candidates in clubTop (precomputed
+// per node — see buildClubTopSuffix and mergeClubTops), enforcing ONLY
+// the per-club cap (maxPerClub) and ignoring price/budget and
+// position-quota constraints entirely: for each club, at most
+// maxPerClub-clubCount[club] more of its candidates could ever be
+// selected, so summing each club's top that-many still-available values
+// is the true optimum of exactly that relaxed problem — no candidates
+// need considering beyond a club's own top maxPerClub (a club can never
+// contribute more than maxPerClub picks in any real feasible squad,
+// regardless of price or position), which is exactly why clubTop only
+// ever needs to track each club's top maxPerClub values, not its full
+// list.
+//
+// This is deliberately a DIFFERENT, independent relaxation from bound()'s
+// (which does the reverse: exact on price/budget/position-quota, ignoring
+// the club cap). min() of two independently-sound relaxations of the same
+// true value is itself sound — the real, fully-constrained optimum is <=
+// both, hence <= their min — with no new reasoning needed about how the
+// two relaxations interact.
+//
+// Safe where two much earlier value/price-ratio-greedy bound attempts
+// were proven UNSAFE (see bound's doc comment): those failed because 0/1
+// knapsack (a budget/price constraint) is NOT a matroid, so greedy isn't
+// provably optimal for it. This bound has no budget/price dimension at
+// all — "pick the highest-value items subject to a per-club cap" is a
+// partition matroid, and greedy-by-value IS provably optimal on a
+// matroid. It isn't approximating a hard problem; it's exactly solving an
+// easy one, which is why no interaction-with-price bug is possible here.
+func clubCapBound(clubTop map[int][]float64, clubCount map[int]int, maxPerClub int, currentValue float64) float64 {
+	total := currentValue
+	for club, vals := range clubTop {
+		remaining := maxPerClub - clubCount[club]
+		if remaining <= 0 {
+			continue
+		}
+		n := remaining
+		if n > len(vals) {
+			n = len(vals)
+		}
+		for i := 0; i < n; i++ {
+			total += vals[i]
+		}
+	}
+	return total
+}
+
+// buildClubTopSuffix mirrors buildPositionSuffixDP's backward-incremental
+// approach, but for the much smaller structure clubCapBound needs:
+// result[j] = each club's top maxPerClub values among candidates[j:] —
+// the same "node-aware, not yet decided only" semantics dpSuffix
+// provides, since a club can never usefully keep more than maxPerClub
+// candidates in view regardless of how many it actually has available.
+// Built with the same immutable-snapshot discipline as
+// buildPositionSuffixDP for the same reason: each result[j] must stay
+// valid independent of later (smaller-j) insertions.
+func buildClubTopSuffix(candidates []Candidate, maxPerClub int) []map[int][]float64 {
+	m := len(candidates)
+	running := map[int][]float64{}
+	result := make([]map[int][]float64, m+1)
+	result[m] = map[int][]float64{} // nothing available
+	for j := m - 1; j >= 0; j-- {
+		cnd := candidates[j]
+		vals := append(append([]float64(nil), running[cnd.Club]...), cnd.Value)
+		sort.Sort(sort.Reverse(sort.Float64Slice(vals)))
+		if len(vals) > maxPerClub {
+			vals = vals[:maxPerClub]
+		}
+		snap := make(map[int][]float64, len(running)+1)
+		for c, v := range running {
+			snap[c] = v
+		}
+		snap[cnd.Club] = vals
+		running = snap
+		result[j] = snap
+	}
+	return result
+}
+
+// mergeClubTops combines two "top maxPerClub values per club" maps into
+// one covering their union — per club, concatenating both lists then
+// keeping only the top maxPerClub. Used both to fold a position's own
+// full-list top-values into a broader "after" accumulator (mirroring
+// suffixAfter) and to combine a node's own position-suffix top-values
+// with that accumulator into the final per-node clubTop.
+func mergeClubTops(a, b map[int][]float64, maxPerClub int) map[int][]float64 {
+	out := make(map[int][]float64, len(a)+len(b))
+	seen := make(map[int]bool, len(a)+len(b))
+	for club := range a {
+		seen[club] = true
+	}
+	for club := range b {
+		seen[club] = true
+	}
+	for club := range seen {
+		merged := append(append([]float64(nil), a[club]...), b[club]...)
+		sort.Sort(sort.Reverse(sort.Float64Slice(merged)))
+		if len(merged) > maxPerClub {
+			merged = merged[:maxPerClub]
+		}
+		out[club] = merged
+	}
+	return out
+}
+
+func buildPositionSuffixDP(candidates []Candidate, quota int, maxBudget int) []positionDP {
 	if maxBudget < 0 {
 		maxBudget = 0
 	}
-	table := make([][]float64, quota+1)
-	for k := range table {
-		table[k] = make([]float64, maxBudget+1)
+	m := len(candidates)
+	raw := make([][]float64, quota+1)
+	for k := range raw {
+		raw[k] = make([]float64, maxBudget+1)
 		if k > 0 {
-			for b := range table[k] {
-				table[k][b] = unreachableValue
+			for b := range raw[k] {
+				raw[k][b] = unreachableValue
 			}
 		}
 	}
-	for _, cnd := range candidates {
-		price := cnd.PriceTenths
-		if price > maxBudget {
-			continue // can never be afforded regardless of what else is picked
-		}
-		for k := quota; k >= 1; k-- {
-			for b := maxBudget; b >= price; b-- {
-				prev := table[k-1][b-price]
-				if prev == unreachableValue {
-					continue
-				}
-				if v := prev + cnd.Value; v > table[k][b] {
-					table[k][b] = v
-				}
+
+	suffixes := make([]positionDP, m+1)
+	suffixes[m] = snapshotAtMost(raw, maxBudget)
+	for j := m - 1; j >= 0; j-- {
+		insertIntoExactTable(raw, candidates[j], quota, maxBudget)
+		suffixes[j] = snapshotAtMost(raw, maxBudget)
+	}
+	return suffixes
+}
+
+// insertIntoExactTable folds one more candidate into raw's "cost exactly
+// b" knapsack table, mutating it in place — the standard backward k/b
+// 0/1-knapsack update. raw is kept in this exact (never prefix-maxed)
+// form throughout buildPositionSuffixDP's insertion loop so later
+// insertions stay correct; only a snapshot copy (see snapshotAtMost) is
+// ever converted to "at most" semantics.
+func insertIntoExactTable(raw [][]float64, cnd Candidate, quota, maxBudget int) {
+	price := cnd.PriceTenths
+	if price > maxBudget {
+		return // can never be afforded regardless of what else is picked
+	}
+	for k := quota; k >= 1; k-- {
+		for b := maxBudget; b >= price; b-- {
+			prev := raw[k-1][b-price]
+			if prev == unreachableValue {
+				continue
+			}
+			if v := prev + cnd.Value; v > raw[k][b] {
+				raw[k][b] = v
 			}
 		}
 	}
-	for k := range table {
+}
+
+// snapshotAtMost copies raw (still in "cost exactly b" form) and converts
+// the copy to "cost at most b" via a per-row prefix max, so bestValue can
+// look up any budget directly — non-destructively, so raw itself is left
+// untouched for buildPositionSuffixDP's next insertion to build on.
+func snapshotAtMost(raw [][]float64, maxBudget int) positionDP {
+	table := make([][]float64, len(raw))
+	for k := range raw {
+		row := make([]float64, len(raw[k]))
+		copy(row, raw[k])
 		for b := 1; b <= maxBudget; b++ {
-			if table[k][b-1] > table[k][b] {
-				table[k][b] = table[k][b-1]
+			if row[b-1] > row[b] {
+				row[b] = row[b-1]
 			}
 		}
+		table[k] = row
 	}
 	return positionDP{maxBudget: maxBudget, table: table}
 }
