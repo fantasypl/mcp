@@ -86,12 +86,12 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("tools/list: %v", err)
 	}
-	if len(tools.Tools) != 14 {
+	if len(tools.Tools) != 15 {
 		names := make([]string, len(tools.Tools))
 		for i, tl := range tools.Tools {
 			names[i] = tl.Name
 		}
-		t.Errorf("got %d tools, want 14: %v", len(tools.Tools), names)
+		t.Errorf("got %d tools, want 15: %v", len(tools.Tools), names)
 	}
 
 	resources, err := clientSession.ListResources(ctx, nil)

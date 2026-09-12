@@ -44,6 +44,11 @@ type optimalSquadIn struct {
 	Gameweek         *int     `json:"gameweek,omitempty"           jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
 	ExcludePlayerIDs []int    `json:"exclude_player_ids,omitempty" jsonschema:"Player element IDs to exclude from consideration."`
 }
+type optimalTransfersIn struct {
+	TeamID    int   `json:"team_id"              jsonschema:"FPL team ID"`
+	Gameweek  *int  `json:"gameweek,omitempty"   jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
+	AllowHits *bool `json:"allow_hits,omitempty" jsonschema:"Also consider paid transfers beyond your free allowance, showing the points-vs-hit-cost tradeoff for each. Default false (free transfers only)."`
+}
 type compareIn struct {
 	PlayerNames    []string `json:"player_names"              jsonschema:"Two to four player names"`
 	GameweeksAhead int      `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
@@ -202,8 +207,20 @@ func newServer(client *fpl.Client) *mcp.Server {
 			budgetM = *in.BudgetM
 		}
 		return nil, call(func() (any, error) {
-			return engine.OptimalSquad(ctx, int(budgetM*10), in.Gameweek, in.ExcludePlayerIDs)
+			return engine.OptimalSquad(ctx, algo.RoundToInt(budgetM*10), in.Gameweek, in.ExcludePlayerIDs)
 		}, "Failed to build an optimal squad. Please try again."), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "optimal_transfers", Description: "Find the combinatorially optimal transfers for your current FPL squad — an exact optimizer, not a heuristic single-swap suggester.\n\nUSE THIS WHEN the user asks: \"What's the best possible transfer(s) this week?\", \"Prove my transfer is optimal\", \"Should I make multiple transfers?\", or wants the mathematically best move rather than a quick suggestion. Prefer transfer_suggestions for a faster, single-swap recommendation with detailed reasoning.\n\nAuto-detects your bank, free transfers, and current squad from your team ID. Set allow_hits to also weigh paid transfers (-4 each beyond your free allowance) against their projected points gain — every option considered is returned, not just the best one, so the tradeoff is visible. This may take longer than transfer_suggestions, especially with allow_hits set (up to 4 searches)."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalTransfersIn) (*mcp.CallToolResult, any, error) {
+		if e := validTeam(in.TeamID); e != "" {
+			return nil, errResult(e), nil
+		}
+		if e := validGW(in.Gameweek); e != "" {
+			return nil, errResult(e), nil
+		}
+		allowHits := in.AllowHits != nil && *in.AllowHits
+		return nil, call(func() (any, error) {
+			return engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
+		}, fmt.Sprintf("Failed to find optimal transfers for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
 		if len(in.PlayerNames) < 2 {

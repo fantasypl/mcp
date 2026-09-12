@@ -1,0 +1,16 @@
+{
+  "current": [
+    {
+      "event": 1,
+      "points": 58,
+      "value": 1005,
+      "bank": 3
+    }
+  ],
+  "chips": [
+    {
+      "name": "wildcard",
+      "event": 1
+    }
+  ]
+}

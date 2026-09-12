@@ -1,0 +1,39 @@
+{
+  "team_id": 999001,
+  "gameweek": 1,
+  "free_transfers": 1,
+  "budget_m": 100.5,
+  "budget_note": "Budget is FPL's own reported total team value (squad + bank) as of your most recent recorded gameweek.",
+  "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
+  "options": [
+    {
+      "num_transfers": 1,
+      "hit_cost": 0,
+      "projected_points": 102.04,
+      "net_projected_points": 102.04,
+      "optimal": true,
+      "best": true,
+      "total_cost_m": 93.5,
+      "transfers_out": [
+        {
+          "id": 58,
+          "name": "Forster",
+          "team": "BOU",
+          "position": "GKP",
+          "cost_m": 4,
+          "projected_points": 0
+        }
+      ],
+      "transfers_in": [
+        {
+          "id": 199,
+          "name": "Benitez",
+          "team": "CRY",
+          "position": "GKP",
+          "cost_m": 4.5,
+          "projected_points": 14.42
+        }
+      ]
+    }
+  ]
+}

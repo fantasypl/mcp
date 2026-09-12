@@ -97,6 +97,11 @@ func basicEngine(fixture string) (*algo.Engine, error) {
 		return nil, err
 	}
 	c.SetTeamPicks(syntheticTeamID, 1, p)
+	h, err := readFixture[*fpl.TeamHistory](filepath.Join("testdata", "history_squad1.json"))
+	if err != nil {
+		return nil, err
+	}
+	c.SetHistory(syntheticTeamID, h)
 	for _, id := range []int{411, 426} {
 		summary, err := readFixture[*fpl.PlayerSummary](filepath.Join("testdata", fmt.Sprintf("player_summary_%d.json", id)))
 		if err != nil {
@@ -132,6 +137,16 @@ func genBasic(ctx context.Context, out string) error {
 		}},
 		{"optimal_squad", "", func(c context.Context, e *algo.Engine) (any, error) {
 			return e.OptimalSquad(c, 1000, nil, nil)
+		}},
+		// allow_hits isn't golden-tested: at higher MaxChanges ceilings the
+		// search routinely hits optimalSquadTimeLimit before proving
+		// optimality (Optimal: false), and a time-boxed search's exact
+		// squad choice at that point is scheduling-dependent, not a
+		// meaningful regression signal — see
+		// TestOptimalTransfersAllowHitsSweepsMultipleOptions and friends in
+		// optimal_transfers_test.go for the property-based coverage instead.
+		{"optimal_transfers_default", "", func(c context.Context, e *algo.Engine) (any, error) {
+			return e.OptimalTransfers(c, syntheticTeamID, nil, false)
 		}},
 		{"scout", "", func(c context.Context, e *algo.Engine) (any, error) { return e.SquadScout(c, syntheticTeamID) }},
 		{"compare_haaland_fernandes", "", func(c context.Context, e *algo.Engine) (any, error) {

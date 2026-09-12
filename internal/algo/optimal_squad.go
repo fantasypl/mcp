@@ -171,15 +171,7 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 	squad := make([]OptimalSquadSlot, 0, len(result.Squad))
 	totalCost := 0
 	for _, c := range result.Squad {
-		p := byID[c.ID]
-		squad = append(squad, OptimalSquadSlot{
-			ID:              c.ID,
-			Name:            p.WebName,
-			Team:            shortName(teams[p.Team]),
-			Position:        Position(p.ElementType),
-			CostM:           float64(c.PriceTenths) / 10,
-			ProjectedPoints: Round(c.Value, 2),
-		})
+		squad = append(squad, slotOf(byID[c.ID], teams, c.PriceTenths, c.Value))
 		totalCost += c.PriceTenths
 	}
 
