@@ -15,6 +15,7 @@ import (
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
+	"github.com/fantasypl/mcp/internal/remotecongestion"
 	"github.com/fantasypl/mcp/internal/remoteweights"
 	"github.com/fantasypl/mcp/internal/store"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -158,6 +159,17 @@ func newServer(client *fpl.Client) *mcp.Server {
 			if w, ok := remoteweights.Load(context.Background(), cfg, layout, time.Now()); ok {
 				engine = engine.WithWeights(w)
 			}
+		}
+
+		// Same pattern again: a self-hosted Champions League congestion
+		// calendar (internal/openfootball, captured centrally — see
+		// internal/remotecongestion's package doc) instead of
+		// FPL-Core-Insights' broader-but-not-self-hosted one, only when
+		// FPL_MCP_CONGESTION_URL is set. Narrower coverage (Champions League
+		// only, not Europa/Conference/domestic cups) is an accepted
+		// trade-off for owning the data, not a bug — see CHANGELOG.md.
+		if cfg := remotecongestion.ConfigFromEnv(); cfg.URL != "" {
+			engine.CongestionSource = remotecongestion.NewClient(cfg)
 		}
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
