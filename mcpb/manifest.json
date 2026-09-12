@@ -22,7 +22,11 @@
     "mcp_config": {
       "command": "${__dirname}/server/fpl-mcp",
       "args": [],
-      "env": {}
+      "env": {
+        "FPL_MCP_WEIGHTS_URL": "${user_config.weights_url}",
+        "FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID": "${user_config.weights_access_client_id}",
+        "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}"
+      }
     }
   },
   "tools": [
@@ -44,5 +48,27 @@
   "license": "MIT",
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"]
+  },
+  "user_config": {
+    "weights_url": {
+      "type": "string",
+      "title": "Optimized weights URL (advanced)",
+      "description": "Only relevant if you run a private data-driven weights endpoint (see internal/remoteweights). Leave blank — every user without one gets the same hand-tuned default scoring.",
+      "required": false
+    },
+    "weights_access_client_id": {
+      "type": "string",
+      "title": "Weights endpoint Access Client ID (advanced)",
+      "description": "Cloudflare Access service token Client ID for the URL above. Leave blank unless you set weights_url.",
+      "sensitive": true,
+      "required": false
+    },
+    "weights_access_client_secret": {
+      "type": "string",
+      "title": "Weights endpoint Access Client Secret (advanced)",
+      "description": "Cloudflare Access service token Client Secret for the URL above. Leave blank unless you set weights_url.",
+      "sensitive": true,
+      "required": false
+    }
   }
 }
