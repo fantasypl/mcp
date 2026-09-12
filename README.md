@@ -72,6 +72,8 @@ fplctl evaluate --gw N [--root DIR]
 fplctl audit [--team-id N] [--root DIR]
 fplctl gengolden [--which SET] [--out DIR] | --check
 fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N] [--root DIR]
+fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-from N] [--split-gw N] [--to N] [--group-size N] [--min-matches N] [--min-avg-minutes F] [--exclude-gk] [--root DIR]
+fplctl elo-capture [--root DIR]
 ```
 
 ## Development

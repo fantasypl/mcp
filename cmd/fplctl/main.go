@@ -38,6 +38,8 @@ func main() {
 		err = runFinishingRegression(ctx, args)
 	case "role-change":
 		err = runRoleChangeRegression(ctx, args)
+	case "elo-capture":
+		err = runEloCapture(ctx, args)
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -65,6 +67,7 @@ Usage:
   fplctl gengolden [--which SET] [--out DIR] | --check
   fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N] [--root DIR]
   fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-from N] [--split-gw N] [--to N] [--group-size N] [--min-matches N] [--min-avg-minutes F] [--exclude-gk] [--root DIR]
+  fplctl elo-capture [--root DIR]
 
 Run 'fplctl <subcommand> -h' for subcommand-specific flags.
 `)
