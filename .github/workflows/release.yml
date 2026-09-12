@@ -35,6 +35,9 @@ jobs:
           - goos: windows
             goarch: amd64
             mcpb_platform: win32
+          - goos: windows
+            goarch: arm64
+            mcpb_platform: win32
     steps:
       - uses: actions/checkout@v6
 
