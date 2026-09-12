@@ -210,3 +210,31 @@ func TestBuildCaseRejectsPreSchemaSeasons(t *testing.T) {
 		t.Errorf("error should name the missing column, got: %v", err)
 	}
 }
+
+func TestFetchSendsAuthorizationHeaderOnlyWhenSet(t *testing.T) {
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		fmt.Fprint(w, "ok")
+	}))
+	defer srv.Close()
+
+	c := NewCorpus(t.TempDir())
+	c.BaseURL = srv.URL
+	c.HTTP = srv.Client()
+
+	if _, err := c.fetch(context.Background(), "probe1"); err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "" {
+		t.Errorf("expected no Authorization header without AuthToken, got %q", gotAuth)
+	}
+
+	c.AuthToken = "secret-token"
+	if _, err := c.fetch(context.Background(), "probe2"); err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "Bearer secret-token" {
+		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer secret-token")
+	}
+}

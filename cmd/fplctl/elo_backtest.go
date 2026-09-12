@@ -128,7 +128,7 @@ func runBacktestEloCompare(ctx context.Context, root string, seasons []string, h
 		return fmt.Errorf("elo-compare needs -seasons S1,S2,... (comma-separated, no trailing comma)")
 	}
 
-	corpus := vaastav.NewCorpus(filepath.Join(root, ".cache", "vaastav"))
+	corpus := newVaastavCorpus(filepath.Join(root, ".cache", "vaastav"))
 	eloClient := clubelo.NewClient(filepath.Join(root, ".cache", "clubelo"))
 
 	var baseTuning, baseHeld []msResult

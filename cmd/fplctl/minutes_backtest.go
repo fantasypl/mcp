@@ -155,7 +155,7 @@ func runBacktestMinutesCompare(ctx context.Context, root string, seasons []strin
 		return fmt.Errorf("minutes-compare needs -seasons S1,S2,... (comma-separated, no trailing comma)")
 	}
 
-	corpus := vaastav.NewCorpus(filepath.Join(root, ".cache", "vaastav"))
+	corpus := newVaastavCorpus(filepath.Join(root, ".cache", "vaastav"))
 	ins := insights.NewClient(filepath.Join(root, ".cache", "insights"))
 
 	var baseTuning, baseHeld, variantTuning, variantHeld []msResult

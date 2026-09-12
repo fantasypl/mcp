@@ -90,6 +90,13 @@ type Corpus struct {
 	CacheDir string
 	BaseURL  string
 	HTTP     *http.Client
+
+	// AuthToken, when set, is sent as an "Authorization: Bearer" header on
+	// every fetch — for pointing BaseURL at a private, vaastav-compatible
+	// mirror (e.g. a self-hosted replacement) instead of the public vaastav
+	// repo. Verified live that raw.githubusercontent.com accepts this
+	// directly for a private repo; no need for the GitHub Contents API.
+	AuthToken string
 }
 
 // NewCorpus returns a Corpus caching fetched CSVs under cacheDir.
@@ -112,6 +119,9 @@ func (c *Corpus) fetch(ctx context.Context, relPath string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
+	}
+	if c.AuthToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
 	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {

@@ -108,7 +108,7 @@ func runRoleChangeRegression(ctx context.Context, args []string) error {
 	})
 	control = control[:*groupSize]
 
-	corpus := vaastav.NewCorpus(filepath.Join(*root, ".cache", "vaastav"))
+	corpus := newVaastavCorpus(filepath.Join(*root, ".cache", "vaastav"))
 	future, err := corpus.FuturePoints(ctx, *season, *splitGW+1, *toGW)
 	if err != nil {
 		return err

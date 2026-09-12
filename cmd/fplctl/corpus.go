@@ -12,6 +12,21 @@ import (
 	"github.com/fantasypl/mcp/internal/vaastav"
 )
 
+// newVaastavCorpus returns a Corpus caching under cacheDir, pointed at the
+// public vaastav repo by default. Set FPLCTL_VAASTAV_BASE_URL (and, for a
+// private mirror, FPLCTL_VAASTAV_TOKEN) to point every fplctl command that
+// reconstructs point-in-time state at a self-hosted replacement instead —
+// both are empty for everyone but whoever sets them, so this is a no-op for
+// every other fplctl user.
+func newVaastavCorpus(cacheDir string) *vaastav.Corpus {
+	c := vaastav.NewCorpus(cacheDir)
+	if u := os.Getenv("FPLCTL_VAASTAV_BASE_URL"); u != "" {
+		c.BaseURL = u
+	}
+	c.AuthToken = os.Getenv("FPLCTL_VAASTAV_TOKEN")
+	return c
+}
+
 // msResult is one gameweek's captain-pick outcome within a multi-season
 // corpus backtest — the same shape as btGWResult, plus a season label so
 // results from different seasons can be told apart once aggregated.
@@ -48,7 +63,7 @@ func runBacktestCorpus(ctx context.Context, root string, seasons []string, holdo
 		return fmt.Errorf("-holdout %q must be one of -seasons %v", holdout, seasons)
 	}
 
-	corpus := vaastav.NewCorpus(filepath.Join(root, ".cache", "vaastav"))
+	corpus := newVaastavCorpus(filepath.Join(root, ".cache", "vaastav"))
 
 	var tuning, held []msResult
 	for _, season := range seasons {
