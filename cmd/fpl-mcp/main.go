@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
+	"github.com/fantasypl/mcp/internal/remoteweights"
+	"github.com/fantasypl/mcp/internal/store"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -146,6 +149,16 @@ func newServer(client *fpl.Client) *mcp.Server {
 		engine.FinishingLuckSource = ins
 		engine.CongestionSource = ins
 		engine.RoleChangeSource = ins
+
+		// Best-effort, same as above: inert unless FPL_MCP_WEIGHTS_URL is
+		// set, which it never is for a public install — see package
+		// remoteweights.
+		if cfg := remoteweights.ConfigFromEnv(); cfg.URL != "" {
+			layout := store.Layout{Root: filepath.Join(cacheDir, "fpl-mcp")}
+			if w, ok := remoteweights.Load(context.Background(), cfg, layout, time.Now()); ok {
+				engine = engine.WithWeights(w)
+			}
+		}
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
