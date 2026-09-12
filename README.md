@@ -48,6 +48,8 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `fixture_outlook` | Teams ranked by upcoming fixture difficulty |
 | `price_predictions` | Likely price rises and falls tonight |
 | `transfer_suggestions` | Transfer recommendations for a team |
+| `optimal_squad` | The highest-projected-points 15-man squad achievable under a budget, via an exact combinatorial optimizer |
+| `optimal_transfers` | Combinatorially optimal transfers for a team's current squad, weighed against hit cost |
 | `player_comparison` | Head-to-head comparison of 2-4 players |
 | `live_points` | Live points during an active gameweek |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
