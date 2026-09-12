@@ -1,0 +1,48 @@
+{
+  "manifest_version": "0.3",
+  "name": "fpl-intelligence",
+  "display_name": "FPL Intelligence",
+  "version": "0.0.0",
+  "description": "Fantasy Premier League analysis: captain picks, transfer suggestions, fixture difficulty, differentials, price predictions, mini-league tracking, and a full manager intelligence report.",
+  "long_description": "An MCP server backed by live data from the official FPL API. A single static Go binary — no API keys, no hosted service, no per-request cost. Each user runs their own copy against the free, public FPL API.",
+  "author": {
+    "name": "fantasypl",
+    "url": "https://github.com/fantasypl"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fantasypl/mcp.git"
+  },
+  "homepage": "https://github.com/fantasypl/mcp",
+  "documentation": "https://github.com/fantasypl/mcp#readme",
+  "support": "https://github.com/fantasypl/mcp/issues",
+  "server": {
+    "type": "binary",
+    "entry_point": "server/fpl-mcp",
+    "mcp_config": {
+      "command": "${__dirname}/server/fpl-mcp",
+      "args": [],
+      "env": {}
+    }
+  },
+  "tools": [
+    { "name": "fpl_manager_hub", "description": "Complete intelligence report for a manager's team — the best starting point" },
+    { "name": "captain_pick", "description": "Top 5 captain recommendations for a gameweek" },
+    { "name": "differential_finder", "description": "Underowned players outperforming their ownership" },
+    { "name": "fixture_outlook", "description": "Teams ranked by upcoming fixture difficulty" },
+    { "name": "price_predictions", "description": "Likely price rises and falls tonight" },
+    { "name": "transfer_suggestions", "description": "Transfer recommendations for a team" },
+    { "name": "player_comparison", "description": "Head-to-head comparison of 2-4 players" },
+    { "name": "live_points", "description": "Live points during an active gameweek" },
+    { "name": "is_hit_worth_it", "description": "Whether a -4 transfer hit is worth taking" },
+    { "name": "chip_strategy", "description": "When to use each remaining chip" },
+    { "name": "rival_tracker", "description": "Mini-league rival analysis and counter-strategies" },
+    { "name": "league_analyzer", "description": "Win probability predictions for a mini-league" },
+    { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" }
+  ],
+  "keywords": ["fantasy-premier-league", "fpl", "football", "soccer", "fantasy-sports"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"]
+  }
+}

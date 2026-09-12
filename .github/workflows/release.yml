@@ -2,7 +2,10 @@ name: Release
 
 # Builds both binaries for each target platform and attaches them to the
 # GitHub Release, replacing the reference workflow's PyPI publish step —
-# this project ships as a binary, not a package registry artifact.
+# this project ships as a binary, not a package registry artifact. Also
+# packs fpl-mcp (not fplctl, which isn't an MCP server) as a .mcpb bundle
+# per platform, so Claude Desktop users can install it with one click
+# instead of hand-editing claude_desktop_config.json.
 
 on:
   release:
@@ -19,14 +22,19 @@ jobs:
         include:
           - goos: linux
             goarch: amd64
+            mcpb_platform: linux
           - goos: linux
             goarch: arm64
+            mcpb_platform: linux
           - goos: darwin
             goarch: amd64
+            mcpb_platform: darwin
           - goos: darwin
             goarch: arm64
+            mcpb_platform: darwin
           - goos: windows
             goarch: amd64
+            mcpb_platform: win32
     steps:
       - uses: actions/checkout@v6
 
@@ -48,6 +56,29 @@ jobs:
             -o "dist/fpl-mcp-${{ matrix.goos }}-${{ matrix.goarch }}${ext}" ./cmd/fpl-mcp
           go build -ldflags="-s -w" \
             -o "dist/fplctl-${{ matrix.goos }}-${{ matrix.goarch }}${ext}" ./cmd/fplctl
+
+      - name: Pack MCPB bundle
+        run: |
+          ext=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then ext=".exe"; fi
+          version="${GITHUB_REF_NAME#v}"
+
+          bundle="bundle-${{ matrix.goos }}-${{ matrix.goarch }}"
+          mkdir -p "$bundle/server"
+          cp "dist/fpl-mcp-${{ matrix.goos }}-${{ matrix.goarch }}${ext}" "$bundle/server/fpl-mcp${ext}"
+
+          jq \
+            --arg version "$version" \
+            --arg entry "server/fpl-mcp${ext}" \
+            --arg platform "${{ matrix.mcpb_platform }}" \
+            '.version = $version
+             | .server.entry_point = $entry
+             | .server.mcp_config.command = "${__dirname}/" + $entry
+             | .compatibility.platforms = [$platform]' \
+            mcpb/manifest.json > "$bundle/manifest.json"
+
+          npx --yes @anthropic-ai/mcpb@2.1.2 pack "$bundle" \
+            "dist/fpl-mcp-${{ matrix.goos }}-${{ matrix.goarch }}.mcpb"
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
