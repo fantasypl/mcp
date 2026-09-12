@@ -130,6 +130,9 @@ func genBasic(ctx context.Context, out string) error {
 		{"transfers_2ft", "", func(c context.Context, e *algo.Engine) (any, error) {
 			return e.TransferSuggestions(c, syntheticTeamID, 2, 0)
 		}},
+		{"optimal_squad", "", func(c context.Context, e *algo.Engine) (any, error) {
+			return e.OptimalSquad(c, 1000, nil, nil)
+		}},
 		{"scout", "", func(c context.Context, e *algo.Engine) (any, error) { return e.SquadScout(c, syntheticTeamID) }},
 		{"compare_haaland_fernandes", "", func(c context.Context, e *algo.Engine) (any, error) {
 			return e.ComparePlayers(c, []string{"Haaland", "B.Fernandes"}, 4)

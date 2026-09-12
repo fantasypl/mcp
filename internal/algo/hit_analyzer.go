@@ -22,6 +22,13 @@ const (
 	homeBoost   = 1.15 // home fixtures are worth ~15% more
 	awayPenalty = 0.95 // away fixtures ~5% less
 	hitCost     = -4
+
+	// xpHorizonGWs is AnalyzeHit's default projection window, and also
+	// optimal_squad/optimal_transfers' fixed lookahead for the same
+	// projectExpectedPoints call — a product decision to keep squad
+	// selection's objective on the same footing as hit analysis, not an
+	// independently-tunable parameter.
+	xpHorizonGWs = 5
 )
 
 // fdrMultiplier scales expected points by fixture difficulty.
@@ -181,7 +188,7 @@ func buildPlayerSummary(p *fpl.Player, teamName string, fixtures []projectionFix
 // transfer justifies its cost. gameweeksAhead defaults to 5.
 func (e *Engine) AnalyzeHit(ctx context.Context, playerOutID, playerInID, gameweeksAhead int) (*HitResult, error) {
 	if gameweeksAhead <= 0 {
-		gameweeksAhead = 5
+		gameweeksAhead = xpHorizonGWs
 	}
 
 	bootstrap, err := e.client.Bootstrap(ctx)

@@ -1,0 +1,131 @@
+{
+  "gameweek": 1,
+  "gameweeks_ahead": 5,
+  "budget_m": 100,
+  "total_cost_m": 100,
+  "projected_points": 166.26,
+  "optimal": true,
+  "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
+  "squad": [
+    {
+      "id": 199,
+      "name": "Benitez",
+      "team": "CRY",
+      "position": "GKP",
+      "cost_m": 4.5,
+      "projected_points": 14.42
+    },
+    {
+      "id": 531,
+      "name": "Ellborg",
+      "team": "SUN",
+      "position": "GKP",
+      "cost_m": 4.5,
+      "projected_points": 10.62
+    },
+    {
+      "id": 4,
+      "name": "Gabriel",
+      "team": "ARS",
+      "position": "DEF",
+      "cost_m": 8,
+      "projected_points": 13.02
+    },
+    {
+      "id": 388,
+      "name": "Guéhi",
+      "team": "MCI",
+      "position": "DEF",
+      "cost_m": 6,
+      "projected_points": 11.33
+    },
+    {
+      "id": 389,
+      "name": "Matheus N.",
+      "team": "MCI",
+      "position": "DEF",
+      "cost_m": 6,
+      "projected_points": 9.99
+    },
+    {
+      "id": 391,
+      "name": "Gvardiol",
+      "team": "MCI",
+      "position": "DEF",
+      "cost_m": 5.5,
+      "projected_points": 9.77
+    },
+    {
+      "id": 498,
+      "name": "Senesi",
+      "team": "TOT",
+      "position": "DEF",
+      "cost_m": 6,
+      "projected_points": 10.38
+    },
+    {
+      "id": 236,
+      "name": "Dewsbury-Hall",
+      "team": "EVE",
+      "position": "MID",
+      "cost_m": 6.5,
+      "projected_points": 10.49
+    },
+    {
+      "id": 260,
+      "name": "Wilson",
+      "team": "LEE",
+      "position": "MID",
+      "cost_m": 6.5,
+      "projected_points": 10.38
+    },
+    {
+      "id": 335,
+      "name": "Stach",
+      "team": "LEE",
+      "position": "MID",
+      "cost_m": 6,
+      "projected_points": 10.38
+    },
+    {
+      "id": 426,
+      "name": "B.Fernandes",
+      "team": "MUN",
+      "position": "MID",
+      "cost_m": 12,
+      "projected_points": 14.18
+    },
+    {
+      "id": 452,
+      "name": "Bruno G.",
+      "team": "NEW",
+      "position": "MID",
+      "cost_m": 7,
+      "projected_points": 11.34
+    },
+    {
+      "id": 106,
+      "name": "Thiago",
+      "team": "BRE",
+      "position": "FWD",
+      "cost_m": 8,
+      "projected_points": 10.27
+    },
+    {
+      "id": 165,
+      "name": "João Pedro",
+      "team": "CHE",
+      "position": "FWD",
+      "cost_m": 7.5,
+      "projected_points": 10.63
+    },
+    {
+      "id": 346,
+      "name": "Calvert-Lewin",
+      "team": "LEE",
+      "position": "FWD",
+      "cost_m": 6,
+      "projected_points": 9.06
+    }
+  ]
+}

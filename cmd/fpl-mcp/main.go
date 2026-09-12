@@ -39,6 +39,11 @@ type transferIn struct {
 	FreeTransfers int     `json:"free_transfers,omitempty" jsonschema:"Available free transfers. Default 1."`
 	Bank          float64 `json:"bank,omitempty"            jsonschema:"Money in the bank in millions. Default 0."`
 }
+type optimalSquadIn struct {
+	BudgetM          *float64 `json:"budget_m,omitempty"           jsonschema:"Total squad budget in millions. Default 100.0."`
+	Gameweek         *int     `json:"gameweek,omitempty"           jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
+	ExcludePlayerIDs []int    `json:"exclude_player_ids,omitempty" jsonschema:"Player element IDs to exclude from consideration."`
+}
 type compareIn struct {
 	PlayerNames    []string `json:"player_names"              jsonschema:"Two to four player names"`
 	GameweeksAhead int      `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
@@ -81,6 +86,12 @@ func validLeague(id int) string {
 func validGW(gw *int) string {
 	if gw != nil && (*gw < 1 || *gw > 38) {
 		return "Invalid gameweek. Must be between 1 and 38."
+	}
+	return ""
+}
+func validBudgetM(budget *float64) string {
+	if budget != nil && (*budget < 80 || *budget > 120) {
+		return "Invalid budget_m. Must be between 80 and 120."
 	}
 	return ""
 }
@@ -178,6 +189,21 @@ func newServer(client *fpl.Client) *mcp.Server {
 		return nil, call(func() (any, error) {
 			return engine.TransferSuggestions(ctx, in.TeamID, clamp(in.FreeTransfers, 1, 5), maxf(in.Bank, 0))
 		}, "Failed to get transfer suggestions. Check that the team ID is correct and try again."), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "optimal_squad", Description: "Build the highest-projected-points 15-man FPL squad achievable under a budget, using an exact combinatorial optimizer (branch-and-bound), not a heuristic.\n\nUSE THIS WHEN the user asks: \"Build me the best possible squad\", \"Optimal team for £100m?\", \"What's the mathematically best squad?\", or wants a from-scratch squad rather than advice on their existing one.\n\nSelects the 15-man squad only (2 GKP/5 DEF/5 MID/3 FWD, max 3 per club) — not a starting XI or captain. Each player's value is projected points over the next 5 gameweeks. Considers a large but bounded candidate pool per position, so the result is near-optimal rather than certified optimal against every player in the game."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalSquadIn) (*mcp.CallToolResult, any, error) {
+		if e := validBudgetM(in.BudgetM); e != "" {
+			return nil, errResult(e), nil
+		}
+		if e := validGW(in.Gameweek); e != "" {
+			return nil, errResult(e), nil
+		}
+		budgetM := 100.0
+		if in.BudgetM != nil {
+			budgetM = *in.BudgetM
+		}
+		return nil, call(func() (any, error) {
+			return engine.OptimalSquad(ctx, int(budgetM*10), in.Gameweek, in.ExcludePlayerIDs)
+		}, "Failed to build an optimal squad. Please try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
 		if len(in.PlayerNames) < 2 {

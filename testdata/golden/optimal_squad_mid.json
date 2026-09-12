@@ -1,0 +1,131 @@
+{
+  "gameweek": 1,
+  "gameweeks_ahead": 5,
+  "budget_m": 100,
+  "total_cost_m": 100,
+  "projected_points": 445.15,
+  "optimal": true,
+  "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
+  "squad": [
+    {
+      "id": 1,
+      "name": "Raya",
+      "team": "ARS",
+      "position": "GKP",
+      "cost_m": 6,
+      "projected_points": 24.44
+    },
+    {
+      "id": 82,
+      "name": "Kelleher",
+      "team": "BRE",
+      "position": "GKP",
+      "cost_m": 5,
+      "projected_points": 23.75
+    },
+    {
+      "id": 4,
+      "name": "Gabriel",
+      "team": "ARS",
+      "position": "DEF",
+      "cost_m": 8,
+      "projected_points": 31.05
+    },
+    {
+      "id": 61,
+      "name": "Truffert",
+      "team": "BOU",
+      "position": "DEF",
+      "cost_m": 5.5,
+      "projected_points": 27.5
+    },
+    {
+      "id": 229,
+      "name": "Tarkowski",
+      "team": "EVE",
+      "position": "DEF",
+      "cost_m": 6,
+      "projected_points": 26.54
+    },
+    {
+      "id": 498,
+      "name": "Senesi",
+      "team": "TOT",
+      "position": "DEF",
+      "cost_m": 6,
+      "projected_points": 33.58
+    },
+    {
+      "id": 533,
+      "name": "Mukiele",
+      "team": "SUN",
+      "position": "DEF",
+      "cost_m": 5.5,
+      "projected_points": 26.84
+    },
+    {
+      "id": 95,
+      "name": "O.Dango",
+      "team": "BRE",
+      "position": "MID",
+      "cost_m": 6.5,
+      "projected_points": 28.25
+    },
+    {
+      "id": 368,
+      "name": "Szoboszlai",
+      "team": "LIV",
+      "position": "MID",
+      "cost_m": 7,
+      "projected_points": 30.93
+    },
+    {
+      "id": 426,
+      "name": "B.Fernandes",
+      "team": "MUN",
+      "position": "MID",
+      "cost_m": 12,
+      "projected_points": 38.95
+    },
+    {
+      "id": 481,
+      "name": "Anderson",
+      "team": "MCI",
+      "position": "MID",
+      "cost_m": 6.5,
+      "projected_points": 33.09
+    },
+    {
+      "id": 542,
+      "name": "E.Le Fée",
+      "team": "SUN",
+      "position": "MID",
+      "cost_m": 6,
+      "projected_points": 26.84
+    },
+    {
+      "id": 55,
+      "name": "Watkins",
+      "team": "AVL",
+      "position": "FWD",
+      "cost_m": 8,
+      "projected_points": 38.4
+    },
+    {
+      "id": 346,
+      "name": "Calvert-Lewin",
+      "team": "LEE",
+      "position": "FWD",
+      "cost_m": 6,
+      "projected_points": 27.28
+    },
+    {
+      "id": 465,
+      "name": "Osula",
+      "team": "NEW",
+      "position": "FWD",
+      "cost_m": 6,
+      "projected_points": 27.71
+    }
+  ]
+}
