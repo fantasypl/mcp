@@ -78,13 +78,21 @@ func TestOptimalTransfersDefaultHasExactlyOneOption(t *testing.T) {
 
 // One allow_hits=true call (already a multi-second, multi-Solve sweep) is
 // reused across every property below rather than re-run per assertion, to
-// avoid needlessly repeating the same expensive computation in every test.
+// avoid needlessly repeating the same expensive computation in every test —
+// including a realistic-scale timing check through the full pipeline
+// (translation, pool-cap prefilter, and up to 1+maxHitsConsidered
+// sequential Solve calls), mirroring TestOptimalSquadRealisticScaleTiming's
+// worst-case-elapsed approach for this tool's harder, Locked-constrained
+// search.
 func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping the multi-Solve allow_hits sweep in -short mode")
 	}
 	e := newEngineWithSquadAndHistory(t, "midseason")
+
+	start := time.Now()
 	got, err := e.OptimalTransfers(context.Background(), syntheticTeamID, nil, true)
+	elapsed := time.Since(start)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,6 +100,16 @@ func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 	if len(result.Options) != 1+maxHitsConsidered {
 		t.Fatalf("allow_hits=true: got %d options, want %d", len(result.Options), 1+maxHitsConsidered)
 	}
+
+	t.Run("stays within worst-case latency", func(t *testing.T) {
+		worstCase := time.Duration(1+maxHitsConsidered) * (optimalSquadTimeLimit + 2*time.Second)
+		if elapsed > worstCase {
+			t.Errorf("OptimalTransfers(allowHits=true) took %v, want well under %v", elapsed, worstCase)
+		}
+		for _, opt := range result.Options {
+			t.Logf("num_transfers=%d optimal=%v net_projected_points=%.2f", opt.NumTransfers, opt.Optimal, opt.NetProjectedPoints)
+		}
+	})
 
 	squad := loadJSON[*fpl.TeamPicks](t, testdataPath("picks_squad1.json"))
 	lockedIDs := make(map[int]bool, len(squad.Picks))
