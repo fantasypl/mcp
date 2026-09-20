@@ -16,27 +16,30 @@ import (
 // coherent picture instead of six separate calls that could observe
 // different cache states.
 type ManagerHubResult struct {
-	TeamID                int                  `json:"team_id"`
-	Gameweek              int                  `json:"gameweek"`
-	PreppingFor           string               `json:"prepping_for"`
-	ManagerStatus         *fpl.ManagerStatus   `json:"manager_status"`
-	SquadValue            float64              `json:"squad_value"`
-	Bank                  float64              `json:"bank"`
-	TotalBudget           float64              `json:"total_budget"`
-	SeasonSummary         HubSeasonSummary     `json:"season_summary"`
-	SquadSize             int                  `json:"squad_size"`
-	SquadValid            bool                 `json:"squad_valid"`
-	NumStarters           int                  `json:"num_starters"`
-	NumBench              int                  `json:"num_bench"`
-	Squad                 []HubSquadEntry      `json:"squad"`
-	SquadHealth           HubSquadHealth       `json:"squad_health"`
-	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
-	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
-	DifferentialTargets   []Differential       `json:"differential_targets"`
-	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
-	PriceDropRisks        []HubPriceRisk       `json:"price_drop_risks"`
-	PricePredictions      HubPricePredictions  `json:"price_predictions"`
-	PoweredBy             string               `json:"powered_by"`
+	TeamID                int                `json:"team_id"`
+	Gameweek              int                `json:"gameweek"`
+	PreppingFor           string             `json:"prepping_for"`
+	ManagerStatus         *fpl.ManagerStatus `json:"manager_status"`
+	SquadValue            float64            `json:"squad_value"`
+	Bank                  float64            `json:"bank"`
+	TotalBudget           float64            `json:"total_budget"`
+	SeasonSummary         HubSeasonSummary   `json:"season_summary"`
+	SquadSize             int                `json:"squad_size"`
+	SquadValid            bool               `json:"squad_valid"`
+	NumStarters           int                `json:"num_starters"`
+	NumBench              int                `json:"num_bench"`
+	Squad                 []HubSquadEntry    `json:"squad"`
+	SquadHealth           HubSquadHealth     `json:"squad_health"`
+	CaptainRecommendation []CaptainPick      `json:"captain_recommendation"`
+	// CaptainSignalNote is set only when captain_score and FPL's ep_next
+	// disagree on the best captain among the starters. See captainSignalNote.
+	CaptainSignalNote   string               `json:"captain_signal_note,omitempty"`
+	TransferSuggestions []TransferSuggestion `json:"transfer_suggestions"`
+	DifferentialTargets []Differential       `json:"differential_targets"`
+	FixtureOutlook      HubFixtureOutlook    `json:"fixture_outlook"`
+	PriceDropRisks      []HubPriceRisk       `json:"price_drop_risks"`
+	PricePredictions    HubPricePredictions  `json:"price_predictions"`
+	PoweredBy           string               `json:"powered_by"`
 }
 
 type HubSeasonSummary struct {
@@ -72,6 +75,7 @@ type HubSquadEntry struct {
 	Cost          float64  `json:"cost"`
 	Form          float64  `json:"form"`
 	PointsPerGame float64  `json:"points_per_game"`
+	EPNext        float64  `json:"ep_next"`
 	TotalPoints   int      `json:"total_points"`
 	ICTIndex      float64  `json:"ict_index"`
 	IsCaptain     bool     `json:"is_captain"`
@@ -83,6 +87,41 @@ type HubSquadEntry struct {
 	Status        string   `json:"status"`
 	Minutes       int      `json:"minutes"`
 	SelectedByPct float64  `json:"selected_by_pct"`
+}
+
+// captainSignalNote explains a disagreement between the two captaincy signals
+// the hub reports for each starter: the server's captain_score, and FPL's own
+// ep_next projection. Returns "" when they agree.
+//
+// They can legitimately disagree. captain_score weighs fixture difficulty,
+// form and set-piece duties on top of expected output, while ep_next is FPL's
+// own model. The note names each signal's favourite so the caller knows why
+// two recommendations differ instead of guessing which to trust.
+//
+// Only starters count: a benched player can't be captain. A tie on ep_next is
+// not a disagreement, and neither is a squad with no ep_next data at all
+// (preseason, where every projection is zero).
+func captainSignalNote(squad []HubSquadEntry) string {
+	var byScore, byEP *HubSquadEntry
+	for i := range squad {
+		s := &squad[i]
+		if !s.Starter {
+			continue
+		}
+		if byScore == nil || s.CaptainScore > byScore.CaptainScore {
+			byScore = s
+		}
+		if byEP == nil || s.EPNext > byEP.EPNext {
+			byEP = s
+		}
+	}
+	if byScore == nil || byScore.EPNext >= byEP.EPNext {
+		return ""
+	}
+	return fmt.Sprintf(
+		"captain_score favours %s (%.1f, ep_next %.1f) while ep_next favours %s (%.1f, captain_score %.1f). "+
+			"captain_score weighs fixture difficulty, form and set-piece duties; ep_next is FPL's own projection.",
+		byScore.Name, byScore.CaptainScore, byScore.EPNext, byEP.Name, byEP.EPNext, byEP.CaptainScore)
 }
 
 type HubSquadHealth struct {
@@ -249,7 +288,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			Slot: pick.Position, Starter: pick.Position <= 11, ElementID: p.ID,
 			Name: p.WebName, Team: shortName(team), TeamFullName: fullName(team),
 			Position: Position(p.ElementType), Cost: float64(p.NowCost) / 10,
-			Form: p.Form.Float(), PointsPerGame: p.PointsPerGame.Float(),
+			Form: p.Form.Float(), PointsPerGame: p.PointsPerGame.Float(), EPNext: p.EPNext.Float(),
 			TotalPoints: p.TotalPoints, ICTIndex: p.ICTIndex.Float(),
 			IsCaptain: pick.IsCaptain, IsViceCaptain: pick.IsViceCaptain,
 			Opponent: opponentStr, Venue: venue, FDR: fdr, CaptainScore: captainScore,
@@ -361,6 +400,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			InjuredOrDoubtful: injured, PoorFormStarters: poorForm, ToughFixturesThisGW: toughFixtures,
 		},
 		CaptainRecommendation: captainResult.Picks,
+		CaptainSignalNote:     captainSignalNote(squad),
 		TransferSuggestions:   transferSuggestions,
 		DifferentialTargets:   diffTargets,
 		FixtureOutlook:        HubFixtureOutlook{TeamsByDifficulty: teamsByDifficulty, PlayersToTarget: fixtureResult.PlayersToTarget},
