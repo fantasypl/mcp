@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/fantasypl/mcp/internal/fpl"
@@ -41,6 +42,8 @@ type CompareResult struct {
 	GameweeksAhead int
 	Players        []PlayerProfile
 	Verdict        string
+	// Warnings lists matches the caller should double-check; see matchWarnings.
+	Warnings []string
 }
 
 func compareError(msg string) *CompareResult {
@@ -51,8 +54,8 @@ func compareNoMatch(msg string, details []string, matched []MatchedQuery) *Compa
 	return &CompareResult{kind: compareKindNoMatch, Error: msg, Details: details, Matched: matched}
 }
 
-func compareSuccess(gw, gameweeksAhead int, players []PlayerProfile, verdict string) *CompareResult {
-	return &CompareResult{kind: compareKindSuccess, Gameweek: gw, GameweeksAhead: gameweeksAhead, Players: players, Verdict: verdict}
+func compareSuccess(gw, gameweeksAhead int, players []PlayerProfile, verdict string, warnings []string) *CompareResult {
+	return &CompareResult{kind: compareKindSuccess, Gameweek: gw, GameweeksAhead: gameweeksAhead, Players: players, Verdict: verdict, Warnings: warnings}
 }
 
 func (c CompareResult) MarshalJSON() ([]byte, error) {
@@ -64,12 +67,15 @@ func (c CompareResult) MarshalJSON() ([]byte, error) {
 			Matched []MatchedQuery `json:"matched"`
 		}{c.Error, c.Details, c.Matched})
 	case compareKindSuccess:
+		// Warnings comes first so it is the first thing a reader sees, and is
+		// omitted entirely when every match was exact and unambiguous.
 		return json.Marshal(struct {
+			Warnings       []string        `json:"warnings,omitempty"`
 			Gameweek       int             `json:"gameweek"`
 			GameweeksAhead int             `json:"gameweeks_ahead"`
 			Players        []PlayerProfile `json:"players"`
 			Verdict        string          `json:"verdict"`
-		}{c.Gameweek, c.GameweeksAhead, c.Players, c.Verdict})
+		}{c.Warnings, c.Gameweek, c.GameweeksAhead, c.Players, c.Verdict})
 	default:
 		return json.Marshal(struct {
 			Error string `json:"error"`
@@ -206,51 +212,151 @@ func avgTotalPoints(games []fpl.PlayerHistoryEntry) float64 {
 	return Round(float64(sum)/float64(len(games)), 1)
 }
 
-// fuzzyMatchPlayer finds the best fuzzy name match for a player.
+// latinFolds maps accented Latin letters to their plain-ASCII base. The
+// standard library has no diacritic stripping (that lives in golang.org/x/text,
+// which this module doesn't otherwise use), and FPL player names only ever use
+// Latin letters, so a table covering Latin-1 Supplement and Latin Extended-A is
+// enough. Letters with no accent-free base (ß, æ, ø, đ) fold to the spelling
+// English-language sources use.
+var latinFolds = strings.NewReplacer(
+	"à", "a", "á", "a", "â", "a", "ã", "a", "ä", "a", "å", "a", "ā", "a", "ă", "a", "ą", "a",
+	"ç", "c", "ć", "c", "ĉ", "c", "ċ", "c", "č", "c",
+	"ď", "d", "đ", "d", "ð", "d",
+	"è", "e", "é", "e", "ê", "e", "ë", "e", "ē", "e", "ĕ", "e", "ė", "e", "ę", "e", "ě", "e",
+	"ĝ", "g", "ğ", "g", "ġ", "g", "ģ", "g",
+	"ĥ", "h", "ħ", "h",
+	"ì", "i", "í", "i", "î", "i", "ï", "i", "ĩ", "i", "ī", "i", "ĭ", "i", "į", "i", "ı", "i",
+	"ĵ", "j", "ķ", "k",
+	"ĺ", "l", "ļ", "l", "ľ", "l", "ł", "l",
+	"ñ", "n", "ń", "n", "ņ", "n", "ň", "n",
+	"ò", "o", "ó", "o", "ô", "o", "õ", "o", "ö", "o", "ø", "o", "ō", "o", "ŏ", "o", "ő", "o",
+	"ŕ", "r", "ŗ", "r", "ř", "r",
+	"ś", "s", "ŝ", "s", "ş", "s", "š", "s",
+	"ţ", "t", "ť", "t", "ŧ", "t",
+	"ù", "u", "ú", "u", "û", "u", "ü", "u", "ũ", "u", "ū", "u", "ŭ", "u", "ů", "u", "ű", "u", "ų", "u",
+	"ŵ", "w", "ý", "y", "ÿ", "y", "ŷ", "y",
+	"ź", "z", "ż", "z", "ž", "z",
+	"ß", "ss", "æ", "ae", "œ", "oe", "þ", "th",
+)
+
+// foldName lower-cases s and strips diacritics so "João" and "joao" compare
+// equal. Lower-casing first means the table only needs lower-case entries.
+func foldName(s string) string {
+	return latinFolds.Replace(strings.ToLower(strings.TrimSpace(s)))
+}
+
+// playerMatch is the outcome of resolving a name query to a player.
+type playerMatch struct {
+	player *fpl.Player
+	// tier is "exact", "starts_with", "contains" or "full_name".
+	tier string
+	// alternatives are the other players the query could equally have meant,
+	// most-owned first. Empty when the match was unambiguous.
+	alternatives []*fpl.Player
+}
+
+// fuzzyMatchPlayer resolves a name query to a player.
 //
-// Priority: exact web_name match, web_name prefix, web_name substring, full
-// name substring. Within a tier, ties go to the player with the most total
-// points — and among equal-points players, to whichever is *first*
-// in elements order, not the last.
-func fuzzyMatchPlayer(name string, elements []fpl.Player) (*fpl.Player, string, bool) {
-	query := strings.ToLower(strings.TrimSpace(name))
+// Matching ignores case and diacritics, so "Joao Pedro" finds "João Pedro".
+//
+// An exact web_name match wins outright. Otherwise every player whose web_name
+// starts with or contains the query is a candidate, and the most widely
+// owned wins. Ownership, not match tier, decides among them: a short query
+// like "Pedro" *starts* Pedro Porro's web_name but only *appears inside* João
+// Pedro's, and ranking by tier would pick the far less relevant player. Only
+// when no web_name matches does the search fall back to full names.
+//
+// Whenever more than one player fits, the others are returned as
+// alternatives so the caller can flag the ambiguity rather than guess
+// silently. Ties in ownership go to total points, then to whichever player
+// comes first in elements order.
+func fuzzyMatchPlayer(name string, elements []fpl.Player) (playerMatch, bool) {
+	query := foldName(name)
 	if query == "" {
-		return nil, "", false
+		return playerMatch{}, false
 	}
 
-	var exact, startsWith, contains, fullNameContains []*fpl.Player
+	var exact, partial, fullNameContains []*fpl.Player
+	tierOf := map[int]string{}
 	for i := range elements {
 		p := &elements[i]
-		web := strings.ToLower(p.WebName)
-		full := strings.ToLower(p.FirstName + " " + p.SecondName)
+		web := foldName(p.WebName)
+		full := foldName(p.FirstName + " " + p.SecondName)
 
 		switch {
 		case web == query:
 			exact = append(exact, p)
+			tierOf[p.ID] = "exact"
 		case strings.HasPrefix(web, query):
-			startsWith = append(startsWith, p)
+			partial = append(partial, p)
+			tierOf[p.ID] = "starts_with"
 		case strings.Contains(web, query):
-			contains = append(contains, p)
+			partial = append(partial, p)
+			tierOf[p.ID] = "contains"
 		case strings.Contains(full, query):
 			fullNameContains = append(fullNameContains, p)
+			tierOf[p.ID] = "full_name"
 		}
 	}
 
-	tiers := [][]*fpl.Player{exact, startsWith, contains, fullNameContains}
-	tierNames := [...]string{"exact", "starts_with", "contains", "full_name"}
-	for i, group := range tiers {
-		if len(group) == 0 {
+	for _, candidates := range [][]*fpl.Player{exact, partial, fullNameContains} {
+		if len(candidates) == 0 {
 			continue
 		}
-		best := group[0]
-		for _, p := range group[1:] {
-			if p.TotalPoints > best.TotalPoints {
-				best = p
+		// Stable, so equal candidates keep elements order.
+		ranked := slices.Clone(candidates)
+		slices.SortStableFunc(ranked, func(a, b *fpl.Player) int {
+			switch {
+			case a.SelectedByPercent != b.SelectedByPercent:
+				if a.SelectedByPercent > b.SelectedByPercent {
+					return -1
+				}
+				return 1
+			case a.TotalPoints != b.TotalPoints:
+				return b.TotalPoints - a.TotalPoints
+			default:
+				return 0
 			}
-		}
-		return best, tierNames[i], true
+		})
+		return playerMatch{player: ranked[0], tier: tierOf[ranked[0].ID], alternatives: ranked[1:]}, true
 	}
-	return nil, "", false
+	return playerMatch{}, false
+}
+
+// queryMatch pairs a query with what it resolved to.
+type queryMatch struct {
+	query string
+	playerMatch
+}
+
+// matchWarnings describes every match a caller should double-check: anything
+// that was not an exact name, and anything another player could equally
+// have been. teamOf maps player id to team short name, for disambiguation.
+func matchWarnings(matches []queryMatch, teamOf map[int]string) []string {
+	label := func(p *fpl.Player) string {
+		if t := teamOf[p.ID]; t != "" {
+			return fmt.Sprintf("%s (%s)", p.WebName, t)
+		}
+		return p.WebName
+	}
+
+	var warnings []string
+	for _, m := range matches {
+		if m.tier == "exact" && len(m.alternatives) == 0 {
+			continue
+		}
+		w := fmt.Sprintf("'%s' was matched to %s by %s match", m.query, label(m.player), m.tier)
+		if len(m.alternatives) > 0 {
+			others := make([]string, len(m.alternatives))
+			for i, alt := range m.alternatives {
+				others[i] = label(alt)
+			}
+			w += "; it could also mean " + strings.Join(others, ", ")
+		}
+		w += ". Use a fuller name if this is not who you meant."
+		warnings = append(warnings, w)
+	}
+	return warnings
 }
 
 // buildUpcomingFixtures reuses buildFixtureMap (captain.go) per gameweek —
@@ -431,20 +537,15 @@ func (e *Engine) ComparePlayers(ctx context.Context, playerNames []string, gamew
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, nextGW, teams)
 
-	type matchedPlayer struct {
-		query  string
-		player *fpl.Player
-		tier   string
-	}
-	var matched []matchedPlayer
+	var matched []queryMatch
 	var errs []string
 	for _, name := range playerNames {
-		p, tier, ok := fuzzyMatchPlayer(name, bootstrap.Elements)
+		pm, ok := fuzzyMatchPlayer(name, bootstrap.Elements)
 		if !ok {
 			errs = append(errs, fmt.Sprintf("No match found for '%s'.", name))
 			continue
 		}
-		matched = append(matched, matchedPlayer{query: name, player: p, tier: tier})
+		matched = append(matched, queryMatch{query: name, playerMatch: pm})
 	}
 
 	if len(errs) > 0 {
@@ -583,5 +684,12 @@ func (e *Engine) ComparePlayers(ctx context.Context, playerNames []string, gamew
 		})
 	}
 
-	return compareSuccess(nextGW, gameweeksAhead, profiles, buildVerdict(profiles)), nil
+	teamShort := make(map[int]string, len(matched))
+	for _, m := range matched {
+		teamShort[m.player.ID] = shortName(teams[m.player.Team])
+		for _, alt := range m.alternatives {
+			teamShort[alt.ID] = shortName(teams[alt.Team])
+		}
+	}
+	return compareSuccess(nextGW, gameweeksAhead, profiles, buildVerdict(profiles), matchWarnings(matched, teamShort)), nil
 }
