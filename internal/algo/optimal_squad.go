@@ -119,6 +119,9 @@ type OptimalSquadSlot struct {
 	Position        string  `json:"position"`
 	CostM           float64 `json:"cost_m"`
 	ProjectedPoints float64 `json:"projected_points"`
+	// PriceRisk is set only on optimal_transfers legs, when price_predictions
+	// flags the player. It is informational and never affects selection.
+	PriceRisk string `json:"price_risk,omitempty"`
 }
 
 // OptimalSquad builds the projected-points-maximizing 15-man squad under

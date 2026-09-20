@@ -268,3 +268,77 @@ func TestPlayerValueScoreDefensiveContributionOnlyForDefenders(t *testing.T) {
 		t.Error("defensive contribution should not affect a midfielder's score")
 	}
 }
+
+// setPriceMomentum makes the player a likely riser (net > 0) or faller
+// (net < 0) in the stub bootstrap, and available so price_predictions
+// doesn't skip them as injured.
+func setPriceMomentum(t *testing.T, e *Engine, playerID, net int) {
+	t.Helper()
+	b := e.client.(*StubClient).bootstrap
+	for i := range b.Elements {
+		if b.Elements[i].ID == playerID {
+			b.Elements[i].Status = "a"
+			b.Elements[i].TransfersInEvent, b.Elements[i].TransfersOutEvent = 0, 0
+			if net > 0 {
+				b.Elements[i].TransfersInEvent = net
+			} else {
+				b.Elements[i].TransfersOutEvent = -net
+			}
+			return
+		}
+	}
+	t.Fatalf("player %d not in bootstrap", playerID)
+}
+
+// Issue #9: a suggestion whose sell or buy candidate is flagged by
+// price_predictions says so inline, with no second call, and ranking is left
+// exactly as it was.
+func TestTransferSuggestionsShowPriceRisk(t *testing.T) {
+	e := newEngineWithSquad(t, "midseason")
+	ctx := context.Background()
+
+	base, err := e.TransferSuggestions(ctx, syntheticTeamID, 1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseSugg := base.(*TransferSuggestionsResult).TransferSuggestions[0]
+	outID := baseSugg.TransferOut.ID
+	inID := baseSugg.TransferInOptions[0].ID
+	if baseSugg.TransferOut.PriceRisk != "" || baseSugg.TransferInOptions[0].PriceRisk != "" {
+		t.Fatalf("test setup: unflagged players already carry a price risk")
+	}
+
+	setPriceMomentum(t, e, outID, -600_000)
+	setPriceMomentum(t, e, inID, 600_000)
+
+	got, err := e.TransferSuggestions(ctx, syntheticTeamID, 1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sugg := got.(*TransferSuggestionsResult).TransferSuggestions[0]
+
+	if sugg.TransferOut.PriceRisk != "likely to fall tonight" {
+		t.Errorf("sell candidate PriceRisk = %q, want %q", sugg.TransferOut.PriceRisk, "likely to fall tonight")
+	}
+	var buy *TransferInOption
+	for i := range sugg.TransferInOptions {
+		if sugg.TransferInOptions[i].ID == inID {
+			buy = &sugg.TransferInOptions[i]
+		}
+	}
+	if buy == nil || buy.PriceRisk != "likely to rise tonight" {
+		t.Errorf("buy candidate PriceRisk = %+v, want %q", buy, "likely to rise tonight")
+	}
+
+	// Purely informational: same players in the same order.
+	if sugg.TransferOut.ID != outID || len(sugg.TransferInOptions) != len(baseSugg.TransferInOptions) {
+		t.Fatalf("price risk changed the suggestion: out %d vs %d, %d options vs %d",
+			sugg.TransferOut.ID, outID, len(sugg.TransferInOptions), len(baseSugg.TransferInOptions))
+	}
+	for i := range baseSugg.TransferInOptions {
+		if sugg.TransferInOptions[i].ID != baseSugg.TransferInOptions[i].ID {
+			t.Errorf("option %d changed from %d to %d: ranking must not depend on price risk",
+				i, baseSugg.TransferInOptions[i].ID, sugg.TransferInOptions[i].ID)
+		}
+	}
+}

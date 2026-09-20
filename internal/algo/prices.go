@@ -110,6 +110,34 @@ func (e *Engine) PricePredictions(ctx context.Context, topN int) (*PriceResult, 
 	}, nil
 }
 
+// Inline price-risk labels, as shown on transfer suggestions and plans.
+const (
+	priceRiskFall = "likely to fall tonight"
+	priceRiskRise = "likely to rise tonight"
+)
+
+// priceRiskByPlayer maps each player flagged by PricePredictions, at its
+// default depth, to a short label. Transfer tools use it to show a price
+// warning next to a sell or buy candidate, so a caller doesn't need a second
+// call and a manual cross-reference to learn a move is time-sensitive.
+//
+// It is best-effort: with no bootstrap, PricePredictions would already have
+// failed the caller's own fetch, so an error here just means no annotations.
+func (e *Engine) priceRiskByPlayer(ctx context.Context) map[int]string {
+	result, err := e.PricePredictions(ctx, 0)
+	if err != nil {
+		return nil
+	}
+	risks := make(map[int]string, len(result.LikelyRisers)+len(result.LikelyFallers))
+	for _, m := range result.LikelyRisers {
+		risks[m.Player.ID] = priceRiskRise
+	}
+	for _, m := range result.LikelyFallers {
+		risks[m.Player.ID] = priceRiskFall
+	}
+	return risks
+}
+
 func capMoves(m []PriceMove, n int) []PriceMove {
 	if m == nil {
 		return []PriceMove{}

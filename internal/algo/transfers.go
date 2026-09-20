@@ -56,6 +56,9 @@ type TransferOutPlayer struct {
 	Form       float64 `json:"form"`
 	ValueScore float64 `json:"value_score"`
 	Reasoning  string  `json:"reasoning"`
+	// PriceRisk is set when price_predictions flags this player; see
+	// priceRiskByPlayer. Informational only: it does not affect ranking.
+	PriceRisk string `json:"price_risk,omitempty"`
 }
 
 type TransferInOption struct {
@@ -70,6 +73,9 @@ type TransferInOption struct {
 	ValueScore   float64      `json:"value_score"`
 	CaptainScore float64      `json:"captain_score"`
 	Fixture      *FixtureLite `json:"fixture"`
+	// PriceRisk is set when price_predictions flags this player; see
+	// priceRiskByPlayer. Informational only: it does not affect ranking.
+	PriceRisk string `json:"price_risk,omitempty"`
 }
 
 // FixtureLite is a single fixture's raw fields, as opposed to FixtureInfo's
@@ -303,6 +309,8 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 	numOut := min(freeTransfers, len(squad))
 	sellCandidates := squad[:numOut]
 
+	priceRisks := e.priceRiskByPlayer(ctx)
+
 	suggestions := make([]TransferSuggestion, 0, numOut)
 	for _, sell := range sellCandidates {
 		// FPL pays selling_price, not current price, but purchase price isn't
@@ -351,6 +359,7 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 				ValueScore:   score,
 				CaptainScore: Round(e.scorePlayer(p, pf), 1),
 				Fixture:      fixtureLiteOf(firstFixture(pf)),
+				PriceRisk:    priceRisks[p.ID],
 			})
 		}
 
@@ -376,6 +385,7 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 				ID: sell.player.ID, Name: sell.player.WebName, Team: sell.team,
 				Position: sell.position, Cost: sell.cost, Form: sell.form,
 				ValueScore: sell.valueScore, Reasoning: e.sellReason(&sell),
+				PriceRisk: priceRisks[sell.player.ID],
 			},
 			TransferInOptions: replacements,
 			BudgetAvailable:   Round(budget, 1),

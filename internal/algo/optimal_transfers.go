@@ -148,6 +148,8 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		}
 	}
 
+	priceRisks := e.priceRiskByPlayer(ctx)
+
 	options := make([]TransferPlanOption, 0, len(ceilings))
 	bestIdx := -1
 	for i, ceiling := range ceilings {
@@ -174,12 +176,16 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		for _, id := range lockedIDs {
 			if !resultSet[id] {
 				p := byID[id]
-				transfersOut = append(transfersOut, slotOf(p, teams, p.NowCost, projectExpectedPoints(p, window[p.Team])))
+				slot := slotOf(p, teams, p.NowCost, projectExpectedPoints(p, window[p.Team]))
+				slot.PriceRisk = priceRisks[id]
+				transfersOut = append(transfersOut, slot)
 			}
 		}
 		for _, c := range result.Squad {
 			if !lockedSet[c.ID] {
-				transfersIn = append(transfersIn, slotOf(byID[c.ID], teams, c.PriceTenths, c.Value))
+				slot := slotOf(byID[c.ID], teams, c.PriceTenths, c.Value)
+				slot.PriceRisk = priceRisks[c.ID]
+				transfersIn = append(transfersIn, slot)
 			}
 		}
 
