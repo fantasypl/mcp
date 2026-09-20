@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/golden"
 )
 
@@ -116,4 +117,54 @@ func deref[T any](p *T) any {
 		return nil
 	}
 	return *p
+}
+
+// Issue #1 end to end: a squad player whose FPL news says "Suspended" and
+// whose last match shows a yellow and a red gets a card-derived estimate
+// alongside FPL's text, instead of the text standing alone as fact.
+func TestSquadScoutSuspendedPlayerGetsEstimate(t *testing.T) {
+	e := newEngineWithSquad(t, "preseason")
+	stub := e.client.(*StubClient)
+
+	picks := stub.picks[picksKey{syntheticTeamID, 1}]
+	var target *fpl.Player
+	for i := range stub.bootstrap.Elements {
+		if stub.bootstrap.Elements[i].ID == picks.Picks[0].Element {
+			target = &stub.bootstrap.Elements[i]
+		}
+	}
+	if target == nil {
+		t.Fatal("first pick not found in bootstrap")
+	}
+	target.News = "Suspended until 10 Oct"
+
+	// A finished match, sorted ahead of the team's real (unplayed) fixtures by
+	// its empty kickoff time, in which the player was sent off after a yellow.
+	gw := 1
+	redCardMatch := fpl.Fixture{ID: 9001, Event: &gw, TeamH: target.Team, TeamA: target.Team + 1, Finished: true}
+	redCardMatch.Stats = cardStats(target.Team, fpl.CardEvent{Player: target.ID, Team: target.Team, Yellow: 1, Red: 1})
+	stub.fixtures = append(stub.fixtures, redCardMatch)
+
+	got, err := e.SquadScout(context.Background(), syntheticTeamID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var news *PlayerNews
+	for _, p := range got.SquadReport {
+		if p.Name == target.WebName {
+			news = p.News
+		}
+	}
+	if news == nil {
+		t.Fatal("suspended player has no news in the scout report")
+	}
+	if news.Source != NewsSourceFPL || news.Confidence != ConfidenceProvisional {
+		t.Errorf("Source/Confidence = %q/%q, want %q/%q", news.Source, news.Confidence, NewsSourceFPL, ConfidenceProvisional)
+	}
+	if news.SuspensionEstimate == nil {
+		t.Fatal("expected a card-derived suspension estimate")
+	}
+	if news.SuspensionEstimate.Matches != 1 || news.SuspensionEstimate.Basis != BasisRedAfterYellow {
+		t.Errorf("estimate = %+v, want a 1-match red_after_yellow ban", news.SuspensionEstimate)
+	}
 }
