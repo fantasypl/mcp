@@ -3,6 +3,7 @@ package algo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/fantasypl/mcp/internal/fpl"
 )
@@ -29,26 +30,152 @@ const maxHitsConsidered = 3
 
 // OptimalTransfersResult is optimal_transfers' response shape.
 type OptimalTransfersResult struct {
-	TeamID        int                  `json:"team_id"`
-	Gameweek      int                  `json:"gameweek"`
-	FreeTransfers int                  `json:"free_transfers"`
-	BudgetM       float64              `json:"budget_m"`
-	BudgetNote    string               `json:"budget_note"`
-	PoolNote      string               `json:"pool_note"`
-	Options       []TransferPlanOption `json:"options"`
+	TeamID        int     `json:"team_id"`
+	Gameweek      int     `json:"gameweek"`
+	FreeTransfers int     `json:"free_transfers"`
+	BudgetM       float64 `json:"budget_m"`
+	BudgetNote    string  `json:"budget_note"`
+	PoolNote      string  `json:"pool_note"`
+	// BestNote spells out what the best and safest flags on each option mean.
+	BestNote string               `json:"best_note"`
+	Options  []TransferPlanOption `json:"options"`
 }
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
 type TransferPlanOption struct {
-	NumTransfers       int                `json:"num_transfers"`
-	HitCost            int                `json:"hit_cost"`
-	ProjectedPoints    float64            `json:"projected_points"`
-	NetProjectedPoints float64            `json:"net_projected_points"`
-	Optimal            bool               `json:"optimal"`
-	Best               bool               `json:"best"`
-	TotalCostM         float64            `json:"total_cost_m"`
-	TransfersOut       []OptimalSquadSlot `json:"transfers_out"`
-	TransfersIn        []OptimalSquadSlot `json:"transfers_in"`
+	NumTransfers       int     `json:"num_transfers"`
+	HitCost            int     `json:"hit_cost"`
+	ProjectedPoints    float64 `json:"projected_points"`
+	NetProjectedPoints float64 `json:"net_projected_points"`
+	Optimal            bool    `json:"optimal"`
+	// Best marks the highest net projected points. That is expected value,
+	// not reliability: see Confidence and Safest.
+	Best bool `json:"best"`
+	// Confidence is how far the projection can be trusted: high, medium or
+	// low, set by the weakest incoming player. See assessIncomingPlayer.
+	Confidence string `json:"confidence"`
+	// ConfidenceNotes name each incoming player behind a below-high rating.
+	ConfidenceNotes []string `json:"confidence_notes"`
+	// Safest marks the most reliable option, with net projected points
+	// breaking ties. It is often, but not always, the same as Best.
+	Safest       bool               `json:"safest"`
+	TotalCostM   float64            `json:"total_cost_m"`
+	TransfersOut []OptimalSquadSlot `json:"transfers_out"`
+	TransfersIn  []OptimalSquadSlot `json:"transfers_in"`
+}
+
+// Confidence levels for an incoming player or a whole option.
+const (
+	ConfidenceHigh   = "high"
+	ConfidenceMedium = "medium"
+	ConfidenceLow    = "low"
+)
+
+// Thresholds behind assessIncomingPlayer. Minutes are season totals: 300 is
+// under four full matches, 900 is ten.
+const (
+	lowMinutesThreshold    = 300
+	mediumMinutesThreshold = 900
+	// A player counts as running hot when goals + assists beat their expected
+	// figure by at least overperformAbs *and* by at least overperformRatio
+	// times. Both must hold so a big-minutes striker a couple of goals up on
+	// xG, or a low-xG player 1 to 0, is not flagged as noise.
+	overperformAbs   = 3.0
+	overperformRatio = 1.5
+)
+
+const bestNoteText = "best marks the option with the highest net projected points, not the lowest risk. " +
+	"confidence rates how far each option's incoming players can be trusted (minutes played, and goal involvements versus expected), " +
+	"and safest marks the most reliable option."
+
+// confidenceRank orders levels for comparison.
+func confidenceRank(level string) int {
+	switch level {
+	case ConfidenceHigh:
+		return 2
+	case ConfidenceMedium:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func lowerConfidence(level string) string {
+	if level == ConfidenceHigh {
+		return ConfidenceMedium
+	}
+	return ConfidenceLow
+}
+
+// assessIncomingPlayer rates how far a player's projection can be trusted,
+// with a note when it is below high.
+//
+// Two things weaken a projection: a small sample (few minutes played, so form
+// and points-per-game rest on a handful of matches), and results running well
+// ahead of the underlying chances (goals and assists far above xG + xA, which
+// tends to regress). The second drops the rating one level.
+func assessIncomingPlayer(p *fpl.Player) (string, string) {
+	level := ConfidenceHigh
+	var notes []string
+
+	switch {
+	case p.Minutes < lowMinutesThreshold:
+		level = ConfidenceLow
+		notes = append(notes, fmt.Sprintf("only %d minutes this season", p.Minutes))
+	case p.Minutes < mediumMinutesThreshold:
+		level = ConfidenceMedium
+		notes = append(notes, fmt.Sprintf("only %d minutes this season", p.Minutes))
+	}
+
+	actual := float64(p.GoalsScored + p.Assists)
+	expected := p.ExpectedGoals.Float() + p.ExpectedAssists.Float()
+	if actual-expected >= overperformAbs && actual >= overperformRatio*expected {
+		level = lowerConfidence(level)
+		notes = append(notes, fmt.Sprintf("%d goal involvements from %.1f expected, which tends to regress", int(actual), expected))
+	}
+
+	if len(notes) == 0 {
+		return level, ""
+	}
+	return level, p.WebName + ": " + strings.Join(notes, "; ")
+}
+
+// summarizeOptionConfidence rates a transfer option by its weakest incoming
+// player and returns a note for each player rated below high. An option with
+// no incoming players (keeping the squad as is) is high confidence.
+func summarizeOptionConfidence(incoming []*fpl.Player) (string, []string) {
+	level := ConfidenceHigh
+	notes := []string{}
+	for _, p := range incoming {
+		l, note := assessIncomingPlayer(p)
+		if confidenceRank(l) < confidenceRank(level) {
+			level = l
+		}
+		if note != "" {
+			notes = append(notes, note)
+		}
+	}
+	return level, notes
+}
+
+// markSafest flags the most reliable option: highest confidence, then highest
+// net projected points, then the fewest transfers (earliest in the sweep).
+func markSafest(options []TransferPlanOption) {
+	safest := -1
+	for i, opt := range options {
+		switch {
+		case safest == -1:
+			safest = i
+		case confidenceRank(opt.Confidence) > confidenceRank(options[safest].Confidence):
+			safest = i
+		case confidenceRank(opt.Confidence) == confidenceRank(options[safest].Confidence) &&
+			opt.NetProjectedPoints > options[safest].NetProjectedPoints:
+			safest = i
+		}
+	}
+	if safest >= 0 {
+		options[safest].Safest = true
+	}
 }
 
 // optimalTransfersBudgetTenths returns the manager's total squad budget
@@ -188,7 +315,15 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		optionHitCost := hitCost * paidTransfers
 		netValue := Round(result.Value+float64(optionHitCost), 2)
 
+		incoming := make([]*fpl.Player, 0, len(transfersIn))
+		for _, in := range transfersIn {
+			incoming = append(incoming, byID[in.ID])
+		}
+		confidence, confidenceNotes := summarizeOptionConfidence(incoming)
+
 		options = append(options, TransferPlanOption{
+			Confidence:         confidence,
+			ConfidenceNotes:    confidenceNotes,
 			NumTransfers:       numTransfers,
 			HitCost:            optionHitCost,
 			ProjectedPoints:    Round(result.Value, 2),
@@ -205,6 +340,7 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 	if bestIdx >= 0 {
 		options[bestIdx].Best = true
 	}
+	markSafest(options)
 
 	return &OptimalTransfersResult{
 		TeamID:        teamID,
@@ -215,7 +351,8 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		PoolNote: fmt.Sprintf(
 			"Considered the top %d/%d/%d/%d GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
-		Options: options,
+		BestNote: bestNoteText,
+		Options:  options,
 	}, nil
 }
 

@@ -5,6 +5,7 @@
   "budget_m": 100.5,
   "budget_note": "Budget is FPL's own reported total team value (squad + bank) as of your most recent recorded gameweek.",
   "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
+  "best_note": "best marks the option with the highest net projected points, not the lowest risk. confidence rates how far each option's incoming players can be trusted (minutes played, and goal involvements versus expected), and safest marks the most reliable option.",
   "options": [
     {
       "num_transfers": 1,
@@ -13,6 +14,11 @@
       "net_projected_points": 102.04,
       "optimal": true,
       "best": true,
+      "confidence": "low",
+      "confidence_notes": [
+        "Benitez: only 90 minutes this season"
+      ],
+      "safest": true,
       "total_cost_m": 93.5,
       "transfers_out": [
         {

@@ -2,6 +2,7 @@ package algo
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,26 @@ func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 		}
 	})
 
+	t.Run("every option carries confidence, exactly one is safest, and the note says what best means", func(t *testing.T) {
+		safest := 0
+		for _, opt := range result.Options {
+			switch opt.Confidence {
+			case ConfidenceHigh, ConfidenceMedium, ConfidenceLow:
+			default:
+				t.Errorf("num_transfers=%d: Confidence = %q, want high, medium or low", opt.NumTransfers, opt.Confidence)
+			}
+			if opt.Safest {
+				safest++
+			}
+		}
+		if safest != 1 {
+			t.Errorf("got %d options marked safest, want exactly 1", safest)
+		}
+		if !strings.Contains(result.BestNote, "highest") || !strings.Contains(result.BestNote, "not") {
+			t.Errorf("BestNote = %q, want it to say best means highest projection, not lowest risk", result.BestNote)
+		}
+	})
+
 	t.Run("hit cost and net points arithmetic", func(t *testing.T) {
 		for _, opt := range result.Options {
 			paid := max(0, opt.NumTransfers-result.FreeTransfers)
@@ -198,5 +219,74 @@ func TestOptimalTransfersFallsBackWithoutHistory(t *testing.T) {
 	}
 	if result.BudgetM <= 0 {
 		t.Errorf("fallback budget should still be positive, got %v", result.BudgetM)
+	}
+}
+
+// Issue #5: an option's confidence is that of its weakest incoming player, judged
+// on how much playing time backs the projection and whether goal involvements
+// run well ahead of the underlying chances.
+func TestAssessIncomingPlayer(t *testing.T) {
+	cases := []struct {
+		name      string
+		player    fpl.Player
+		wantLevel string
+		wantNote  bool
+	}{
+		{"established starter", fpl.Player{Minutes: 2700, GoalsScored: 10, Assists: 5, ExpectedGoals: 9.5, ExpectedAssists: 4.5}, ConfidenceHigh, false},
+		{"some minutes", fpl.Player{Minutes: 600}, ConfidenceMedium, true},
+		{"the issue's low-minutes forward", fpl.Player{Minutes: 105}, ConfidenceLow, true},
+		{"minutes boundary: 300 is not low", fpl.Player{Minutes: 300}, ConfidenceMedium, true},
+		{"minutes boundary: 900 is not medium", fpl.Player{Minutes: 900}, ConfidenceHigh, false},
+		// 1500 minutes would be high, but 12 involvements from 6.0 xGI is a hot streak.
+		{"overperforming its chances", fpl.Player{Minutes: 1500, GoalsScored: 8, Assists: 4, ExpectedGoals: 4.0, ExpectedAssists: 2.0}, ConfidenceMedium, true},
+		{"overperforming and few minutes", fpl.Player{Minutes: 400, GoalsScored: 6, Assists: 2, ExpectedGoals: 2.0, ExpectedAssists: 1.0}, ConfidenceLow, true},
+		{"small overperformance is noise", fpl.Player{Minutes: 1500, GoalsScored: 4, Assists: 2, ExpectedGoals: 3.0, ExpectedAssists: 1.5}, ConfidenceHigh, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.player.WebName = "Test"
+			level, note := assessIncomingPlayer(&tc.player)
+			if level != tc.wantLevel {
+				t.Errorf("level = %q, want %q (note %q)", level, tc.wantLevel, note)
+			}
+			if (note != "") != tc.wantNote {
+				t.Errorf("note = %q, wantNote = %v", note, tc.wantNote)
+			}
+		})
+	}
+}
+
+func TestSummarizeOptionConfidence(t *testing.T) {
+	solid := &fpl.Player{WebName: "Solid", Minutes: 2000}
+	thin := &fpl.Player{WebName: "Thin", Minutes: 105}
+
+	level, notes := summarizeOptionConfidence(nil)
+	if level != ConfidenceHigh || len(notes) != 0 {
+		t.Errorf("no transfers: %q %v, want high with no notes", level, notes)
+	}
+
+	level, notes = summarizeOptionConfidence([]*fpl.Player{solid, thin})
+	if level != ConfidenceLow {
+		t.Errorf("level = %q, want low: one thin leg drags the option down", level)
+	}
+	if len(notes) != 1 || !strings.Contains(notes[0], "Thin") {
+		t.Errorf("notes = %v, want a single note naming Thin", notes)
+	}
+}
+
+func TestMarkSafest(t *testing.T) {
+	opts := []TransferPlanOption{
+		{NumTransfers: 1, NetProjectedPoints: 430, Confidence: ConfidenceHigh},
+		{NumTransfers: 2, NetProjectedPoints: 465, Confidence: ConfidenceHigh},
+		{NumTransfers: 3, NetProjectedPoints: 486, Confidence: ConfidenceLow, Best: true},
+	}
+	markSafest(opts)
+	for i, want := range []bool{false, true, false} {
+		if opts[i].Safest != want {
+			t.Errorf("option %d Safest = %v, want %v", i, opts[i].Safest, want)
+		}
+	}
+	if !opts[2].Best || opts[2].Safest {
+		t.Error("the issue's case: best (486, low confidence) and safest must be different options")
 	}
 }
