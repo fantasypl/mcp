@@ -169,17 +169,12 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 
 	var captainResult *CaptainResult
-	var transferResult any
 	var diffResult *DifferentialResult
 	var fixtureResult *FixtureOutlookResult
 	var priceResult *PriceResult
 	{
 		g, gctx := errgroup.WithContext(ctx)
 		g.Go(func() (err error) { captainResult, err = e.CaptainPicks(gctx, &nextGW, 5); return })
-		g.Go(func() (err error) {
-			transferResult, err = e.TransferSuggestions(gctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank)
-			return
-		})
 		g.Go(func() (err error) { diffResult, err = e.Differentials(gctx, 10, &nextGW, 10); return })
 		g.Go(func() (err error) { fixtureResult, err = e.FixtureOutlook(gctx, gameweeksAhead, ""); return })
 		g.Go(func() (err error) { priceResult, err = e.PricePredictions(gctx, 0); return })
@@ -320,6 +315,23 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			entry.Note = &note
 		}
 		chipsUsed = append(chipsUsed, entry)
+	}
+
+	// Suggest a replacement for every player squad_health flagged as needing
+	// one, not only the worst-value player the free-transfer count allows.
+	// Injured or suspended players and poor-form starters qualify; a tough
+	// fixture alone does not, since it is a one-week problem. This runs after
+	// the health check because it depends on which players were flagged.
+	var flagged []int
+	for _, p := range poorForm {
+		flagged = append(flagged, p.ElementID)
+	}
+	for _, p := range injured {
+		flagged = append(flagged, p.ElementID)
+	}
+	transferResult, err := e.TransferSuggestionsIncluding(ctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank, flagged)
+	if err != nil {
+		return nil, err
 	}
 
 	var transferSuggestions []TransferSuggestion

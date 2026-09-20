@@ -102,3 +102,46 @@ func TestManagerHub(t *testing.T) {
 		t.Errorf("powered_by = %q, want the Go repo reference, not the PyPI one", got.PoweredBy)
 	}
 }
+
+// Issue #4: every starter flagged in squad_health as a poor-form problem, and
+// every injured or suspended player, gets a transfer suggestion in the same
+// call — not just the single worst-value player the free-transfer count allows.
+func TestManagerHubSuggestsForEveryFlaggedPlayer(t *testing.T) {
+	e := hubEngine(t)
+	stub := e.client.(*StubClient)
+
+	// Force two starters into poor form so the squad has several flags.
+	picks := stub.picks[picksKey{syntheticTeamID, 1}]
+	forced := map[int]bool{picks.Picks[1].Element: true, picks.Picks[2].Element: true}
+	for i := range stub.bootstrap.Elements {
+		if forced[stub.bootstrap.Elements[i].ID] {
+			stub.bootstrap.Elements[i].Form = 0.5
+		}
+	}
+
+	got, err := e.ManagerHub(context.Background(), syntheticTeamID, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var flagged []int
+	for _, p := range got.SquadHealth.PoorFormStarters {
+		flagged = append(flagged, p.ElementID)
+	}
+	for _, p := range got.SquadHealth.InjuredOrDoubtful {
+		flagged = append(flagged, p.ElementID)
+	}
+	if len(flagged) < 2 {
+		t.Fatalf("test setup: only %d players flagged, want at least 2", len(flagged))
+	}
+
+	suggested := map[int]bool{}
+	for _, s := range got.TransferSuggestions {
+		suggested[s.TransferOut.ID] = true
+	}
+	for _, id := range flagged {
+		if !suggested[id] {
+			t.Errorf("flagged player %d has no transfer suggestion (suggested: %v)", id, suggested)
+		}
+	}
+}
