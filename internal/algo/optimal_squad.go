@@ -100,8 +100,10 @@ func buildCandidates(elements []fpl.Player, window map[int][]projectionFixture, 
 //
 // Alongside the 15-man squad it suggests who to start, in what formation, the
 // bench order, and a captain and vice-captain. The lineup is chosen by the
-// same 5-gameweek projected points that selected the squad; the captain uses
-// captain_pick's scoring for the target gameweek.
+// same 5-gameweek projected points that selected the squad, so it is a
+// horizon lineup and can include a player who blanks in the target gameweek.
+// The captain uses captain_pick's scoring for the target gameweek alone, and
+// only among starters who have a fixture in it.
 type OptimalSquadResult struct {
 	Gameweek        int                `json:"gameweek"`
 	GameweeksAhead  int                `json:"gameweeks_ahead"`
