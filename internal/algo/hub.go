@@ -85,6 +85,26 @@ type HubSquadEntry struct {
 	SelectedByPct float64  `json:"selected_by_pct"`
 }
 
+// playersNeedingReplacement returns the ids squad_health flags as needing a
+// transfer suggestion: poor-form starters, and injured or suspended players.
+//
+// A tough fixture alone does not qualify, since it is a one-week problem. Nor
+// does a doubtful bench player: they still appear in squad_health, but forcing
+// a suggestion for every 75%-fit reserve would bury the ones that matter. A
+// doubtful starter does qualify, and so does an injured or suspended player
+// anywhere in the squad.
+func playersNeedingReplacement(squad []HubSquadEntry) []int {
+	var ids []int
+	for _, s := range squad {
+		poorFormStarter := s.Starter && s.Form <= 2.0
+		unavailable := InjuryStatuses[s.Status] && (s.Starter || s.Status != "d")
+		if poorFormStarter || unavailable {
+			ids = append(ids, s.ElementID)
+		}
+	}
+	return ids
+}
+
 type HubSquadHealth struct {
 	InjuredOrDoubtful   []HubInjuredEntry      `json:"injured_or_doubtful"`
 	PoorFormStarters    []HubPoorFormEntry     `json:"poor_form_starters"`
@@ -317,18 +337,10 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		chipsUsed = append(chipsUsed, entry)
 	}
 
-	// Suggest a replacement for every player squad_health flagged as needing
-	// one, not only the worst-value player the free-transfer count allows.
-	// Injured or suspended players and poor-form starters qualify; a tough
-	// fixture alone does not, since it is a one-week problem. This runs after
-	// the health check because it depends on which players were flagged.
-	var flagged []int
-	for _, p := range poorForm {
-		flagged = append(flagged, p.ElementID)
-	}
-	for _, p := range injured {
-		flagged = append(flagged, p.ElementID)
-	}
+	// Suggest a replacement for every flagged player, not only the worst-value
+	// one the free-transfer count allows. This runs after the health check
+	// because it depends on what was flagged.
+	flagged := playersNeedingReplacement(squad)
 	transferResult, err := e.TransferSuggestionsIncluding(ctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank, flagged)
 	if err != nil {
 		return nil, err
