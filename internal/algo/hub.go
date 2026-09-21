@@ -33,6 +33,7 @@ type ManagerHubResult struct {
 	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"` // bench re-ordered by ep_next; never alters Squad
 	SquadHealth           HubSquadHealth       `json:"squad_health"`
 	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
+	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and ep_next disagree
 	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
 	DifferentialTargets   []Differential       `json:"differential_targets"`
 	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
@@ -424,6 +425,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			InjuredOrDoubtful: injured, PoorFormStarters: poorForm, ToughFixturesThisGW: toughFixtures,
 		},
 		CaptainRecommendation: captainResult.Picks,
+		CaptainSignalNote:     captainSignalNote(squad),
 		TransferSuggestions:   transferSuggestions,
 		DifferentialTargets:   diffTargets,
 		FixtureOutlook:        HubFixtureOutlook{TeamsByDifficulty: teamsByDifficulty, PlayersToTarget: fixtureResult.PlayersToTarget},
