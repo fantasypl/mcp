@@ -38,6 +38,7 @@ type OptimalTransfersResult struct {
 	PoolNote      string               `json:"pool_note"`
 	BestNote      string               `json:"best_note"` // what the best and safest flags on each option mean
 	Options       []TransferPlanOption `json:"options"`
+	PriceRiskNote string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
 }
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
@@ -296,6 +297,7 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 
 	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10))
 	candidates := buildCandidates(bootstrap.Elements, window, nil, lockedSet)
+	priceRisks := e.priceRiskByPlayer(ctx)
 
 	ceilings := []int{mgrStatus.FreeTransfers}
 	if allowHits {
@@ -332,12 +334,16 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		for _, id := range lockedIDs {
 			if !resultSet[id] {
 				p := byID[id]
-				transfersOut = append(transfersOut, slotOf(p, teams, p.NowCost, projectExpectedPoints(p, window[p.Team])))
+				slot := slotOf(p, teams, p.NowCost, projectExpectedPoints(p, window[p.Team]))
+				slot.PriceRisk = priceRiskFor(p, priceRisks)
+				transfersOut = append(transfersOut, slot)
 			}
 		}
 		for _, c := range result.Squad {
 			if !lockedSet[c.ID] {
-				transfersIn = append(transfersIn, slotOf(byID[c.ID], teams, c.PriceTenths, c.Value))
+				slot := slotOf(byID[c.ID], teams, c.PriceTenths, c.Value)
+				slot.PriceRisk = priceRiskFor(byID[c.ID], priceRisks)
+				transfersIn = append(transfersIn, slot)
 			}
 		}
 
@@ -373,7 +379,15 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 	}
 	markSafest(options)
 
+	priceRiskNote := ""
+	for _, opt := range options {
+		if anyPriceRisk(opt.TransfersOut) || anyPriceRisk(opt.TransfersIn) {
+			priceRiskNote = priceRiskNoteText
+		}
+	}
+
 	return &OptimalTransfersResult{
+		PriceRiskNote: priceRiskNote,
 		TeamID:        teamID,
 		Gameweek:      gw,
 		FreeTransfers: mgrStatus.FreeTransfers,

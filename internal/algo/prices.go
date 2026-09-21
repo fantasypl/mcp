@@ -3,6 +3,8 @@ package algo
 import (
 	"context"
 	"slices"
+
+	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // Price predictions estimate which players will rise or fall in price tonight.
@@ -108,6 +110,79 @@ func (e *Engine) PricePredictions(ctx context.Context, topN int) (*PriceResult, 
 		LikelyRisers:  capMoves(risers, topN),
 		LikelyFallers: capMoves(fallers, topN),
 	}, nil
+}
+
+// Inline price-risk labels, as shown on transfer suggestions and plans.
+const (
+	priceRiskFall = "likely to fall tonight"
+	priceRiskRise = "likely to rise tonight"
+)
+
+// priceRiskByPlayer maps each player flagged by PricePredictions, at its
+// default depth (the top 20 risers and fallers), to a short label. Transfer
+// tools use it, through priceRiskFor, to show a price warning next to a sell
+// or buy candidate, so a caller doesn't need a second call and a manual
+// cross-reference to learn a move is time-sensitive.
+//
+// It is best-effort: with no bootstrap, PricePredictions would already have
+// failed the caller's own fetch, so an error here just means no annotations.
+func (e *Engine) priceRiskByPlayer(ctx context.Context) map[int]string {
+	result, err := e.PricePredictions(ctx, 0)
+	if err != nil {
+		return nil
+	}
+	risks := make(map[int]string, len(result.LikelyRisers)+len(result.LikelyFallers))
+	for _, m := range result.LikelyRisers {
+		risks[m.Player.ID] = priceRiskRise
+	}
+	for _, m := range result.LikelyFallers {
+		risks[m.Player.ID] = priceRiskFall
+	}
+	return risks
+}
+
+// priceRiskNoteText explains price_risk wherever a result carries labels.
+const priceRiskNoteText = "price_risk marks players that price_predictions flags as likely to move tonight " +
+	"(injured or suspended players are judged on their own net transfers). " +
+	"A player without it is not among the biggest movers, which does not mean their price is safe."
+
+// injuredPriceRiskNet is how many net transfers in a gameweek make an injured
+// or suspended player worth labelling. It matches the hub's own
+// price_drop_risks threshold.
+const injuredPriceRiskNet = 50_000
+
+// priceRiskFor returns the label for one transfer candidate, or "".
+//
+// Anyone flagged by PricePredictions gets that label. PricePredictions skips
+// injured and suspended players, but they are often the most urgent sells, so
+// for them the label comes straight from their own net transfers this
+// gameweek. An available player who isn't in the flagged lists gets nothing:
+// no label means "not among the biggest movers", not "safe".
+func priceRiskFor(p *fpl.Player, flagged map[int]string) string {
+	if label, ok := flagged[p.ID]; ok {
+		return label
+	}
+	if !InjuryStatuses[p.Status] {
+		return ""
+	}
+	net := p.TransfersInEvent - p.TransfersOutEvent
+	switch {
+	case net <= -injuredPriceRiskNet:
+		return priceRiskFall
+	case net >= injuredPriceRiskNet:
+		return priceRiskRise
+	}
+	return ""
+}
+
+// anyPriceRisk reports whether any transfer leg carries a price_risk label.
+func anyPriceRisk(legs []OptimalSquadSlot) bool {
+	for _, leg := range legs {
+		if leg.PriceRisk != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func capMoves(m []PriceMove, n int) []PriceMove {
