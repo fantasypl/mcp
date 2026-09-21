@@ -98,8 +98,12 @@ func buildCandidates(elements []fpl.Player, window map[int][]projectionFixture, 
 
 // OptimalSquadResult is optimal_squad's response shape.
 //
-// This selects the 15-man squad only — not a starting XI or captain, which
-// captain_pick and the existing chip logic already cover.
+// Alongside the 15-man squad it suggests who to start, in what formation, the
+// bench order, and a captain and vice-captain. The lineup is chosen by the
+// same 5-gameweek projected points that selected the squad, so it is a
+// horizon lineup and can include a player who blanks in the target gameweek.
+// The captain uses captain_pick's scoring for the target gameweek alone, and
+// only among starters who have a fixture in it.
 type OptimalSquadResult struct {
 	Gameweek        int                `json:"gameweek"`
 	GameweeksAhead  int                `json:"gameweeks_ahead"`
@@ -109,6 +113,27 @@ type OptimalSquadResult struct {
 	Optimal         bool               `json:"optimal"`
 	PoolNote        string             `json:"pool_note"`
 	Squad           []OptimalSquadSlot `json:"squad"`
+
+	// StartingXI and BenchOrder hold player ids from Squad. StartingXI lists
+	// the goalkeeper first; BenchOrder opens with the spare goalkeeper and
+	// then runs by descending projected points.
+	StartingXI []int  `json:"starting_xi"`
+	Formation  string `json:"formation"`
+	BenchOrder []int  `json:"bench_order"`
+	// The captain and vice-captain come from the starting XI and are nil when
+	// none of them has a fixture in the target gameweek.
+	RecommendedCaptain     *LineupCaptain `json:"recommended_captain"`
+	RecommendedViceCaptain *LineupCaptain `json:"recommended_vice_captain"`
+}
+
+// LineupCaptain is a captaincy recommendation for a suggested lineup.
+type LineupCaptain struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Team  string  `json:"team"`
+	Score float64 `json:"score"`
+	// Reason is captain_pick's own reasoning for the player.
+	Reason string `json:"reason"`
 }
 
 // OptimalSquadSlot is one selected player.
@@ -175,7 +200,12 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 		totalCost += c.PriceTenths
 	}
 
+	lineup := chooseLineup(squad)
+	captain, vice := e.pickLineupCaptains(lineup.XI, byID, teams, buildFixtureMap(fixtures, gw, teams), gw)
+
 	return &OptimalSquadResult{
+		StartingXI: lineup.XI, Formation: lineup.Formation, BenchOrder: lineup.Bench,
+		RecommendedCaptain: captain, RecommendedViceCaptain: vice,
 		Gameweek:        gw,
 		GameweeksAhead:  xpHorizonGWs,
 		BudgetM:         float64(budgetTenths) / 10,
@@ -187,6 +217,44 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
 		Squad: squad,
 	}, nil
+}
+
+// pickLineupCaptains scores every starter with captain_pick's own scorePlayer
+// and returns the top two as captain and vice-captain. Starters with no
+// fixture that gameweek are skipped: they cannot score.
+func (e *Engine) pickLineupCaptains(xi []int, byID map[int]*fpl.Player, teams map[int]*fpl.Team, fixtureMap map[int][]TeamFixture, gw int) (captain, vice *LineupCaptain) {
+	var scored []scoredPlayer
+	for _, id := range xi {
+		p := byID[id]
+		pf := fixtureMap[p.Team]
+		if len(pf) == 0 {
+			continue
+		}
+		scored = append(scored, scoredPlayer{e.scorePlayer(p, pf), p, pf})
+	}
+	// Stable, so equal scores keep starting-XI order.
+	slices.SortStableFunc(scored, func(a, b scoredPlayer) int {
+		switch {
+		case a.score > b.score:
+			return -1
+		case a.score < b.score:
+			return 1
+		default:
+			return 0
+		}
+	})
+
+	toCaptain := func(s scoredPlayer, rank int) *LineupCaptain {
+		pick := e.buildPick(s, gw, teams, rank)
+		return &LineupCaptain{ID: s.player.ID, Name: s.player.WebName, Team: shortName(teams[s.player.Team]), Score: pick.Score, Reason: pick.Reasoning}
+	}
+	if len(scored) > 0 {
+		captain = toCaptain(scored[0], 1)
+	}
+	if len(scored) > 1 {
+		vice = toCaptain(scored[1], 2)
+	}
+	return captain, vice
 }
 
 // PositionOrder fixes GKP/DEF/MID/FWD as squad display order.

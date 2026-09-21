@@ -127,5 +127,39 @@
       "cost_m": 6,
       "projected_points": 27.71
     }
-  ]
+  ],
+  "starting_xi": [
+    1,
+    498,
+    4,
+    61,
+    426,
+    481,
+    368,
+    95,
+    55,
+    465,
+    346
+  ],
+  "formation": "3-4-3",
+  "bench_order": [
+    82,
+    533,
+    542,
+    229
+  ],
+  "recommended_captain": {
+    "id": 426,
+    "name": "B.Fernandes",
+    "team": "MUN",
+    "score": 11.977,
+    "reason": "Exceptional form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 11.977)"
+  },
+  "recommended_vice_captain": {
+    "id": 4,
+    "name": "Gabriel",
+    "team": "ARS",
+    "score": 9.047,
+    "reason": "Strong form, fpl expects 4.0pts, easy fixture (fdr 1), home advantage (score: 9.047)"
+  }
 }
