@@ -7,6 +7,7 @@ import (
 
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/golden"
+	"github.com/fantasypl/mcp/internal/marketodds"
 )
 
 func TestFixtureOutlookMatchesGolden(t *testing.T) {
@@ -216,5 +217,73 @@ func TestFixtureOutlookOmitsCongestionWhenNotConfigured(t *testing.T) {
 				t.Errorf("team %d fixture flagged congested with no CongestionSource configured", tm.TeamID)
 			}
 		}
+	}
+}
+
+// stubMarketSource returns fixed models, or an error, with no network access.
+type stubMarketSource struct {
+	models map[marketodds.Key]marketodds.MatchModel
+	err    error
+}
+
+func (s *stubMarketSource) MatchModels(context.Context) (map[marketodds.Key]marketodds.MatchModel, error) {
+	return s.models, s.err
+}
+
+func TestFixtureOutlookSurfacesMarketOdds(t *testing.T) {
+	kickoff := time.Date(2026, 1, 10, 15, 0, 0, 0, time.UTC)
+	bootstrap, fixtures := congestionOutlookFixture(kickoff)
+	e := NewEngine(NewStubClient(bootstrap, fixtures))
+	e.Now = func() time.Time { return kickoff }
+	e.MarketSource = &stubMarketSource{models: map[marketodds.Key]marketodds.MatchModel{
+		{Home: "Congested FC", Away: "Fresh United"}: {HomeXG: 2.0, AwayXG: 0.8, HomeCS: 0.449, AwayCS: 0.135},
+	}}
+
+	got, err := e.FixtureOutlook(context.Background(), 1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	byTeam := map[int]OutlookFixture{}
+	for _, tm := range got.TeamsByDifficulty {
+		byTeam[tm.TeamID] = tm.Fixtures[0]
+	}
+	home, away := byTeam[1], byTeam[2]
+	if home.CleanSheetPct == nil || *home.CleanSheetPct != 44.9 || *home.ExpectedGoalsFor != 2.0 {
+		t.Errorf("home market fields wrong: %+v", home)
+	}
+	if away.CleanSheetPct == nil || *away.CleanSheetPct != 13.5 || *away.ExpectedGoalsFor != 0.8 {
+		t.Errorf("away market fields wrong: %+v", away)
+	}
+	if home.FDR != away.FDR {
+		t.Errorf("market odds must not change FDR: %v vs %v", home.FDR, away.FDR)
+	}
+}
+
+// A failing or missing market source must leave the outlook intact, with the
+// market fields omitted.
+func TestFixtureOutlookSurvivesMarketFailure(t *testing.T) {
+	kickoff := time.Date(2026, 1, 10, 15, 0, 0, 0, time.UTC)
+	for name, src := range map[string]MarketSource{
+		"unconfigured": nil,
+		"erroring":     &stubMarketSource{err: context.DeadlineExceeded},
+		"no odds":      &stubMarketSource{models: map[marketodds.Key]marketodds.MatchModel{}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			bootstrap, fixtures := congestionOutlookFixture(kickoff)
+			e := NewEngine(NewStubClient(bootstrap, fixtures))
+			e.Now = func() time.Time { return kickoff }
+			e.MarketSource = src
+			got, err := e.FixtureOutlook(context.Background(), 1, "")
+			if err != nil {
+				t.Fatalf("FixtureOutlook must not fail: %v", err)
+			}
+			for _, tm := range got.TeamsByDifficulty {
+				for _, f := range tm.Fixtures {
+					if f.CleanSheetPct != nil || f.ExpectedGoalsFor != nil {
+						t.Errorf("market fields should be absent, got %+v", f)
+					}
+				}
+			}
+		})
 	}
 }

@@ -32,6 +32,9 @@ type Probs struct {
 	HasTotals        bool
 }
 
+// Key identifies a match by FPL team names (Home v Away).
+type Key struct{ Home, Away string }
+
 // MatchModel is the fitted result for one match.
 type MatchModel struct {
 	HomeXG, AwayXG float64 // expected goals scored by each side

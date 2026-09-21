@@ -6,6 +6,7 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Optional bookmaker odds in `fixture_outlook` (`internal/apifootball`, `Engine.MarketSource`): with your own API-Football key in `FPL_MCP_APIFOOTBALL_KEY` (or the extension's "API-Football key" setting), each fixture gains `market_clean_sheet_pct` and `market_expected_goals`, from the market-average 1X2 and over/under 2.5 prices. Informational only: FDR and ranking are untouched, matching how congestion and finishing regression shipped. Results are cached on disk for 6 hours (a refresh is about 3-5 requests against the free plan's 100 a day) and a failed fetch falls back to the stale cache. Fails soft: without a key, or on any error, `fixture_outlook` is unchanged. The response parsing is tested against fixtures shaped like API-Football's documented v3 payloads, not a live key; whether the free plan serves the current season is unverified.
 - `internal/marketodds` and `internal/footballdata`, plus `fplctl odds-backtest`: turn bookmaker match odds (free history from football-data.co.uk) into per-team expected goals and clean-sheet probability, and measure them against FPL's own fixture difficulty. Backtested on 4 seasons (2022-23 to 2025-26, 1,520 matches, 3,040 team-matches), predicting clean sheets:
 
   | Forecast | Brier | Log loss |

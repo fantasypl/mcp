@@ -18,6 +18,7 @@ import (
 
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
+	"github.com/fantasypl/mcp/internal/marketodds"
 )
 
 // ptr returns a pointer to v — for constructing *int/*string literals inline,
@@ -113,6 +114,16 @@ type Engine struct {
 	// weaker, noisier evidence than finishing regression's or congestion's,
 	// but the same shape, so it ships the same way: informational only.
 	RoleChangeSource RoleChangeSource
+
+	// MarketSource follows the same nil-by-default pattern: wired only by
+	// cmd/fpl-mcp, and only when the user supplies an API-Football key.
+	// `fplctl odds-backtest` measured bookmaker-implied clean-sheet
+	// probability beating FPL's FDR out of sample (see CHANGELOG.md), but
+	// that validates the signal, not a weight for it, so FixtureOutlook
+	// surfaces it per fixture as information and leaves FDR untouched — the
+	// same "signal exists, weighting it doesn't (yet)" line drawn for
+	// congestion and finishing regression.
+	MarketSource MarketSource
 }
 
 // intelFetcher is the subset of *DGWIntelFetcher chip strategy needs — an
@@ -146,6 +157,13 @@ type CongestionSource interface {
 // single aggregate.
 type RoleChangeSource interface {
 	AveragePositions(ctx context.Context, season string, fromGW, toGW int) (map[int]insights.PlayerPosition, error)
+}
+
+// MarketSource supplies bookmaker-implied match models for upcoming
+// fixtures, keyed by FPL team names — an interface so tests can substitute a
+// stub with no network access.
+type MarketSource interface {
+	MatchModels(ctx context.Context) (map[marketodds.Key]marketodds.MatchModel, error)
 }
 
 // NewEngine returns an Engine with the hand-tuned default weights.
