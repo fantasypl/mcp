@@ -2,6 +2,7 @@ package algo
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,26 @@ func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 		}
 	})
 
+	t.Run("every option carries confidence, exactly one is safest, and the note says what best means", func(t *testing.T) {
+		safest := 0
+		for _, opt := range result.Options {
+			switch opt.Confidence {
+			case ConfidenceHigh, ConfidenceMedium, ConfidenceLow:
+			default:
+				t.Errorf("num_transfers=%d: Confidence = %q, want high, medium or low", opt.NumTransfers, opt.Confidence)
+			}
+			if opt.Safest {
+				safest++
+			}
+		}
+		if safest != 1 {
+			t.Errorf("got %d options marked safest, want exactly 1", safest)
+		}
+		if !strings.Contains(result.BestNote, "highest") || !strings.Contains(result.BestNote, "not") {
+			t.Errorf("BestNote = %q, want it to say best means highest projection, not lowest risk", result.BestNote)
+		}
+	})
+
 	t.Run("hit cost and net points arithmetic", func(t *testing.T) {
 		for _, opt := range result.Options {
 			paid := max(0, opt.NumTransfers-result.FreeTransfers)
@@ -198,5 +219,101 @@ func TestOptimalTransfersFallsBackWithoutHistory(t *testing.T) {
 	}
 	if result.BudgetM <= 0 {
 		t.Errorf("fallback budget should still be positive, got %v", result.BudgetM)
+	}
+}
+
+// Issue #5: an option's confidence is that of its weakest incoming player, judged
+// on how much of the available playing time backs the projection and whether
+// goal involvements run well ahead of the underlying chances.
+func TestAssessIncomingPlayer(t *testing.T) {
+	cases := []struct {
+		name      string
+		gw        int // gameweeks played, so 90*gw minutes were available
+		player    fpl.Player
+		wantLevel string
+		wantNote  bool
+	}{
+		{"established starter", 10, fpl.Player{Minutes: 810, GoalsScored: 10, Assists: 5, ExpectedGoals: 9.5, ExpectedAssists: 4.5}, ConfidenceHigh, false},
+		{"rotation player", 10, fpl.Player{Minutes: 500}, ConfidenceMedium, true},
+		{"the issue's low-minutes forward, GW4", 4, fpl.Player{Minutes: 105}, ConfidenceLow, true},
+		{"low boundary: 30% of 900 is 270", 10, fpl.Player{Minutes: 269}, ConfidenceLow, true},
+		{"low boundary: 270 is medium", 10, fpl.Player{Minutes: 270}, ConfidenceMedium, true},
+		{"medium boundary: 539 is medium", 10, fpl.Player{Minutes: 539}, ConfidenceMedium, true},
+		{"medium boundary: 60% is high", 10, fpl.Player{Minutes: 540}, ConfidenceHigh, false},
+		// The reviewer's case: 90 minutes is a regular starter's whole season
+		// after one gameweek, not a sample too small to trust.
+		{"regular starter early in the season", 3, fpl.Player{Minutes: 270}, ConfidenceHigh, false},
+		{"one start in three games is rotation, not thin", 3, fpl.Player{Minutes: 90}, ConfidenceMedium, true},
+		{"a cameo in three games", 3, fpl.Player{Minutes: 45}, ConfidenceLow, true},
+		{"too early to judge minutes: GW2", 2, fpl.Player{Minutes: 10}, ConfidenceHigh, false},
+		{"too early to judge minutes: preseason carry-over", 0, fpl.Player{Minutes: 90}, ConfidenceHigh, false},
+		// 12 involvements from 6.0 xGI is a hot streak, dropping high to medium.
+		{"overperforming its chances", 20, fpl.Player{Minutes: 1500, GoalsScored: 8, Assists: 4, ExpectedGoals: 4.0, ExpectedAssists: 2.0}, ConfidenceMedium, true},
+		{"overperforming and few minutes", 20, fpl.Player{Minutes: 400, GoalsScored: 6, Assists: 2, ExpectedGoals: 2.0, ExpectedAssists: 1.0}, ConfidenceLow, true},
+		{"overperformance counts even when minutes are too early to judge", 2, fpl.Player{Minutes: 180, GoalsScored: 5, Assists: 1, ExpectedGoals: 1.0, ExpectedAssists: 0.5}, ConfidenceMedium, true},
+		{"small overperformance is noise", 20, fpl.Player{Minutes: 1500, GoalsScored: 4, Assists: 2, ExpectedGoals: 3.0, ExpectedAssists: 1.5}, ConfidenceHigh, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.player.WebName = "Test"
+			level, note := assessIncomingPlayer(&tc.player, tc.gw)
+			if level != tc.wantLevel {
+				t.Errorf("level = %q, want %q (note %q)", level, tc.wantLevel, note)
+			}
+			if (note != "") != tc.wantNote {
+				t.Errorf("note = %q, wantNote = %v", note, tc.wantNote)
+			}
+		})
+	}
+}
+
+func TestSummarizeOptionConfidence(t *testing.T) {
+	solid := &fpl.Player{WebName: "Solid", Minutes: 800}
+	thin := &fpl.Player{WebName: "Thin", Minutes: 105}
+
+	level, notes := summarizeOptionConfidence(nil, 10)
+	if level != ConfidenceHigh || len(notes) != 0 {
+		t.Errorf("no transfers: %q %v, want high with no notes", level, notes)
+	}
+
+	level, notes = summarizeOptionConfidence([]*fpl.Player{solid, thin}, 10)
+	if level != ConfidenceLow {
+		t.Errorf("level = %q, want low: one thin leg drags the option down", level)
+	}
+	if len(notes) != 1 || !strings.Contains(notes[0], "Thin") {
+		t.Errorf("notes = %v, want a single note naming Thin", notes)
+	}
+
+	// An id missing from the bootstrap arrives as nil and is skipped, not a panic.
+	level, _ = summarizeOptionConfidence([]*fpl.Player{nil, solid}, 10)
+	if level != ConfidenceHigh {
+		t.Errorf("level = %q, want high: the nil entry is ignored", level)
+	}
+}
+
+func TestGameweeksPlayed(t *testing.T) {
+	b := &fpl.Bootstrap{Events: []fpl.Event{{ID: 1, Finished: true}, {ID: 2, Finished: true}, {ID: 3, IsCurrent: true}, {ID: 4}}}
+	if got := gameweeksPlayed(b); got != 2 {
+		t.Errorf("gameweeksPlayed = %d, want 2 (only finished gameweeks count)", got)
+	}
+	if got := gameweeksPlayed(&fpl.Bootstrap{}); got != 0 {
+		t.Errorf("gameweeksPlayed on an empty bootstrap = %d, want 0", got)
+	}
+}
+
+func TestMarkSafest(t *testing.T) {
+	opts := []TransferPlanOption{
+		{NumTransfers: 1, NetProjectedPoints: 430, Confidence: ConfidenceHigh},
+		{NumTransfers: 2, NetProjectedPoints: 465, Confidence: ConfidenceHigh},
+		{NumTransfers: 3, NetProjectedPoints: 486, Confidence: ConfidenceLow, Best: true},
+	}
+	markSafest(opts)
+	for i, want := range []bool{false, true, false} {
+		if opts[i].Safest != want {
+			t.Errorf("option %d Safest = %v, want %v", i, opts[i].Safest, want)
+		}
+	}
+	if !opts[2].Best || opts[2].Safest {
+		t.Error("the issue's case: best (486, low confidence) and safest must be different options")
 	}
 }

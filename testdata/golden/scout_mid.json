@@ -393,6 +393,9 @@
       "is_captain": false,
       "name": "J.Timber",
       "news": {
+        "confidence": "unverified",
+        "news_added": "2026-07-23",
+        "source": "fpl_api",
         "text": "Groin injury - Expected back 21 Aug",
         "updated": "6 days ago"
       },
