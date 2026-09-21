@@ -6,6 +6,15 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- `internal/marketodds` and `internal/footballdata`, plus `fplctl odds-backtest`: turn bookmaker match odds (free history from football-data.co.uk) into per-team expected goals and clean-sheet probability, and measure them against FPL's own fixture difficulty. Backtested on 4 seasons (2022-23 to 2025-26, 1,520 matches, 3,040 team-matches), predicting clean sheets:
+
+  | Forecast | Brier | Log loss |
+  |---|---:|---:|
+  | League base rate | 0.1840 | 0.5548 |
+  | FPL FDR (fitted leave-one-season-out) | 0.1792 | 0.5402 |
+  | Bookmaker-implied (no fitted parameters) | 0.1726 | 0.5216 |
+
+  The market forecast is well calibrated (predicted vs actual clean-sheet rate by quintile: 10.7/8.1, 18.5/19.4, 24.8/24.7, 31.5/27.6, 42.4/41.3 %), with mild overconfidence in the 4th quintile and lowest. It cuts about 2.4x as much Brier error as FDR does relative to the base rate. Nothing consumes it in a tool yet: this is the evidence that justifies wiring a live odds source in next. football-data.co.uk answers Go's default User-Agent with a 503; the client sends a descriptive one.
 - MCP server (`cmd/fpl-mcp`) exposing 13 tools, 2 resources, and 5 prompts for Fantasy Premier League analysis: captain picks, differentials, fixture outlook, price predictions, transfer suggestions, player comparison, live points, hit analysis, chip strategy, rival tracking, league analysis, squad scouting, and a full manager intelligence report (`fpl_manager_hub`).
 - `fpl_manager_hub` auto-detects a manager's bank, free transfers, and chip status, then runs every other team-scoped tool in parallel against the same gameweek for one coherent report.
 - `fplctl`, the operational counterpart: gameweek snapshots, weight optimization, backtesting, accuracy evaluation, data-integrity auditing, and golden-fixture regeneration (`gengolden`).

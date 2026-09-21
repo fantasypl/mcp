@@ -38,6 +38,8 @@ func main() {
 		err = runFinishingRegression(ctx, args)
 	case "role-change":
 		err = runRoleChangeRegression(ctx, args)
+	case "odds-backtest":
+		err = runOddsBacktest(ctx, args)
 	case "elo-capture":
 		err = runEloCapture(ctx, args)
 	case "congestion-capture":
@@ -69,6 +71,7 @@ Usage:
   fplctl gengolden [--which SET] [--out DIR] | --check
   fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N] [--root DIR]
   fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-from N] [--split-gw N] [--to N] [--group-size N] [--min-matches N] [--min-avg-minutes F] [--exclude-gk] [--root DIR]
+  fplctl odds-backtest [--seasons S1,S2,...] [--root DIR]
   fplctl elo-capture [--root DIR]
   fplctl congestion-capture [--root DIR]
 
