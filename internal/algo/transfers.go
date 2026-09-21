@@ -39,6 +39,8 @@ type TransferSuggestionsResult struct {
 	TransferSuggestions []TransferSuggestion `json:"transfer_suggestions"`
 	SquadSize           int                  `json:"squad_size"`
 	SquadOverview       []SquadOverviewEntry `json:"squad_overview"`
+	// PriceRiskNote explains price_risk; set only when some player carries one.
+	PriceRiskNote string `json:"price_risk_note,omitempty"`
 }
 
 type TransferSuggestion struct {
@@ -359,7 +361,7 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 				ValueScore:   score,
 				CaptainScore: Round(e.scorePlayer(p, pf), 1),
 				Fixture:      fixtureLiteOf(firstFixture(pf)),
-				PriceRisk:    priceRisks[p.ID],
+				PriceRisk:    priceRiskFor(p, priceRisks),
 			})
 		}
 
@@ -385,7 +387,7 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 				ID: sell.player.ID, Name: sell.player.WebName, Team: sell.team,
 				Position: sell.position, Cost: sell.cost, Form: sell.form,
 				ValueScore: sell.valueScore, Reasoning: e.sellReason(&sell),
-				PriceRisk: priceRisks[sell.player.ID],
+				PriceRisk: priceRiskFor(sell.player, priceRisks),
 			},
 			TransferInOptions: replacements,
 			BudgetAvailable:   Round(budget, 1),
@@ -400,7 +402,19 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 		})
 	}
 
+	priceRiskNote := ""
+	for _, sugg := range suggestions {
+		labelled := sugg.TransferOut.PriceRisk != ""
+		for _, in := range sugg.TransferInOptions {
+			labelled = labelled || in.PriceRisk != ""
+		}
+		if labelled {
+			priceRiskNote = priceRiskNoteText
+		}
+	}
+
 	return &TransferSuggestionsResult{
+		PriceRiskNote:       priceRiskNote,
 		TeamID:              teamID,
 		Gameweek:            nextGW,
 		FreeTransfers:       freeTransfers,
