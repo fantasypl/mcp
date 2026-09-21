@@ -259,25 +259,29 @@ type playerMatch struct {
 //
 // Matching ignores case and diacritics, so "Joao Pedro" finds "João Pedro".
 //
-// An exact web_name match wins outright. Otherwise every player whose web_name
-// starts with or contains the query is a candidate, and the most widely
-// owned wins. Ownership, not match tier, decides among them: a short query
-// like "Pedro" *starts* Pedro Porro's web_name but only *appears inside* João
-// Pedro's, and ranking by tier would pick the far less relevant player. Only
-// when no web_name matches does the search fall back to full names.
+// Candidates are tiered, best first, and the first non-empty tier decides:
 //
-// Whenever more than one player fits, the others are returned as
-// alternatives so the caller can flag the ambiguity rather than guess
-// silently. Ties in ownership go to total points, then to whichever player
-// comes first in elements order.
+//	exact        web_name equals the query
+//	starts_with  web_name starts with the query, or any whitespace-separated
+//	             word of it does ("Pedro" starts a word of "João Pedro")
+//	contains     the query appears elsewhere inside web_name
+//	full_name    the query appears in first + second name
+//
+// Within the deciding tier the most widely owned candidate wins, so a short
+// query lands on the player most people mean. A real prefix is never demoted
+// beneath a substring: "Son" means Sonny, not the more-owned Robertson. Ties
+// in ownership go to total points, then to elements order.
+//
+// Whenever the deciding tier holds more than one player, the rest come back as
+// alternatives so the caller can flag the ambiguity rather than guess silently.
 func fuzzyMatchPlayer(name string, elements []fpl.Player) (playerMatch, bool) {
 	query := foldName(name)
 	if query == "" {
 		return playerMatch{}, false
 	}
 
-	var exact, partial, fullNameContains []*fpl.Player
-	tierOf := map[int]string{}
+	tierNames := [...]string{"exact", "starts_with", "contains", "full_name"}
+	var tiers [len(tierNames)][]*fpl.Player
 	for i := range elements {
 		p := &elements[i]
 		web := foldName(p.WebName)
@@ -285,21 +289,17 @@ func fuzzyMatchPlayer(name string, elements []fpl.Player) (playerMatch, bool) {
 
 		switch {
 		case web == query:
-			exact = append(exact, p)
-			tierOf[p.ID] = "exact"
-		case strings.HasPrefix(web, query):
-			partial = append(partial, p)
-			tierOf[p.ID] = "starts_with"
+			tiers[0] = append(tiers[0], p)
+		case startsAnyWord(web, query):
+			tiers[1] = append(tiers[1], p)
 		case strings.Contains(web, query):
-			partial = append(partial, p)
-			tierOf[p.ID] = "contains"
+			tiers[2] = append(tiers[2], p)
 		case strings.Contains(full, query):
-			fullNameContains = append(fullNameContains, p)
-			tierOf[p.ID] = "full_name"
+			tiers[3] = append(tiers[3], p)
 		}
 	}
 
-	for _, candidates := range [][]*fpl.Player{exact, partial, fullNameContains} {
+	for i, candidates := range tiers {
 		if len(candidates) == 0 {
 			continue
 		}
@@ -318,9 +318,24 @@ func fuzzyMatchPlayer(name string, elements []fpl.Player) (playerMatch, bool) {
 				return 0
 			}
 		})
-		return playerMatch{player: ranked[0], tier: tierOf[ranked[0].ID], alternatives: ranked[1:]}, true
+		return playerMatch{player: ranked[0], tier: tierNames[i], alternatives: ranked[1:]}, true
 	}
 	return playerMatch{}, false
+}
+
+// startsAnyWord reports whether any whitespace-separated word of name starts
+// with prefix. The whole name counts as a word sequence too, so a multi-word
+// prefix like "joao pe" still matches "joao pedro".
+func startsAnyWord(name, prefix string) bool {
+	if strings.HasPrefix(name, prefix) {
+		return true
+	}
+	for _, word := range strings.Fields(name) {
+		if strings.HasPrefix(word, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // queryMatch pairs a query with what it resolved to.

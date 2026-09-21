@@ -45,11 +45,44 @@ func TestFuzzyMatchAmbiguousQueryPrefersOwnership(t *testing.T) {
 	if m.player.ID != 165 {
 		t.Errorf("matched player %d (%s), want 165 (João Pedro, 53.7%% owned)", m.player.ID, m.player.WebName)
 	}
-	if m.tier == "exact" {
-		t.Errorf("tier = exact, but the query was not an exact name")
+	// Pedro is a whole word of "João Pedro", so it counts as a prefix match.
+	if m.tier != "starts_with" {
+		t.Errorf("tier = %q, want starts_with", m.tier)
 	}
 	if len(m.alternatives) != 1 || m.alternatives[0].ID != 499 {
 		t.Errorf("alternatives = %v, want just Pedro Porro (499)", m.alternatives)
+	}
+}
+
+// A real prefix outranks a mere substring, whatever the ownership: "Son" means
+// a player whose name starts with Son, not the most-owned Robertson or Jackson.
+func TestFuzzyMatchPrefixBeatsMoreOwnedSubstring(t *testing.T) {
+	players := []fpl.Player{
+		{ID: 1, WebName: "Robertson", FirstName: "Andrew", SecondName: "Robertson", SelectedByPercent: 40.0},
+		{ID: 2, WebName: "Jackson", FirstName: "Nicolas", SecondName: "Jackson", SelectedByPercent: 30.0},
+		{ID: 3, WebName: "Sonny", FirstName: "Sonny", SecondName: "Nobody", SelectedByPercent: 2.0},
+	}
+	m, ok := fuzzyMatchPlayer("Son", players)
+	if !ok {
+		t.Fatal("no match")
+	}
+	if m.player.ID != 3 || m.tier != "starts_with" {
+		t.Errorf("got %d %q, want Sonny (3) via starts_with", m.player.ID, m.tier)
+	}
+	if len(m.alternatives) != 0 {
+		t.Errorf("alternatives = %v, want none: the substring matches are a lower tier", m.alternatives)
+	}
+}
+
+// With no prefix match at all, a substring match still resolves, most-owned first.
+func TestFuzzyMatchFallsBackToSubstring(t *testing.T) {
+	players := []fpl.Player{
+		{ID: 2, WebName: "Jackson", FirstName: "Nicolas", SecondName: "Jackson", SelectedByPercent: 30.0},
+		{ID: 1, WebName: "Robertson", FirstName: "Andrew", SecondName: "Robertson", SelectedByPercent: 40.0},
+	}
+	m, _ := fuzzyMatchPlayer("son", players)
+	if m.player.ID != 1 || m.tier != "contains" {
+		t.Errorf("got %d %q, want Robertson (1) via contains", m.player.ID, m.tier)
 	}
 }
 
