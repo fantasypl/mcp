@@ -39,8 +39,7 @@ type TransferSuggestionsResult struct {
 	TransferSuggestions []TransferSuggestion `json:"transfer_suggestions"`
 	SquadSize           int                  `json:"squad_size"`
 	SquadOverview       []SquadOverviewEntry `json:"squad_overview"`
-	// PriceRiskNote explains price_risk; set only when some player carries one.
-	PriceRiskNote string `json:"price_risk_note,omitempty"`
+	PriceRiskNote       string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a player carries one
 }
 
 type TransferSuggestion struct {
@@ -266,6 +265,8 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 		}
 	}
 
+	priceRisks := e.priceRiskByPlayer(ctx)
+
 	squad := make([]squadEntry, 0, len(picks.Picks))
 	squadIDs := make(map[int]bool, len(picks.Picks))
 	for _, pick := range picks.Picks {
@@ -310,8 +311,6 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 
 	numOut := min(freeTransfers, len(squad))
 	sellCandidates := squad[:numOut]
-
-	priceRisks := e.priceRiskByPlayer(ctx)
 
 	suggestions := make([]TransferSuggestion, 0, numOut)
 	for _, sell := range sellCandidates {

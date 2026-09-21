@@ -3,7 +3,6 @@ package algo
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/fantasypl/mcp/internal/fpl"
 )
@@ -37,8 +36,7 @@ type OptimalTransfersResult struct {
 	BudgetNote    string               `json:"budget_note"`
 	PoolNote      string               `json:"pool_note"`
 	Options       []TransferPlanOption `json:"options"`
-	// PriceRiskNote explains price_risk; set only when some leg carries one.
-	PriceRiskNote string `json:"price_risk_note,omitempty"`
+	PriceRiskNote string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
 }
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
@@ -143,6 +141,7 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 
 	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10))
 	candidates := buildCandidates(bootstrap.Elements, window, nil, lockedSet)
+	priceRisks := e.priceRiskByPlayer(ctx)
 
 	ceilings := []int{mgrStatus.FreeTransfers}
 	if allowHits {
@@ -150,8 +149,6 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 			ceilings = append(ceilings, mgrStatus.FreeTransfers+extra)
 		}
 	}
-
-	priceRisks := e.priceRiskByPlayer(ctx)
 
 	options := make([]TransferPlanOption, 0, len(ceilings))
 	bestIdx := -1
@@ -217,10 +214,8 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 
 	priceRiskNote := ""
 	for _, opt := range options {
-		for _, leg := range append(slices.Clone(opt.TransfersOut), opt.TransfersIn...) {
-			if leg.PriceRisk != "" {
-				priceRiskNote = priceRiskNoteText
-			}
+		if anyPriceRisk(opt.TransfersOut) || anyPriceRisk(opt.TransfersIn) {
+			priceRiskNote = priceRiskNoteText
 		}
 	}
 

@@ -175,6 +175,16 @@ func priceRiskFor(p *fpl.Player, flagged map[int]string) string {
 	return ""
 }
 
+// anyPriceRisk reports whether any transfer leg carries a price_risk label.
+func anyPriceRisk(legs []OptimalSquadSlot) bool {
+	for _, leg := range legs {
+		if leg.PriceRisk != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func capMoves(m []PriceMove, n int) []PriceMove {
 	if m == nil {
 		return []PriceMove{}
