@@ -254,6 +254,14 @@ func (e *Engine) SquadScout(ctx context.Context, teamID int) (*SquadScoutResult,
 	}
 	teams := teamsByID(bootstrap)
 
+	// Fixtures supply the card events behind suspension estimates. They are
+	// best-effort: if the fetch fails, suspension news is still reported, just
+	// without the card-derived second opinion.
+	fixtures, err := e.client.Fixtures(ctx)
+	if err != nil {
+		fixtures = nil
+	}
+
 	type epEntry struct {
 		ep   float64
 		info *ScoutPlayer
@@ -373,6 +381,9 @@ func (e *Engine) SquadScout(ctx context.Context, teamID int) (*SquadScoutResult,
 
 		if news := GetPlayerNews(p, e.Now()); news != nil {
 			info.News = news
+			if IsSuspensionNews(p.News) {
+				news.SuspensionEstimate = EstimateSuspension(p.ID, p.Team, fixtures)
+			}
 			if HasNegativeNews(p) && isStarter {
 				info.NewsRisk = true
 			}
