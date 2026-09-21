@@ -152,11 +152,41 @@ func parseFPLTime(s string) (time.Time, bool) {
 	return time.Time{}, false
 }
 
+// Provenance values for PlayerNews.
+const (
+	// NewsSourceFPL marks text taken verbatim from the FPL API's `news` field.
+	NewsSourceFPL = "fpl_api"
+
+	// ConfidenceProvisional is used for suspension news. FPL states a return
+	// date for a ban before appeals and retrospective rulings settle it, and
+	// the text has been wrong before (issue #1).
+	ConfidenceProvisional = "provisional"
+	// ConfidenceUnverified is used for all other news: FPL's own wording,
+	// which this server has no independent way to confirm.
+	ConfidenceUnverified = "unverified"
+)
+
 // PlayerNews is the structured form of a player's news, or nil when there is
 // none.
 type PlayerNews struct {
-	Text    string `json:"text"`
+	Text string `json:"text"`
+	// Updated is a relative age such as "3 days ago". It reads correctly only
+	// on the day it was produced, so NewsAdded carries the absolute date.
 	Updated string `json:"updated,omitempty"`
+	// NewsAdded is the date (YYYY-MM-DD, UTC) FPL published this text.
+	NewsAdded string `json:"news_added,omitempty"`
+	Source    string `json:"source"`
+	// Confidence is ConfidenceProvisional or ConfidenceUnverified.
+	Confidence string `json:"confidence"`
+	// SuspensionEstimate is set only when the news reports a suspension and
+	// match card data shows a red card, giving a second opinion on the ban
+	// length that doesn't depend on FPL's wording.
+	SuspensionEstimate *SuspensionEstimate `json:"suspension_estimate,omitempty"`
+}
+
+// IsSuspensionNews reports whether the news text says the player is suspended.
+func IsSuspensionNews(news string) bool {
+	return strings.Contains(strings.ToLower(news), "suspended")
 }
 
 // GetPlayerNews returns the structured form of a player's news.
@@ -165,9 +195,17 @@ func GetPlayerNews(p *fpl.Player, now time.Time) *PlayerNews {
 	if text == "" {
 		return nil
 	}
-	out := &PlayerNews{Text: text}
+	out := &PlayerNews{Text: text, Source: NewsSourceFPL, Confidence: ConfidenceUnverified}
+	if IsSuspensionNews(text) {
+		out.Confidence = ConfidenceProvisional
+	}
 	if age := FormatNewsAge(p.NewsAdded, now); age != "" {
 		out.Updated = age
+	}
+	if p.NewsAdded != nil {
+		if added, ok := parseFPLTime(*p.NewsAdded); ok {
+			out.NewsAdded = added.Format("2006-01-02")
+		}
 	}
 	return out
 }
