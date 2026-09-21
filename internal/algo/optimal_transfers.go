@@ -30,15 +30,14 @@ const maxHitsConsidered = 3
 
 // OptimalTransfersResult is optimal_transfers' response shape.
 type OptimalTransfersResult struct {
-	TeamID        int     `json:"team_id"`
-	Gameweek      int     `json:"gameweek"`
-	FreeTransfers int     `json:"free_transfers"`
-	BudgetM       float64 `json:"budget_m"`
-	BudgetNote    string  `json:"budget_note"`
-	PoolNote      string  `json:"pool_note"`
-	// BestNote spells out what the best and safest flags on each option mean.
-	BestNote string               `json:"best_note"`
-	Options  []TransferPlanOption `json:"options"`
+	TeamID        int                  `json:"team_id"`
+	Gameweek      int                  `json:"gameweek"`
+	FreeTransfers int                  `json:"free_transfers"`
+	BudgetM       float64              `json:"budget_m"`
+	BudgetNote    string               `json:"budget_note"`
+	PoolNote      string               `json:"pool_note"`
+	BestNote      string               `json:"best_note"` // what the best and safest flags on each option mean
+	Options       []TransferPlanOption `json:"options"`
 }
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
