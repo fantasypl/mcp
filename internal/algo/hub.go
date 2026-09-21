@@ -16,30 +16,28 @@ import (
 // coherent picture instead of six separate calls that could observe
 // different cache states.
 type ManagerHubResult struct {
-	TeamID                int                `json:"team_id"`
-	Gameweek              int                `json:"gameweek"`
-	PreppingFor           string             `json:"prepping_for"`
-	ManagerStatus         *fpl.ManagerStatus `json:"manager_status"`
-	SquadValue            float64            `json:"squad_value"`
-	Bank                  float64            `json:"bank"`
-	TotalBudget           float64            `json:"total_budget"`
-	SeasonSummary         HubSeasonSummary   `json:"season_summary"`
-	SquadSize             int                `json:"squad_size"`
-	SquadValid            bool               `json:"squad_valid"`
-	NumStarters           int                `json:"num_starters"`
-	NumBench              int                `json:"num_bench"`
-	Squad                 []HubSquadEntry    `json:"squad"`
-	SquadHealth           HubSquadHealth     `json:"squad_health"`
-	CaptainRecommendation []CaptainPick      `json:"captain_recommendation"`
-	// CaptainSignalNote is set only when captain_score and FPL's ep_next
-	// disagree on the best captain among the starters. See captainSignalNote.
-	CaptainSignalNote   string               `json:"captain_signal_note,omitempty"`
-	TransferSuggestions []TransferSuggestion `json:"transfer_suggestions"`
-	DifferentialTargets []Differential       `json:"differential_targets"`
-	FixtureOutlook      HubFixtureOutlook    `json:"fixture_outlook"`
-	PriceDropRisks      []HubPriceRisk       `json:"price_drop_risks"`
-	PricePredictions    HubPricePredictions  `json:"price_predictions"`
-	PoweredBy           string               `json:"powered_by"`
+	TeamID                int                  `json:"team_id"`
+	Gameweek              int                  `json:"gameweek"`
+	PreppingFor           string               `json:"prepping_for"`
+	ManagerStatus         *fpl.ManagerStatus   `json:"manager_status"`
+	SquadValue            float64              `json:"squad_value"`
+	Bank                  float64              `json:"bank"`
+	TotalBudget           float64              `json:"total_budget"`
+	SeasonSummary         HubSeasonSummary     `json:"season_summary"`
+	SquadSize             int                  `json:"squad_size"`
+	SquadValid            bool                 `json:"squad_valid"`
+	NumStarters           int                  `json:"num_starters"`
+	NumBench              int                  `json:"num_bench"`
+	Squad                 []HubSquadEntry      `json:"squad"`
+	SquadHealth           HubSquadHealth       `json:"squad_health"`
+	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
+	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and ep_next disagree
+	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
+	DifferentialTargets   []Differential       `json:"differential_targets"`
+	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
+	PriceDropRisks        []HubPriceRisk       `json:"price_drop_risks"`
+	PricePredictions      HubPricePredictions  `json:"price_predictions"`
+	PoweredBy             string               `json:"powered_by"`
 }
 
 type HubSeasonSummary struct {
@@ -99,8 +97,9 @@ type HubSquadEntry struct {
 // two recommendations differ instead of guessing which to trust.
 //
 // Only starters count: a benched player can't be captain. A tie on ep_next is
-// not a disagreement, and neither is a squad with no ep_next data at all
-// (preseason, where every projection is zero).
+// not a disagreement, and neither is a missing projection: a captain_score
+// leader whose ep_next is zero (a new signing, or every player in preseason)
+// has no FPL figure to disagree with.
 func captainSignalNote(squad []HubSquadEntry) string {
 	var byScore, byEP *HubSquadEntry
 	for i := range squad {
@@ -115,7 +114,10 @@ func captainSignalNote(squad []HubSquadEntry) string {
 			byEP = s
 		}
 	}
-	if byScore == nil || byScore.EPNext >= byEP.EPNext {
+	// A zero ep_next for the captain_score leader means FPL has no projection
+	// for them (a new signing, say), not a low one, so there is nothing to
+	// disagree with.
+	if byScore == nil || byScore.EPNext == 0 || byScore.EPNext >= byEP.EPNext {
 		return ""
 	}
 	return fmt.Sprintf(
