@@ -162,3 +162,45 @@ func TestEngineClockIsInjectable(t *testing.T) {
 		t.Errorf("engine clock = %v, want %v", e.Now(), goldenClock)
 	}
 }
+
+// Issue #1: news is FPL's own free text, so the output must say so, and must
+// carry an absolute date rather than only a relative age that goes stale.
+func TestGetPlayerNewsProvenance(t *testing.T) {
+	added := "2026-09-17T09:30:00Z"
+	now := time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC)
+	p := &fpl.Player{News: "Suspended until 10 Oct", NewsAdded: &added}
+
+	got := GetPlayerNews(p, now)
+	if got == nil {
+		t.Fatal("expected news")
+	}
+	if got.Source != NewsSourceFPL {
+		t.Errorf("Source = %q, want %q", got.Source, NewsSourceFPL)
+	}
+	if got.NewsAdded != "2026-09-17" {
+		t.Errorf("NewsAdded = %q, want 2026-09-17", got.NewsAdded)
+	}
+	if got.Updated != "3 days ago" {
+		t.Errorf("Updated = %q, want the relative age kept", got.Updated)
+	}
+}
+
+// Suspension news is the case that misled in issue #1, so it is explicitly
+// marked provisional. Ordinary injury news is left unmarked-as-verified too:
+// FPL text is never independently confirmed.
+func TestGetPlayerNewsConfidence(t *testing.T) {
+	now := time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC)
+	cases := []struct {
+		news, want string
+	}{
+		{"Suspended until 10 Oct", ConfidenceProvisional},
+		{"Suspended for 3 matches", ConfidenceProvisional},
+		{"Hamstring injury - Expected back 15 Oct", ConfidenceUnverified},
+	}
+	for _, tc := range cases {
+		got := GetPlayerNews(&fpl.Player{News: tc.news}, now)
+		if got.Confidence != tc.want {
+			t.Errorf("%q: Confidence = %q, want %q", tc.news, got.Confidence, tc.want)
+		}
+	}
+}
