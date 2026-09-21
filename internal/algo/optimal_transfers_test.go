@@ -223,29 +223,40 @@ func TestOptimalTransfersFallsBackWithoutHistory(t *testing.T) {
 }
 
 // Issue #5: an option's confidence is that of its weakest incoming player, judged
-// on how much playing time backs the projection and whether goal involvements
-// run well ahead of the underlying chances.
+// on how much of the available playing time backs the projection and whether
+// goal involvements run well ahead of the underlying chances.
 func TestAssessIncomingPlayer(t *testing.T) {
 	cases := []struct {
 		name      string
+		gw        int // gameweeks played, so 90*gw minutes were available
 		player    fpl.Player
 		wantLevel string
 		wantNote  bool
 	}{
-		{"established starter", fpl.Player{Minutes: 2700, GoalsScored: 10, Assists: 5, ExpectedGoals: 9.5, ExpectedAssists: 4.5}, ConfidenceHigh, false},
-		{"some minutes", fpl.Player{Minutes: 600}, ConfidenceMedium, true},
-		{"the issue's low-minutes forward", fpl.Player{Minutes: 105}, ConfidenceLow, true},
-		{"minutes boundary: 300 is not low", fpl.Player{Minutes: 300}, ConfidenceMedium, true},
-		{"minutes boundary: 900 is not medium", fpl.Player{Minutes: 900}, ConfidenceHigh, false},
-		// 1500 minutes would be high, but 12 involvements from 6.0 xGI is a hot streak.
-		{"overperforming its chances", fpl.Player{Minutes: 1500, GoalsScored: 8, Assists: 4, ExpectedGoals: 4.0, ExpectedAssists: 2.0}, ConfidenceMedium, true},
-		{"overperforming and few minutes", fpl.Player{Minutes: 400, GoalsScored: 6, Assists: 2, ExpectedGoals: 2.0, ExpectedAssists: 1.0}, ConfidenceLow, true},
-		{"small overperformance is noise", fpl.Player{Minutes: 1500, GoalsScored: 4, Assists: 2, ExpectedGoals: 3.0, ExpectedAssists: 1.5}, ConfidenceHigh, false},
+		{"established starter", 10, fpl.Player{Minutes: 810, GoalsScored: 10, Assists: 5, ExpectedGoals: 9.5, ExpectedAssists: 4.5}, ConfidenceHigh, false},
+		{"rotation player", 10, fpl.Player{Minutes: 500}, ConfidenceMedium, true},
+		{"the issue's low-minutes forward, GW4", 4, fpl.Player{Minutes: 105}, ConfidenceLow, true},
+		{"low boundary: 30% of 900 is 270", 10, fpl.Player{Minutes: 269}, ConfidenceLow, true},
+		{"low boundary: 270 is medium", 10, fpl.Player{Minutes: 270}, ConfidenceMedium, true},
+		{"medium boundary: 539 is medium", 10, fpl.Player{Minutes: 539}, ConfidenceMedium, true},
+		{"medium boundary: 60% is high", 10, fpl.Player{Minutes: 540}, ConfidenceHigh, false},
+		// The reviewer's case: 90 minutes is a regular starter's whole season
+		// after one gameweek, not a sample too small to trust.
+		{"regular starter early in the season", 3, fpl.Player{Minutes: 270}, ConfidenceHigh, false},
+		{"one start in three games is rotation, not thin", 3, fpl.Player{Minutes: 90}, ConfidenceMedium, true},
+		{"a cameo in three games", 3, fpl.Player{Minutes: 45}, ConfidenceLow, true},
+		{"too early to judge minutes: GW2", 2, fpl.Player{Minutes: 10}, ConfidenceHigh, false},
+		{"too early to judge minutes: preseason carry-over", 0, fpl.Player{Minutes: 90}, ConfidenceHigh, false},
+		// 12 involvements from 6.0 xGI is a hot streak, dropping high to medium.
+		{"overperforming its chances", 20, fpl.Player{Minutes: 1500, GoalsScored: 8, Assists: 4, ExpectedGoals: 4.0, ExpectedAssists: 2.0}, ConfidenceMedium, true},
+		{"overperforming and few minutes", 20, fpl.Player{Minutes: 400, GoalsScored: 6, Assists: 2, ExpectedGoals: 2.0, ExpectedAssists: 1.0}, ConfidenceLow, true},
+		{"overperformance counts even when minutes are too early to judge", 2, fpl.Player{Minutes: 180, GoalsScored: 5, Assists: 1, ExpectedGoals: 1.0, ExpectedAssists: 0.5}, ConfidenceMedium, true},
+		{"small overperformance is noise", 20, fpl.Player{Minutes: 1500, GoalsScored: 4, Assists: 2, ExpectedGoals: 3.0, ExpectedAssists: 1.5}, ConfidenceHigh, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.player.WebName = "Test"
-			level, note := assessIncomingPlayer(&tc.player)
+			level, note := assessIncomingPlayer(&tc.player, tc.gw)
 			if level != tc.wantLevel {
 				t.Errorf("level = %q, want %q (note %q)", level, tc.wantLevel, note)
 			}
@@ -257,20 +268,36 @@ func TestAssessIncomingPlayer(t *testing.T) {
 }
 
 func TestSummarizeOptionConfidence(t *testing.T) {
-	solid := &fpl.Player{WebName: "Solid", Minutes: 2000}
+	solid := &fpl.Player{WebName: "Solid", Minutes: 800}
 	thin := &fpl.Player{WebName: "Thin", Minutes: 105}
 
-	level, notes := summarizeOptionConfidence(nil)
+	level, notes := summarizeOptionConfidence(nil, 10)
 	if level != ConfidenceHigh || len(notes) != 0 {
 		t.Errorf("no transfers: %q %v, want high with no notes", level, notes)
 	}
 
-	level, notes = summarizeOptionConfidence([]*fpl.Player{solid, thin})
+	level, notes = summarizeOptionConfidence([]*fpl.Player{solid, thin}, 10)
 	if level != ConfidenceLow {
 		t.Errorf("level = %q, want low: one thin leg drags the option down", level)
 	}
 	if len(notes) != 1 || !strings.Contains(notes[0], "Thin") {
 		t.Errorf("notes = %v, want a single note naming Thin", notes)
+	}
+
+	// An id missing from the bootstrap arrives as nil and is skipped, not a panic.
+	level, _ = summarizeOptionConfidence([]*fpl.Player{nil, solid}, 10)
+	if level != ConfidenceHigh {
+		t.Errorf("level = %q, want high: the nil entry is ignored", level)
+	}
+}
+
+func TestGameweeksPlayed(t *testing.T) {
+	b := &fpl.Bootstrap{Events: []fpl.Event{{ID: 1, Finished: true}, {ID: 2, Finished: true}, {ID: 3, IsCurrent: true}, {ID: 4}}}
+	if got := gameweeksPlayed(b); got != 2 {
+		t.Errorf("gameweeksPlayed = %d, want 2 (only finished gameweeks count)", got)
+	}
+	if got := gameweeksPlayed(&fpl.Bootstrap{}); got != 0 {
+		t.Errorf("gameweeksPlayed on an empty bootstrap = %d, want 0", got)
 	}
 }
 

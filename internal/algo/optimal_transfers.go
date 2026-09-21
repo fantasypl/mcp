@@ -71,11 +71,16 @@ const (
 	ConfidenceLow    = "low"
 )
 
-// Thresholds behind assessIncomingPlayer. Minutes are season totals: 300 is
-// under four full matches, 900 is ten.
+// Thresholds behind assessIncomingPlayer. Minutes are judged as a share of
+// those available (90 per finished gameweek), not as an absolute total, so a
+// regular starter isn't rated "low" simply because the season is young.
 const (
-	lowMinutesThreshold    = 300
-	mediumMinutesThreshold = 900
+	lowMinutesShare    = 0.3
+	mediumMinutesShare = 0.6
+	// Until this many gameweeks are finished, minutes say little about anyone,
+	// so the minutes check is skipped. It also covers preseason, where the
+	// bootstrap still carries last season's totals.
+	minGameweeksForMinutes = 3
 	// A player counts as running hot when goals + assists beat their expected
 	// figure by at least overperformAbs *and* by at least overperformRatio
 	// times. Both must hold so a big-minutes striker a couple of goals up on
@@ -85,7 +90,7 @@ const (
 )
 
 const bestNoteText = "best marks the option with the highest net projected points, not the lowest risk. " +
-	"confidence rates how far each option's incoming players can be trusted (minutes played, and goal involvements versus expected), " +
+	"confidence rates how far each option's incoming players can be trusted (share of available minutes played, and goal involvements versus expected), " +
 	"and safest marks the most reliable option."
 
 // confidenceRank orders levels for comparison.
@@ -107,24 +112,42 @@ func lowerConfidence(level string) string {
 	return ConfidenceLow
 }
 
+// gameweeksPlayed counts finished gameweeks.
+func gameweeksPlayed(b *fpl.Bootstrap) int {
+	n := 0
+	for _, e := range b.Events {
+		if e.Finished {
+			n++
+		}
+	}
+	return n
+}
+
 // assessIncomingPlayer rates how far a player's projection can be trusted,
-// with a note when it is below high.
+// with a note when it is below high. gameweeks is the number of finished
+// gameweeks, so 90*gameweeks minutes were available.
 //
-// Two things weaken a projection: a small sample (few minutes played, so form
-// and points-per-game rest on a handful of matches), and results running well
-// ahead of the underlying chances (goals and assists far above xG + xA, which
-// tends to regress). The second drops the rating one level.
-func assessIncomingPlayer(p *fpl.Player) (string, string) {
+// Two things weaken a projection: a small sample (a small share of the
+// available minutes, so form and points-per-game rest on a handful of
+// matches), and results running well ahead of the underlying chances (goals
+// and assists far above xG + xA, which tends to regress). The second drops the
+// rating one level. The first applies only once minGameweeksForMinutes
+// gameweeks are finished.
+func assessIncomingPlayer(p *fpl.Player, gameweeks int) (string, string) {
 	level := ConfidenceHigh
 	var notes []string
 
-	switch {
-	case p.Minutes < lowMinutesThreshold:
-		level = ConfidenceLow
-		notes = append(notes, fmt.Sprintf("only %d minutes this season", p.Minutes))
-	case p.Minutes < mediumMinutesThreshold:
-		level = ConfidenceMedium
-		notes = append(notes, fmt.Sprintf("only %d minutes this season", p.Minutes))
+	if gameweeks >= minGameweeksForMinutes {
+		share := float64(p.Minutes) / float64(90*gameweeks)
+		switch {
+		case share < lowMinutesShare:
+			level = ConfidenceLow
+		case share < mediumMinutesShare:
+			level = ConfidenceMedium
+		}
+		if level != ConfidenceHigh {
+			notes = append(notes, fmt.Sprintf("only %d of %d possible minutes this season", p.Minutes, 90*gameweeks))
+		}
 	}
 
 	actual := float64(p.GoalsScored + p.Assists)
@@ -143,11 +166,14 @@ func assessIncomingPlayer(p *fpl.Player) (string, string) {
 // summarizeOptionConfidence rates a transfer option by its weakest incoming
 // player and returns a note for each player rated below high. An option with
 // no incoming players (keeping the squad as is) is high confidence.
-func summarizeOptionConfidence(incoming []*fpl.Player) (string, []string) {
+func summarizeOptionConfidence(incoming []*fpl.Player, gameweeks int) (string, []string) {
 	level := ConfidenceHigh
 	notes := []string{}
 	for _, p := range incoming {
-		l, note := assessIncomingPlayer(p)
+		if p == nil {
+			continue // an id missing from the bootstrap; nothing to assess
+		}
+		l, note := assessIncomingPlayer(p, gameweeks)
 		if confidenceRank(l) < confidenceRank(level) {
 			level = l
 		}
@@ -159,7 +185,11 @@ func summarizeOptionConfidence(incoming []*fpl.Player) (string, []string) {
 }
 
 // markSafest flags the most reliable option: highest confidence, then highest
-// net projected points, then the fewest transfers (earliest in the sweep).
+// net projected points, then the fewest transfers.
+//
+// The last tie-break relies on options arriving in ascending order of
+// transfers, as the sweep produces them, and on the comparisons being strict:
+// an equal option never displaces an earlier one. Changing either breaks it.
 func markSafest(options []TransferPlanOption) {
 	safest := -1
 	for i, opt := range options {
@@ -275,6 +305,8 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		}
 	}
 
+	played := gameweeksPlayed(bootstrap)
+
 	options := make([]TransferPlanOption, 0, len(ceilings))
 	bestIdx := -1
 	for i, ceiling := range ceilings {
@@ -319,7 +351,7 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		for _, in := range transfersIn {
 			incoming = append(incoming, byID[in.ID])
 		}
-		confidence, confidenceNotes := summarizeOptionConfidence(incoming)
+		confidence, confidenceNotes := summarizeOptionConfidence(incoming, played)
 
 		options = append(options, TransferPlanOption{
 			Confidence:         confidence,
