@@ -44,7 +44,15 @@ type SuspensionEstimate struct {
 }
 
 // EstimateSuspension estimates the ban following the player's most recent
-// red card, or returns nil when the fixtures record none.
+// red card, or returns nil when the fixtures record none or that ban has
+// already been served. A served ban is dropped because it can't explain a
+// current suspension: whatever causes that (yellow-card accumulation, a
+// retrospective ruling) isn't visible in the card data, and an estimate of
+// zero matches remaining would only contradict FPL's news.
+//
+// Fixtures are matched on teamID, the player's current club, so a player who
+// moved clubs after the red card won't match the fixture that holds it and
+// gets no estimate. That is rare and errs toward showing nothing.
 //
 // The ban covers the team's next `Matches` fixtures after the red-card match;
 // finished fixtures among them count as already served. It assumes the player
@@ -107,6 +115,10 @@ func EstimateSuspension(playerID, teamID int, fixtures []fpl.Fixture) *Suspensio
 		if after[i].Finished {
 			served++
 		}
+	}
+
+	if matches-served == 0 {
+		return nil
 	}
 
 	cardGW, _ := teamFixtures[cardIdx].EventOf()

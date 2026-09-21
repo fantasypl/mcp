@@ -126,3 +126,19 @@ func TestEstimateSuspensionNoRedCard(t *testing.T) {
 		t.Errorf("a lone yellow must not produce a ban estimate, got %+v", got)
 	}
 }
+
+// A red card from earlier in the season whose ban has been fully served says
+// nothing about a current suspension, which must come from something else
+// (yellow accumulation, a retrospective ruling). Showing "0 matches remaining"
+// beside news that says suspended would contradict it, so there is no estimate.
+func TestEstimateSuspensionServedBanGivesNoEstimate(t *testing.T) {
+	const player, team, opp = 50, 1, 2
+	fixtures := []fpl.Fixture{
+		fixtureWithCards(1, 3, team, opp, true, fpl.CardEvent{Player: player, Team: team, Yellow: 1, Red: 1}),
+		fixtureWithCards(2, 4, opp, team, true),
+		fixtureWithCards(3, 5, team, opp, false),
+	}
+	if got := EstimateSuspension(player, team, fixtures); got != nil {
+		t.Errorf("a fully served ban must give no estimate, got %+v", got)
+	}
+}
