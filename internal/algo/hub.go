@@ -228,17 +228,12 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 
 	var captainResult *CaptainResult
-	var transferResult any
 	var diffResult *DifferentialResult
 	var fixtureResult *FixtureOutlookResult
 	var priceResult *PriceResult
 	{
 		g, gctx := errgroup.WithContext(ctx)
 		g.Go(func() (err error) { captainResult, err = e.CaptainPicks(gctx, &nextGW, 5); return })
-		g.Go(func() (err error) {
-			transferResult, err = e.TransferSuggestions(gctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank)
-			return
-		})
 		g.Go(func() (err error) { diffResult, err = e.Differentials(gctx, 10, &nextGW, 10); return })
 		g.Go(func() (err error) { fixtureResult, err = e.FixtureOutlook(gctx, gameweeksAhead, ""); return })
 		g.Go(func() (err error) { priceResult, err = e.PricePredictions(gctx, 0); return })
@@ -379,6 +374,15 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			entry.Note = &note
 		}
 		chipsUsed = append(chipsUsed, entry)
+	}
+
+	// Suggest a replacement for every flagged player, not only the worst-value
+	// one the free-transfer count allows. This runs after the health check
+	// because it depends on what was flagged.
+	flagged := playersNeedingReplacement(squad)
+	transferResult, err := e.TransferSuggestionsIncluding(ctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank, flagged)
+	if err != nil {
+		return nil, err
 	}
 
 	var transferSuggestions []TransferSuggestion
