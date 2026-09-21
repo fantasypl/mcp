@@ -17,24 +17,20 @@ import (
 // coherent picture instead of six separate calls that could observe
 // different cache states.
 type ManagerHubResult struct {
-	TeamID        int                `json:"team_id"`
-	Gameweek      int                `json:"gameweek"`
-	PreppingFor   string             `json:"prepping_for"`
-	ManagerStatus *fpl.ManagerStatus `json:"manager_status"`
-	SquadValue    float64            `json:"squad_value"`
-	Bank          float64            `json:"bank"`
-	TotalBudget   float64            `json:"total_budget"`
-	SeasonSummary HubSeasonSummary   `json:"season_summary"`
-	SquadSize     int                `json:"squad_size"`
-	SquadValid    bool               `json:"squad_valid"`
-	NumStarters   int                `json:"num_starters"`
-	NumBench      int                `json:"num_bench"`
-	// Squad is the manager's own picks in slot order; slots 12-15 are the
-	// bench priority they set on the FPL site, reported as-is.
-	Squad []HubSquadEntry `json:"squad"`
-	// SuggestedBenchOrder is a recommended re-ordering of that bench by
-	// projected points. It never alters Squad.
-	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"`
+	TeamID                int                  `json:"team_id"`
+	Gameweek              int                  `json:"gameweek"`
+	PreppingFor           string               `json:"prepping_for"`
+	ManagerStatus         *fpl.ManagerStatus   `json:"manager_status"`
+	SquadValue            float64              `json:"squad_value"`
+	Bank                  float64              `json:"bank"`
+	TotalBudget           float64              `json:"total_budget"`
+	SeasonSummary         HubSeasonSummary     `json:"season_summary"`
+	SquadSize             int                  `json:"squad_size"`
+	SquadValid            bool                 `json:"squad_valid"`
+	NumStarters           int                  `json:"num_starters"`
+	NumBench              int                  `json:"num_bench"`
+	Squad                 []HubSquadEntry      `json:"squad"`                 // the manager's own picks; slots 12-15 are their real bench order
+	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"` // bench re-ordered by ep_next; never alters Squad
 	SquadHealth           HubSquadHealth       `json:"squad_health"`
 	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
 	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
