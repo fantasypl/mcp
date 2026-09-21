@@ -3,6 +3,7 @@ package algo
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -28,9 +29,11 @@ type ManagerHubResult struct {
 	SquadValid            bool                 `json:"squad_valid"`
 	NumStarters           int                  `json:"num_starters"`
 	NumBench              int                  `json:"num_bench"`
-	Squad                 []HubSquadEntry      `json:"squad"`
+	Squad                 []HubSquadEntry      `json:"squad"`                 // the manager's own picks; slots 12-15 are their real bench order
+	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"` // bench re-ordered by ep_next; never alters Squad
 	SquadHealth           HubSquadHealth       `json:"squad_health"`
 	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
+	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and ep_next disagree
 	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
 	DifferentialTargets   []Differential       `json:"differential_targets"`
 	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
@@ -72,6 +75,7 @@ type HubSquadEntry struct {
 	Cost          float64  `json:"cost"`
 	Form          float64  `json:"form"`
 	PointsPerGame float64  `json:"points_per_game"`
+	EPNext        float64  `json:"ep_next"`
 	TotalPoints   int      `json:"total_points"`
 	ICTIndex      float64  `json:"ict_index"`
 	IsCaptain     bool     `json:"is_captain"`
@@ -83,6 +87,62 @@ type HubSquadEntry struct {
 	Status        string   `json:"status"`
 	Minutes       int      `json:"minutes"`
 	SelectedByPct float64  `json:"selected_by_pct"`
+}
+
+// HubBenchEntry is one player in the suggested bench order.
+type HubBenchEntry struct {
+	// Slot is the suggested position, 12-15.
+	Slot int `json:"slot"`
+	// CurrentSlot is where the manager has this player now.
+	CurrentSlot int     `json:"current_slot"`
+	ElementID   int     `json:"element_id"`
+	Name        string  `json:"name"`
+	Position    string  `json:"position"`
+	EPNext      float64 `json:"ep_next"`
+}
+
+// suggestBenchOrder recommends an auto-sub priority for the bench (slots
+// 12-15) by projected points.
+//
+// FPL requires the bench goalkeeper in slot 12, so it stays there whatever its
+// projection. Outfield players follow in descending ep_next, since the first
+// outfield bench player who played is the first one subbed on. Equal
+// projections keep the manager's own relative order.
+func suggestBenchOrder(squad []HubSquadEntry) []HubBenchEntry {
+	var keepers, outfield []HubSquadEntry
+	for _, s := range squad {
+		if s.Starter {
+			continue
+		}
+		if s.Position == "GKP" {
+			keepers = append(keepers, s)
+		} else {
+			outfield = append(outfield, s)
+		}
+	}
+	// Start from the manager's order so the stable sort below preserves it
+	// for ties.
+	slices.SortStableFunc(outfield, func(a, b HubSquadEntry) int { return a.Slot - b.Slot })
+	slices.SortStableFunc(outfield, func(a, b HubSquadEntry) int {
+		switch {
+		case a.EPNext > b.EPNext:
+			return -1
+		case a.EPNext < b.EPNext:
+			return 1
+		default:
+			return 0
+		}
+	})
+
+	ordered := append(keepers, outfield...)
+	out := make([]HubBenchEntry, len(ordered))
+	for i, s := range ordered {
+		out[i] = HubBenchEntry{
+			Slot: 12 + i, CurrentSlot: s.Slot, ElementID: s.ElementID,
+			Name: s.Name, Position: s.Position, EPNext: s.EPNext,
+		}
+	}
+	return out
 }
 
 type HubSquadHealth struct {
@@ -169,17 +229,12 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 
 	var captainResult *CaptainResult
-	var transferResult any
 	var diffResult *DifferentialResult
 	var fixtureResult *FixtureOutlookResult
 	var priceResult *PriceResult
 	{
 		g, gctx := errgroup.WithContext(ctx)
 		g.Go(func() (err error) { captainResult, err = e.CaptainPicks(gctx, &nextGW, 5); return })
-		g.Go(func() (err error) {
-			transferResult, err = e.TransferSuggestions(gctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank)
-			return
-		})
 		g.Go(func() (err error) { diffResult, err = e.Differentials(gctx, 10, &nextGW, 10); return })
 		g.Go(func() (err error) { fixtureResult, err = e.FixtureOutlook(gctx, gameweeksAhead, ""); return })
 		g.Go(func() (err error) { priceResult, err = e.PricePredictions(gctx, 0); return })
@@ -249,7 +304,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			Slot: pick.Position, Starter: pick.Position <= 11, ElementID: p.ID,
 			Name: p.WebName, Team: shortName(team), TeamFullName: fullName(team),
 			Position: Position(p.ElementType), Cost: float64(p.NowCost) / 10,
-			Form: p.Form.Float(), PointsPerGame: p.PointsPerGame.Float(),
+			Form: p.Form.Float(), PointsPerGame: p.PointsPerGame.Float(), EPNext: p.EPNext.Float(),
 			TotalPoints: p.TotalPoints, ICTIndex: p.ICTIndex.Float(),
 			IsCaptain: pick.IsCaptain, IsViceCaptain: pick.IsViceCaptain,
 			Opponent: opponentStr, Venue: venue, FDR: fdr, CaptainScore: captainScore,
@@ -322,6 +377,15 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		chipsUsed = append(chipsUsed, entry)
 	}
 
+	// Suggest a replacement for every flagged player, not only the worst-value
+	// one the free-transfer count allows. This runs after the health check
+	// because it depends on what was flagged.
+	flagged := playersNeedingReplacement(squad)
+	transferResult, err := e.TransferSuggestionsIncluding(ctx, teamID, mgrStatus.FreeTransfers, mgrStatus.Bank, flagged)
+	if err != nil {
+		return nil, err
+	}
+
 	var transferSuggestions []TransferSuggestion
 	if tr, ok := transferResult.(*TransferSuggestionsResult); ok {
 		transferSuggestions = tr.TransferSuggestions
@@ -356,11 +420,12 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			ChipsRemaining: mgrStatus.ChipsRemaining, HalfSeason: halfSeason,
 		},
 		SquadSize: len(squad), SquadValid: numStarters == 11, NumStarters: numStarters, NumBench: len(squad) - numStarters,
-		Squad: squad,
+		Squad: squad, SuggestedBenchOrder: suggestBenchOrder(squad),
 		SquadHealth: HubSquadHealth{
 			InjuredOrDoubtful: injured, PoorFormStarters: poorForm, ToughFixturesThisGW: toughFixtures,
 		},
 		CaptainRecommendation: captainResult.Picks,
+		CaptainSignalNote:     captainSignalNote(squad),
 		TransferSuggestions:   transferSuggestions,
 		DifferentialTargets:   diffTargets,
 		FixtureOutlook:        HubFixtureOutlook{TeamsByDifficulty: teamsByDifficulty, PlayersToTarget: fixtureResult.PlayersToTarget},

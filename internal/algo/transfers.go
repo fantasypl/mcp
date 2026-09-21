@@ -226,6 +226,18 @@ func joinComma(parts []string) string {
 // (bootstrap or fixtures fetch failing), which the transfer flow doesn't
 // specifically handle either.
 func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers int, bankM float64) (any, error) {
+	return e.TransferSuggestionsIncluding(ctx, teamID, freeTransfers, bankM, nil)
+}
+
+// TransferSuggestionsIncluding is TransferSuggestions plus a guarantee: every
+// squad player named in includeIDs also gets a suggestion, on top of the usual
+// worst-value candidates.
+//
+// The free-transfer count normally caps how many players are examined. The hub
+// uses this to cover every player it has flagged as a problem, so one call
+// answers "what should I do about each of them". Ids not in the squad are
+// ignored, and a player who is already a candidate appears once.
+func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeTransfers int, bankM float64, includeIDs []int) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
 		return nil, err
@@ -309,10 +321,22 @@ func (e *Engine) TransferSuggestions(ctx context.Context, teamID, freeTransfers 
 		}
 	})
 
+	// The worst-value players, up to the free-transfer count, plus any player
+	// the caller asked for. Both come from the same worst-first ordering, so
+	// the result stays in that order.
 	numOut := min(freeTransfers, len(squad))
-	sellCandidates := squad[:numOut]
+	wanted := make(map[int]bool, len(includeIDs))
+	for _, id := range includeIDs {
+		wanted[id] = true
+	}
+	var sellCandidates []squadEntry
+	for i, se := range squad {
+		if i < numOut || wanted[se.player.ID] {
+			sellCandidates = append(sellCandidates, se)
+		}
+	}
 
-	suggestions := make([]TransferSuggestion, 0, numOut)
+	suggestions := make([]TransferSuggestion, 0, len(sellCandidates))
 	for _, sell := range sellCandidates {
 		// FPL pays selling_price, not current price, but purchase price isn't
 		// exposed by this endpoint — current price is the best available

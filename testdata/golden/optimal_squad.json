@@ -127,5 +127,39 @@
       "cost_m": 6,
       "projected_points": 9.06
     }
-  ]
+  ],
+  "starting_xi": [
+    199,
+    4,
+    388,
+    498,
+    426,
+    452,
+    236,
+    260,
+    335,
+    165,
+    106
+  ],
+  "formation": "3-5-2",
+  "bench_order": [
+    531,
+    389,
+    391,
+    346
+  ],
+  "recommended_captain": {
+    "id": 426,
+    "name": "B.Fernandes",
+    "team": "MUN",
+    "score": 9.629,
+    "reason": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 9.629)"
+  },
+  "recommended_vice_captain": {
+    "id": 106,
+    "name": "Thiago",
+    "team": "BRE",
+    "score": 7.279,
+    "reason": "Poor form, elite xg/90 (0.56), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 7.279)"
+  }
 }
