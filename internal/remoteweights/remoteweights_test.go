@@ -134,3 +134,39 @@ func TestLoadFallsBackOnUnreachableHost(t *testing.T) {
 		t.Errorf("expected DefaultWeights(), got %+v", w)
 	}
 }
+
+// A user_config value pasted with stray whitespace (issue #28) must still
+// load remote weights rather than failing URL parsing and silently falling
+// back to DefaultWeights().
+func TestConfigFromEnvTrimsWhitespaceAndLoads(t *testing.T) {
+	body := `{"weights":{"xg90":7.5},"optimized_at_epoch":1700000000,"base_weights":{},"rolling_window":10}`
+	var gotID, gotSecret string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotID = r.Header.Get("CF-Access-Client-Id")
+		gotSecret = r.Header.Get("CF-Access-Client-Secret")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	t.Setenv("FPL_MCP_WEIGHTS_URL", " "+srv.URL+" \n")
+	t.Setenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID", "\tcid ")
+	t.Setenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET", " secret\n")
+
+	cfg := ConfigFromEnv()
+	if cfg.URL != srv.URL {
+		t.Errorf("URL = %q, want %q", cfg.URL, srv.URL)
+	}
+
+	layout := store.Layout{Root: t.TempDir()}
+	w, ok := Load(context.Background(), cfg, layout, time.Now())
+	if !ok {
+		t.Fatal("expected ok=true: whitespace around the URL should not break loading")
+	}
+	if w.XG90 != 7.5 {
+		t.Errorf("XG90 = %v, want 7.5 (from the remote fetch)", w.XG90)
+	}
+	if gotID != "cid" || gotSecret != "secret" {
+		t.Errorf("headers = (%q, %q), want (cid, secret)", gotID, gotSecret)
+	}
+}

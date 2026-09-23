@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/vaastav"
@@ -20,10 +21,10 @@ import (
 // every other fplctl user.
 func newVaastavCorpus(cacheDir string) *vaastav.Corpus {
 	c := vaastav.NewCorpus(cacheDir)
-	if u := os.Getenv("FPLCTL_VAASTAV_BASE_URL"); u != "" {
+	if u := strings.TrimSpace(os.Getenv("FPLCTL_VAASTAV_BASE_URL")); u != "" {
 		c.BaseURL = u
 	}
-	c.AuthToken = os.Getenv("FPLCTL_VAASTAV_TOKEN")
+	c.AuthToken = strings.TrimSpace(os.Getenv("FPLCTL_VAASTAV_TOKEN"))
 	return c
 }
 

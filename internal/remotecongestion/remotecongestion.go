@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -34,13 +35,14 @@ type Config struct {
 }
 
 // ConfigFromEnv reads FPL_MCP_CONGESTION_URL, FPL_MCP_CONGESTION_TOKEN, and
-// the two FPL_MCP_CONGESTION_ACCESS_CLIENT_* variables.
+// the two FPL_MCP_CONGESTION_ACCESS_CLIENT_* variables, trimming surrounding
+// whitespace.
 func ConfigFromEnv() Config {
 	return Config{
-		URL:             os.Getenv("FPL_MCP_CONGESTION_URL"),
-		AuthToken:       os.Getenv("FPL_MCP_CONGESTION_TOKEN"),
-		AccessClientID:  os.Getenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_ID"),
-		AccessClientKey: os.Getenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_SECRET"),
+		URL:             strings.TrimSpace(os.Getenv("FPL_MCP_CONGESTION_URL")),
+		AuthToken:       strings.TrimSpace(os.Getenv("FPL_MCP_CONGESTION_TOKEN")),
+		AccessClientID:  strings.TrimSpace(os.Getenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_ID")),
+		AccessClientKey: strings.TrimSpace(os.Getenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_SECRET")),
 	}
 }
 
