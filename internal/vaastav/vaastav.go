@@ -487,3 +487,22 @@ func (c *Corpus) BuildCase(ctx context.Context, season string, predictGW int) (*
 		Actual:    actual,
 	}, nil
 }
+
+// SeasonFixtures returns a season's fixtures (with FPL's own difficulty
+// ratings) and a team-id -> team-name map, for callers that need to join
+// FPL fixtures to another source keyed by team name.
+func (c *Corpus) SeasonFixtures(ctx context.Context, season string) ([]fpl.Fixture, map[int]string, error) {
+	byID, _, err := c.loadTeams(ctx, season)
+	if err != nil {
+		return nil, nil, err
+	}
+	fx, err := c.loadFixtures(ctx, season)
+	if err != nil {
+		return nil, nil, err
+	}
+	names := make(map[int]string, len(byID))
+	for id, t := range byID {
+		names[id] = t.name
+	}
+	return fx, names, nil
+}
