@@ -1,6 +1,7 @@
 package algo
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -23,48 +24,63 @@ import (
 // full FPL scale (~150 candidates post-prune, real 2/5/5/3 quota) is
 // checked separately for speed in TestSolveTimingAtRealisticScale.
 func TestBnBMatchesBruteForce(t *testing.T) {
+	t.Parallel() // see TestBnBLineupMatchesBruteForce
 	rng := rand.New(rand.NewSource(42))
 	split := [5]int{0, 6, 8, 8, 6}
 	quota := [5]int{0, 2, 3, 3, 2}
 
-	for trial := 0; trial < 20; trial++ {
-		candidates := randomCandidates(rng, split, 6)
+	// Draw every trial's inputs up front, in the same order as a sequential
+	// loop, so the trials can run in parallel on the same instances.
+	type trialInput struct {
+		candidates []Candidate
+		jitter     int
+	}
+	inputs := make([]trialInput, 20)
+	for i := range inputs {
+		inputs[i] = trialInput{candidates: randomCandidates(rng, split, 6), jitter: rng.Intn(200)}
+	}
 
-		// Guarantee feasibility deterministically rather than hoping a
-		// random budget happens to clear the club-cap-constrained minimum:
-		// solve once with an effectively unlimited budget to get a known
-		// feasible squad, then test at that squad's own cost plus jitter —
-		// any budget at or above a known feasible squad's cost is itself
-		// feasible, by definition.
-		proof, err := Solve(candidates, SquadConstraints{BudgetTenths: 1 << 30, PositionQuota: quota, MaxPerClub: 3, MaxChanges: -1})
-		if err != nil {
-			t.Fatalf("trial %d: proof-of-feasibility solve failed: %v", trial, err)
-		}
-		minFeasibleCost := 0
-		for _, c := range proof.Squad {
-			minFeasibleCost += c.PriceTenths
-		}
+	for trial, in := range inputs {
+		t.Run(fmt.Sprintf("trial %d", trial), func(t *testing.T) {
+			t.Parallel()
+			candidates := in.candidates
 
-		constraints := SquadConstraints{
-			BudgetTenths:  minFeasibleCost + rng.Intn(200),
-			PositionQuota: quota,
-			MaxPerClub:    3,
-			MaxChanges:    -1,
-		}
+			// Guarantee feasibility deterministically rather than hoping a
+			// random budget happens to clear the club-cap-constrained minimum:
+			// solve once with an effectively unlimited budget to get a known
+			// feasible squad, then test at that squad's own cost plus jitter —
+			// any budget at or above a known feasible squad's cost is itself
+			// feasible, by definition.
+			proof, err := Solve(candidates, SquadConstraints{BudgetTenths: 1 << 30, PositionQuota: quota, MaxPerClub: 3, MaxChanges: -1})
+			if err != nil {
+				t.Fatalf("proof-of-feasibility solve failed: %v", err)
+			}
+			minFeasibleCost := 0
+			for _, c := range proof.Squad {
+				minFeasibleCost += c.PriceTenths
+			}
 
-		got, err := Solve(candidates, constraints)
-		if err != nil {
-			t.Fatalf("trial %d: Solve: %v", trial, err)
-		}
-		assertValidSquad(t, got.Squad, constraints)
+			constraints := SquadConstraints{
+				BudgetTenths:  minFeasibleCost + in.jitter,
+				PositionQuota: quota,
+				MaxPerClub:    3,
+				MaxChanges:    -1,
+			}
 
-		want := bruteForceSolve(candidates, constraints)
-		if math.IsInf(want.Value, -1) {
-			t.Fatalf("trial %d: brute force found no feasible squad, but Solve returned one (value %v)", trial, got.Value)
-		}
-		if diff := got.Value - want.Value; diff > 1e-6 || diff < -1e-6 {
-			t.Fatalf("trial %d: Solve value = %v, brute force = %v (budget %d)", trial, got.Value, want.Value, constraints.BudgetTenths)
-		}
+			got, err := Solve(candidates, constraints)
+			if err != nil {
+				t.Fatalf("Solve: %v", err)
+			}
+			assertValidSquad(t, got.Squad, constraints)
+
+			want := bruteForceSolve(candidates, constraints)
+			if math.IsInf(want.Value, -1) {
+				t.Fatalf("brute force found no feasible squad, but Solve returned one (value %v)", got.Value)
+			}
+			if diff := got.Value - want.Value; diff > 1e-6 || diff < -1e-6 {
+				t.Fatalf("Solve value = %v, brute force = %v (budget %d)", got.Value, want.Value, constraints.BudgetTenths)
+			}
+		})
 	}
 }
 
@@ -566,11 +582,15 @@ func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 	}
 
 	best := Result{Value: math.Inf(-1)}
-	var rec func(i int, chosen []Candidate)
-	rec = func(i int, chosen []Candidate) {
+	// One squad buffer and one club counter serve every squad. Allocating
+	// them per squad made allocation most of the run time, worst under -race.
+	chosen := make([]Candidate, 0, 15)
+	club := map[int]int{}
+	var rec func(i int)
+	rec = func(i int) {
 		if i == len(combosByPos) {
 			cost := 0
-			club := map[int]int{}
+			clear(club)
 			for _, cnd := range chosen {
 				cost += cnd.PriceTenths
 				club[cnd.Club]++
@@ -578,12 +598,15 @@ func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 			if cost > c.BudgetTenths {
 				return
 			}
-			inSquad := map[int]bool{}
-			for _, cnd := range chosen {
-				inSquad[cnd.ID] = true
-			}
 			for _, id := range c.Forced {
-				if !inSquad[id] {
+				found := false
+				for _, cnd := range chosen {
+					if cnd.ID == id {
+						found = true
+						break
+					}
+				}
+				if !found {
 					return
 				}
 			}
@@ -606,10 +629,13 @@ func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 			return
 		}
 		for _, combo := range combosByPos[i] {
-			rec(i+1, append(append([]Candidate(nil), chosen...), combo...))
+			n := len(chosen)
+			chosen = append(chosen, combo...)
+			rec(i + 1)
+			chosen = chosen[:n]
 		}
 	}
-	rec(0, nil)
+	rec(0)
 	return best
 }
 
