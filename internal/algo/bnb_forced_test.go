@@ -9,6 +9,7 @@ import (
 // Forced candidates (#20) must always be in the squad; Solve is checked
 // against bruteForceSolve, which skips any squad missing one.
 func TestBnBForcedMatchesBruteForce(t *testing.T) {
+	t.Parallel() // see TestBnBLineupMatchesBruteForce
 	cases := []struct {
 		name   string
 		split  [5]int
@@ -21,6 +22,7 @@ func TestBnBForcedMatchesBruteForce(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			rng := rand.New(rand.NewSource(20))
 			ran := 0
 			for trial := 0; trial < 15; trial++ {

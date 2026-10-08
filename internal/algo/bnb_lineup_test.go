@@ -3,7 +3,7 @@ package algo
 import (
 	"math"
 	"math/rand"
-	"sort"
+	"slices"
 	"testing"
 	"time"
 )
@@ -17,6 +17,10 @@ import (
 var reducedLineup = LineupRules{Size: 6, Min: [5]int{0, 1, 1, 1, 1}, Max: [5]int{0, 1, 3, 3, 2}, BenchWeight: 0.15}
 
 func TestBnBLineupMatchesBruteForce(t *testing.T) {
+	// The brute-force checks are CPU-bound and share no state, so they run
+	// in parallel. Parallel tests start only after the sequential ones end,
+	// so they never compete with the timing tests for CPU.
+	t.Parallel()
 	cases := []struct {
 		name   string
 		seed   int64
@@ -38,6 +42,7 @@ func TestBnBLineupMatchesBruteForce(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			rng := rand.New(rand.NewSource(tc.seed))
 			for trial := 0; trial < tc.trials; trial++ {
 				candidates := randomCandidates(rng, tc.split, tc.clubs)
@@ -199,39 +204,44 @@ func withBenchWeight(l LineupRules, w float64) LineupRules {
 // tries every count of starters per position allowed by the rules, starts
 // that many of each position's best players, and keeps the best total.
 func bruteLineupValue(squad []Candidate, c SquadConstraints) float64 {
-	l := c.Lineup
-	byPos := map[int][]float64{}
+	// Fixed-size arrays keep this allocation-free, since the brute force
+	// calls it once per feasible squad. No test squad exceeds 15 players.
+	var vals [5][15]float64
+	var count [5]int
 	for _, cnd := range squad {
-		byPos[cnd.Position] = append(byPos[cnd.Position], cnd.Value)
+		vals[cnd.Position][count[cnd.Position]] = cnd.Value
+		count[cnd.Position]++
 	}
-	for _, vals := range byPos {
-		sort.Float64s(vals)
-		for i, j := 0, len(vals)-1; i < j; i, j = i+1, j-1 {
-			vals[i], vals[j] = vals[j], vals[i]
+	var byPos [5][]float64
+	for pos := range byPos {
+		byPos[pos] = vals[pos][:count[pos]]
+		slices.Sort(byPos[pos])
+		slices.Reverse(byPos[pos])
+	}
+	return bruteBestLineup(c.Lineup, &byPos, 1, 0, 0)
+}
+
+// bruteBestLineup tries every allowed starter count for each position from
+// pos onward and returns the best total, or -Inf if none fills the lineup.
+func bruteBestLineup(l *LineupRules, byPos *[5][]float64, pos, started int, total float64) float64 {
+	if pos == 5 {
+		if started == l.Size {
+			return total
 		}
+		return math.Inf(-1)
 	}
 	best := math.Inf(-1)
-	var try func(pos, started int, total float64)
-	try = func(pos, started int, total float64) {
-		if pos == 5 {
-			if started == l.Size && total > best {
-				best = total
+	vals := byPos[pos]
+	for n := l.Min[pos]; n <= l.Max[pos] && n <= len(vals); n++ {
+		sub := 0.0
+		for i, v := range vals {
+			if i < n {
+				sub += v
+			} else {
+				sub += l.BenchWeight * v
 			}
-			return
 		}
-		vals := byPos[pos]
-		for n := l.Min[pos]; n <= l.Max[pos] && n <= len(vals); n++ {
-			sub := 0.0
-			for i, v := range vals {
-				if i < n {
-					sub += v
-				} else {
-					sub += l.BenchWeight * v
-				}
-			}
-			try(pos+1, started+n, total+sub)
-		}
+		best = max(best, bruteBestLineup(l, byPos, pos+1, started+n, total+sub))
 	}
-	try(1, 0, 0)
 	return best
 }
