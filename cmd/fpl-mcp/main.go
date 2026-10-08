@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -380,7 +379,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.SquadScout(ctx, in.TeamID) }, "Failed to scout squad. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "fpl_manager_hub", Description: "Complete FPL intelligence report for a manager's team. THIS IS THE BEST STARTING POINT.\n\nUSE THIS FIRST when the user provides their team ID or asks for a full analysis. It auto-detects bank balance, free transfers, chips, and squad — then runs ALL analyses in parallel: captain pick, transfers, fixtures, differentials, price risks, and squad health.\n\nThe user only needs to provide their team ID (the number in their FPL URL: fantasy.premierleague.com/entry/TEAM_ID/event/...)."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hubIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "fpl_manager_hub", Description: "Complete FPL intelligence report for a manager's team. THIS IS THE BEST STARTING POINT.\n\nUSE THIS FIRST when the user provides their team ID or asks for a full analysis. It auto-detects bank balance, free transfers, chips, and squad — then runs ALL analyses in parallel: captain pick, transfers, fixtures, differentials, price risks, and squad health. It also reports the next deadline (UTC) with time remaining and whether the current and next gameweeks are upcoming, in progress or finished.\n\nThe user only needs to provide their team ID (the number in their FPL URL: fantasy.premierleague.com/entry/TEAM_ID/event/...)."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hubIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
@@ -391,7 +390,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return engine.ManagerHub(ctx, in.TeamID, clamp(in.GameweeksAhead, 1, 10))
 		}, fmt.Sprintf("Failed to analyze team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
-	addResources(s, client)
+	addResources(s, client, time.Now)
 	addPrompts(s)
 	return s
 }
@@ -402,40 +401,17 @@ func maxf(v, lo float64) float64 {
 	}
 	return v
 }
-func findEvent(events []fpl.Event, id int) (fpl.Event, bool) {
-	for _, e := range events {
-		if e.ID == id {
-			return e, true
-		}
-	}
-	return fpl.Event{}, false
-}
 
-func addResources(s *mcp.Server, c *fpl.Client) {
-	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Title: "Gameweek status", Description: "Current FPL gameweek status — which GW is active, deadlines, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+// addResources registers the read-only resources. now is the clock for
+// fpl://status's deadline countdown, injectable so tests are deterministic.
+func addResources(s *mcp.Server, c *fpl.Client, now func() time.Time) {
+	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Title: "Gameweek status", Description: "Current FPL gameweek status: current and next gameweek state, the next deadline (UTC) with time remaining, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		b, e := c.Bootstrap(ctx)
 		if e != nil {
 			return nil, e
 		}
-		currentGW, nextGW := b.CurrentGameweek(), b.NextGameweek()
-		currentEvent, _ := findEvent(b.Events, currentGW)
-		nextEvent, nextFound := findEvent(b.Events, nextGW)
-		nextDeadline := "unknown"
-		if nextFound && nextEvent.DeadlineTime != "" {
-			nextDeadline = nextEvent.DeadlineTime
-		}
-		finished := 0
-		for _, x := range b.Events {
-			if x.Finished {
-				finished++
-			}
-		}
-		v, _ := json.MarshalIndent(map[string]any{
-			"current_gameweek": currentGW, "next_gameweek": nextGW,
-			"current_gw_finished": currentEvent.Finished, "next_deadline": nextDeadline,
-			"gameweeks_finished": finished, "gameweeks_remaining": 38 - finished,
-			"season_progress_pct": math.Round(float64(finished)/38*100*10) / 10,
-		}, "", "  ")
+		// The same helper fpl_manager_hub uses, so the two can't disagree.
+		v, _ := json.MarshalIndent(fpl.StatusAt(b, now()), "", "  ")
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: "fpl://status", MIMEType: "application/json", Text: string(v)}}}, nil
 	})
 	s.AddResource(&mcp.Resource{URI: "fpl://teams", Name: "teams", Title: "Premier League teams", Description: "All 20 Premier League teams with short names and IDs.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
