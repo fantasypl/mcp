@@ -37,6 +37,7 @@ type ManagerHubResult struct {
 	SquadHealth           HubSquadHealth       `json:"squad_health"`
 	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
 	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and ep_next disagree
+	CaptainChoice         *HubCaptainChoice    `json:"captain_choice"`                // one captain from the starters, combining both signals
 	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
 	DifferentialTargets   []Differential       `json:"differential_targets"`
 	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
@@ -449,6 +450,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		},
 		CaptainRecommendation: captainResult.Picks,
 		CaptainSignalNote:     captainSignalNote(squad),
+		CaptainChoice:         captainChoice(squad, playersByID),
 		TransferSuggestions:   transferSuggestions,
 		DifferentialTargets:   diffTargets,
 		FixtureOutlook:        HubFixtureOutlook{TeamsByDifficulty: teamsByDifficulty, PlayersToTarget: fixtureResult.PlayersToTarget},
