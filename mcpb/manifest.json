@@ -31,7 +31,7 @@
     }
   },
   "tools": [
-    { "name": "fpl_manager_hub", "description": "Complete intelligence report for a manager's team — the best starting point" },
+    { "name": "fpl_manager_hub", "description": "Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point" },
     { "name": "captain_pick", "description": "Top 5 captain recommendations for a gameweek" },
     { "name": "differential_finder", "description": "Underowned players outperforming their ownership" },
     { "name": "fixture_outlook", "description": "Teams ranked by upcoming fixture difficulty" },

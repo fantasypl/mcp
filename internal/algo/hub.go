@@ -20,6 +20,7 @@ type ManagerHubResult struct {
 	TeamID                int                  `json:"team_id"`
 	Gameweek              int                  `json:"gameweek"`
 	PreppingFor           string               `json:"prepping_for"`
+	GameweekStatus        fpl.GameweekStatus   `json:"gameweek_status"` // next deadline and gameweek states; same helper as fpl://status
 	ManagerStatus         *fpl.ManagerStatus   `json:"manager_status"`
 	SquadValue            float64              `json:"squad_value"`                   // at market prices
 	SquadSellingValue     float64              `json:"squad_selling_value,omitempty"` // what FPL would pay for the squad; set when the transfer history is available
@@ -433,7 +434,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 
 	return &ManagerHubResult{
-		TeamID: teamID, Gameweek: currentGW, PreppingFor: fmt.Sprintf("GW%d", nextGW),
+		TeamID: teamID, Gameweek: currentGW, PreppingFor: fmt.Sprintf("GW%d", nextGW), GameweekStatus: fpl.StatusAt(bootstrap, e.Now()),
 		ManagerStatus: mgrStatus, SquadValue: squadValue, Bank: bank, TotalBudget: totalBudget,
 		SquadSellingValue: squadSellingValue, BudgetNote: budgetNote,
 		SeasonSummary: HubSeasonSummary{
