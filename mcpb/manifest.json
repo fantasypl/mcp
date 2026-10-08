@@ -45,7 +45,7 @@
     { "name": "league_analyzer", "description": "Win probability predictions for a mini-league" },
     { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" },
     { "name": "optimal_squad", "description": "Highest-projected 15-man squad under a budget, from an exact optimizer" },
-    { "name": "optimal_transfers", "description": "Optimal transfers for your current squad, from an exact optimizer" },
+    { "name": "optimal_transfers", "description": "Optimal transfers for your current squad, from an exact optimizer, or the best Wildcard squad on your selling-price budget" },
     { "name": "manager_transfer_history", "description": "A manager's transfers this season, with purchase, market and selling prices" }
   ],
   "prompts": [

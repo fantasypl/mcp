@@ -254,69 +254,17 @@ func optimalTransfersBudgetTenths(history *fpl.TeamHistory, squad []fpl.Player, 
 // *TransferError when the team's picks can't be fetched — the same
 // non-exceptional-result convention TransferSuggestions uses.
 func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int, allowHits bool) (any, error) {
-	bootstrap, err := e.client.Bootstrap(ctx)
+	tc, terr, err := e.loadTransferContext(ctx, teamID, gameweek)
 	if err != nil {
 		return nil, err
 	}
-	fixtures, err := e.client.Fixtures(ctx)
-	if err != nil {
-		return nil, err
+	if terr != nil {
+		return terr, nil
 	}
+	bootstrap, mgrStatus, byID, teams := tc.bootstrap, tc.mgr, tc.byID, tc.teams
+	lockedIDs, lockedSet, window, selling := tc.lockedIDs, tc.lockedSet, tc.window, tc.selling
+	gw, budgetTenths, budgetNote := tc.gw, tc.budgetTenths, tc.budgetNote
 
-	currentGW := bootstrap.CurrentGameweek()
-	nextGW := bootstrap.NextGameweek()
-
-	// Same two-attempt lookup TransferSuggestions uses: nextGW's picks
-	// reflect any changes the manager has already queued for the upcoming
-	// deadline, falling back to the current gameweek's picks otherwise.
-	picks, pErr := e.client.TeamPicks(ctx, teamID, nextGW)
-	if pErr != nil {
-		picks, pErr = e.client.TeamPicks(ctx, teamID, currentGW)
-		if pErr != nil {
-			return &TransferError{
-				Error: fmt.Sprintf("Could not fetch picks for team %d. Check the team ID is correct.", teamID),
-			}, nil
-		}
-	}
-
-	mgrStatus, err := e.client.ManagerStatus(ctx, teamID, bootstrap)
-	if err != nil {
-		return nil, err
-	}
-	history, err := e.client.TeamHistory(ctx, teamID)
-	if err != nil {
-		return nil, err
-	}
-
-	byID := make(map[int]*fpl.Player, len(bootstrap.Elements))
-	for i := range bootstrap.Elements {
-		byID[bootstrap.Elements[i].ID] = &bootstrap.Elements[i]
-	}
-	teams := teamsByID(bootstrap)
-
-	lockedIDs := make([]int, 0, len(picks.Picks))
-	lockedSet := make(map[int]bool, len(picks.Picks))
-	squad := make([]fpl.Player, 0, len(picks.Picks))
-	for _, pick := range picks.Picks {
-		if p := byID[pick.Element]; p != nil {
-			lockedIDs = append(lockedIDs, p.ID)
-			lockedSet[p.ID] = true
-			squad = append(squad, *p)
-		}
-	}
-
-	gw := nextGW
-	if gameweek != nil {
-		gw = *gameweek
-	}
-	window := buildProjectionWindow(fixtures, gw, xpHorizonGWs)
-
-	squadPtrs := make([]*fpl.Player, 0, len(lockedIDs))
-	for _, id := range lockedIDs {
-		squadPtrs = append(squadPtrs, byID[id])
-	}
-	selling := e.squadSellingPrices(ctx, teamID, squadPtrs)
-	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10), selling)
 	candidates := buildCandidates(bootstrap.Elements, window, nil, lockedSet)
 	priceAtSelling(candidates, selling)
 	priceRisks := e.priceRiskByPlayer(ctx)
@@ -423,6 +371,103 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		Partial:              partial,
 		PartialNote:          partialNoteFor(partial),
 	}, nil
+}
+
+// transferContext is what optimal_transfers and its Wildcard mode both load
+// for a manager before searching: the bootstrap, their current squad, the
+// projection window and the budget.
+type transferContext struct {
+	bootstrap    *fpl.Bootstrap
+	fixtures     []fpl.Fixture
+	mgr          *fpl.ManagerStatus
+	byID         map[int]*fpl.Player
+	teams        map[int]*fpl.Team
+	lockedIDs    []int // the current squad, in pick order
+	lockedSet    map[int]bool
+	gw           int
+	window       map[int][]projectionFixture
+	selling      map[int]SquadPrice // nil when the transfer history is unavailable
+	budgetTenths int
+	budgetNote   string
+}
+
+// loadTransferContext fetches everything both modes need. It returns a
+// *TransferError, not a Go error, when the team's picks can't be fetched.
+func (e *Engine) loadTransferContext(ctx context.Context, teamID int, gameweek *int) (*transferContext, *TransferError, error) {
+	bootstrap, err := e.client.Bootstrap(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	fixtures, err := e.client.Fixtures(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	currentGW := bootstrap.CurrentGameweek()
+	nextGW := bootstrap.NextGameweek()
+
+	// Same two-attempt lookup TransferSuggestions uses: nextGW's picks
+	// reflect any changes the manager has already queued for the upcoming
+	// deadline, falling back to the current gameweek's picks otherwise.
+	picks, pErr := e.client.TeamPicks(ctx, teamID, nextGW)
+	if pErr != nil {
+		picks, pErr = e.client.TeamPicks(ctx, teamID, currentGW)
+		if pErr != nil {
+			return nil, &TransferError{
+				Error: fmt.Sprintf("Could not fetch picks for team %d. Check the team ID is correct.", teamID),
+			}, nil
+		}
+	}
+
+	mgrStatus, err := e.client.ManagerStatus(ctx, teamID, bootstrap)
+	if err != nil {
+		return nil, nil, err
+	}
+	history, err := e.client.TeamHistory(ctx, teamID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	byID := make(map[int]*fpl.Player, len(bootstrap.Elements))
+	for i := range bootstrap.Elements {
+		byID[bootstrap.Elements[i].ID] = &bootstrap.Elements[i]
+	}
+
+	lockedIDs := make([]int, 0, len(picks.Picks))
+	lockedSet := make(map[int]bool, len(picks.Picks))
+	squad := make([]fpl.Player, 0, len(picks.Picks))
+	squadPtrs := make([]*fpl.Player, 0, len(picks.Picks))
+	for _, pick := range picks.Picks {
+		if p := byID[pick.Element]; p != nil {
+			lockedIDs = append(lockedIDs, p.ID)
+			lockedSet[p.ID] = true
+			squad = append(squad, *p)
+			squadPtrs = append(squadPtrs, p)
+		}
+	}
+
+	gw := nextGW
+	if gameweek != nil {
+		gw = *gameweek
+	}
+
+	selling := e.squadSellingPrices(ctx, teamID, squadPtrs)
+	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10), selling)
+
+	return &transferContext{
+		bootstrap:    bootstrap,
+		fixtures:     fixtures,
+		mgr:          mgrStatus,
+		byID:         byID,
+		teams:        teamsByID(bootstrap),
+		lockedIDs:    lockedIDs,
+		lockedSet:    lockedSet,
+		gw:           gw,
+		window:       buildProjectionWindow(fixtures, gw, xpHorizonGWs),
+		selling:      selling,
+		budgetTenths: budgetTenths,
+		budgetNote:   budgetNote,
+	}, nil, nil
 }
 
 // partialNoteText explains partial when a search hit its time limit.
