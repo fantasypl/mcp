@@ -145,3 +145,31 @@ func TestSeasonYear(t *testing.T) {
 		}
 	}
 }
+
+// A key pasted into user_config with stray whitespace (issue #28) must still
+// authenticate, and a whitespace-only key counts as unset.
+func TestFromEnvTrimsWhitespaceAndLoads(t *testing.T) {
+	var calls int32
+	srv := fakeServer(t, &calls)
+	defer srv.Close()
+
+	t.Setenv(EnvKey, " k \n")
+	c := FromEnv(t.TempDir())
+	if c == nil {
+		t.Fatal("FromEnv returned nil for a key with surrounding whitespace")
+	}
+	if c.APIKey != "k" {
+		t.Errorf("APIKey = %q, want %q", c.APIKey, "k")
+	}
+	c.BaseURL, c.HTTP = srv.URL, srv.Client()
+	c.now = func() time.Time { return time.Date(2026, 9, 21, 12, 0, 0, 0, time.UTC) }
+	ms, err := c.MatchModels(context.Background())
+	if err != nil || len(ms) != 2 {
+		t.Fatalf("expected the trimmed key to authenticate, got %d matches, err %v", len(ms), err)
+	}
+
+	t.Setenv(EnvKey, " \t\n")
+	if FromEnv(t.TempDir()) != nil {
+		t.Error("FromEnv should be nil for a whitespace-only key")
+	}
+}
