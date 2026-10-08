@@ -25,7 +25,8 @@
       "env": {
         "FPL_MCP_WEIGHTS_URL": "${user_config.weights_url}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID": "${user_config.weights_access_client_id}",
-        "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}"
+        "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}",
+        "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}"
       }
     }
   },
@@ -67,6 +68,13 @@
       "type": "string",
       "title": "Weights endpoint Access Client Secret (advanced)",
       "description": "Cloudflare Access service token Client Secret for the URL above. Leave blank unless you set weights_url.",
+      "sensitive": true,
+      "required": false
+    },
+    "apifootball_key": {
+      "type": "string",
+      "title": "API-Football key (optional)",
+      "description": "Your own key from api-football.com (a free plan works). Adds bookmaker-implied clean-sheet chance and expected goals to fixture_outlook. Leave blank to skip; nothing else changes.",
       "sensitive": true,
       "required": false
     }

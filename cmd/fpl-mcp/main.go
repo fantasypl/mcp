@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/apifootball"
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
 	"github.com/fantasypl/mcp/internal/remotecongestion"
@@ -170,6 +171,14 @@ func newServer(client *fpl.Client) *mcp.Server {
 		// trade-off for owning the data, not a bug — see CHANGELOG.md.
 		if cfg := remotecongestion.ConfigFromEnv(); cfg.URL != "" {
 			engine.CongestionSource = remotecongestion.NewClient(cfg)
+		}
+
+		// Bookmaker odds, only when the user supplies their own
+		// API-Football key (FPL_MCP_APIFOOTBALL_KEY). A nil *Client must not
+		// be stored in the interface, or the engine's nil check would pass
+		// and every call would return ErrNoKey.
+		if af := apifootball.FromEnv(filepath.Join(cacheDir, "fpl-mcp", "apifootball")); af != nil {
+			engine.MarketSource = af
 		}
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
