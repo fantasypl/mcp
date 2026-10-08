@@ -43,7 +43,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | Tool | Description |
 |---|---|
 | `fpl_manager_hub` | Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point |
-| `captain_pick` | Top 5 captain recommendations for a gameweek |
+| `captain_pick` | Top 5 captain recommendations for a gameweek, from every player or from one squad given by `team_id` or `player_ids` |
 | `differential_finder` | Underowned players outperforming their ownership |
 | `fixture_outlook` | Teams ranked by upcoming fixture difficulty |
 | `price_predictions` | Likely price rises and falls tonight |
