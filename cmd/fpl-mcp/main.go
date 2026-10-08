@@ -85,6 +85,7 @@ type optimalTransfersIn struct {
 	TeamID    int   `json:"team_id"              jsonschema:"FPL team ID"`
 	Gameweek  *int  `json:"gameweek,omitempty"   jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
 	AllowHits *bool `json:"allow_hits,omitempty" jsonschema:"Also consider paid transfers beyond your free allowance, showing the points-vs-hit-cost tradeoff for each. Default false (free transfers only)."`
+	Wildcard  *bool `json:"wildcard,omitempty"   jsonschema:"Plan a Wildcard: unlimited free transfers from your current squad, with a budget of bank plus the selling prices of your current 15. Cannot be combined with allow_hits. Default false."`
 }
 type compareIn struct {
 	PlayerNames    []string `json:"player_names"              jsonschema:"Two to four player names"`
@@ -295,7 +296,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return out, err }, "Failed to build an optimal squad. Please try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "optimal_transfers", Description: "Find the combinatorially optimal transfers for your current FPL squad — an exact optimizer, not a heuristic single-swap suggester.\n\nUSE THIS WHEN the user asks: \"What's the best possible transfer(s) this week?\", \"Prove my transfer is optimal\", \"Should I make multiple transfers?\", or wants the mathematically best move rather than a quick suggestion. Prefer transfer_suggestions for a faster, single-swap recommendation with detailed reasoning.\n\nAuto-detects your bank, free transfers, and current squad from your team ID. Set allow_hits to also weigh paid transfers (-4 each beyond your free allowance) against their projected points gain — every option considered is returned, not just the best one, so the tradeoff is visible. Each option's projected_points is the resulting squad's best starting XI over the next 5 gameweeks plus 0.1 of the bench's projected points, as in optimal_squad (projected_points_basis states this). \"best\" means the highest net projected points, not the lowest risk: each option also has a confidence rating (high/medium/low, from the minutes and goal-involvement record of its incoming players) and one option is marked \"safest\". This may take longer than transfer_suggestions: each option is a search capped at 8 seconds, and with allow_hits set the up to 4 searches run in parallel. If a search hits its cap, that option has optimal: false and the result has partial: true, meaning a better plan may exist."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalTransfersIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "optimal_transfers", Description: "Find the combinatorially optimal transfers for your current FPL squad — an exact optimizer, not a heuristic single-swap suggester.\n\nUSE THIS WHEN the user asks: \"What's the best possible transfer(s) this week?\", \"Prove my transfer is optimal\", \"Should I make multiple transfers?\", or wants the mathematically best move rather than a quick suggestion. Prefer transfer_suggestions for a faster, single-swap recommendation with detailed reasoning.\n\nAuto-detects your bank, free transfers, and current squad from your team ID. Set allow_hits to also weigh paid transfers (-4 each beyond your free allowance) against their projected points gain — every option considered is returned, not just the best one, so the tradeoff is visible. Each option's projected_points is the resulting squad's best starting XI over the next 5 gameweeks plus 0.1 of the bench's projected points, as in optimal_squad (projected_points_basis states this). \"best\" means the highest net projected points, not the lowest risk: each option also has a confidence rating (high/medium/low, from the minutes and goal-involvement record of its incoming players) and one option is marked \"safest\". This may take longer than transfer_suggestions: each option is a search capped at 8 seconds, and with allow_hits set the up to 4 searches run in parallel. If a search hits its cap, that option has optimal: false and the result has partial: true, meaning a better plan may exist.\n\nSet wildcard to plan a Wildcard instead (\"Should I wildcard?\", \"Best squad for my Wildcard?\"): one search with unlimited free transfers and no hit cost, on a budget of bank plus the selling prices of your current 15, which is what FPL offers on a Wildcard. Kept players count at their selling price and incoming players at their market price. Selling prices are computed from your public transfer history. The result lists transfers_out and transfers_in, projected_gain over keeping the current squad (projected_points minus current_projected_points, on the same basis), the full squad with a starting XI, formation, bench order and captain for the target gameweek, budget_used_m and budget_left_m, and partial: true if the search hit its 8-second cap. wildcard and allow_hits cannot both be set."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalTransfersIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
@@ -303,6 +304,14 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return nil, errResult(e), nil
 		}
 		allowHits := in.AllowHits != nil && *in.AllowHits
+		if in.Wildcard != nil && *in.Wildcard {
+			if allowHits {
+				return nil, errResult("wildcard and allow_hits cannot both be set: a Wildcard makes every transfer free, so there are no hits to weigh."), nil
+			}
+			return nil, call(func() (any, error) {
+				return engine.OptimalWildcard(ctx, in.TeamID, in.Gameweek)
+			}, fmt.Sprintf("Failed to plan a Wildcard for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
+		}
 		return nil, call(func() (any, error) {
 			return engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
 		}, fmt.Sprintf("Failed to find optimal transfers for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
