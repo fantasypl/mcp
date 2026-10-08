@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/fantasypl/mcp/internal/fpl"
@@ -44,6 +45,36 @@ func TestValidGW(t *testing.T) {
 		gw := gw
 		if e := validGW(&gw); e == "" {
 			t.Errorf("validGW(%d) = \"\", want an error", gw)
+		}
+	}
+}
+
+func TestValidCaptainScope(t *testing.T) {
+	team := 123
+	badTeam := 0
+	for _, in := range []captainIn{
+		{},
+		{TeamID: &team},
+		{PlayerIDs: []int{1}},
+		{PlayerIDs: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}},
+	} {
+		if e := validCaptainScope(in); e != "" {
+			t.Errorf("validCaptainScope(%+v) = %q, want valid", in, e)
+		}
+	}
+	for _, tc := range []struct {
+		in   captainIn
+		want string
+	}{
+		{captainIn{TeamID: &team, PlayerIDs: []int{1}}, "not both"},
+		{captainIn{TeamID: &badTeam}, "Invalid team_id"},
+		{captainIn{PlayerIDs: []int{}}, "between 1 and 15"},
+		{captainIn{PlayerIDs: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}}, "between 1 and 15"},
+		{captainIn{PlayerIDs: []int{1, 0}}, "positive"},
+		{captainIn{PlayerIDs: []int{7, 3, 7}}, "lists 7 more than once"},
+	} {
+		if e := validCaptainScope(tc.in); !strings.Contains(e, tc.want) {
+			t.Errorf("validCaptainScope(%+v) = %q, want it to contain %q", tc.in, e, tc.want)
 		}
 	}
 }
@@ -278,6 +309,13 @@ func TestToolValidation(t *testing.T) {
 		{"captain_pick", map[string]any{"gameweek": 99}},
 		{"captain_pick", map[string]any{"gameweek": 0}},
 		{"captain_pick", map[string]any{"gameweek": -1}},
+		{"captain_pick", map[string]any{"team_id": 123, "player_ids": []int{1, 2}}},
+		{"captain_pick", map[string]any{"team_id": 0}},
+		{"captain_pick", map[string]any{"team_id": 99_999_999}},
+		{"captain_pick", map[string]any{"player_ids": []int{}}},
+		{"captain_pick", map[string]any{"player_ids": []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}}},
+		{"captain_pick", map[string]any{"player_ids": []int{1, 2, 1}}},
+		{"captain_pick", map[string]any{"player_ids": []int{1, -2}}},
 
 		{"differential_finder", map[string]any{"max_ownership_pct": -5}},
 		{"differential_finder", map[string]any{"max_ownership_pct": 0.0}},

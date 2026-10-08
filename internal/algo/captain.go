@@ -461,6 +461,65 @@ func (e *Engine) ScoreAllPlayers(ctx context.Context, gameweek *int) ([]ScoredPl
 // gameweek is optional; nil selects the next gameweek. topN defaults to 5 when
 // non-positive, using the function's default horizon.
 func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*CaptainResult, error) {
+	return e.captainPicks(ctx, gameweek, topN, nil)
+}
+
+// UnknownPlayersError reports player IDs that are not in the bootstrap.
+type UnknownPlayersError struct {
+	IDs []int
+}
+
+func (u *UnknownPlayersError) Error() string {
+	parts := make([]string, len(u.IDs))
+	for i, id := range u.IDs {
+		parts[i] = fmt.Sprint(id)
+	}
+	return "Unknown player_ids: " + strings.Join(parts, ", ") + ". Use the element IDs from tool output such as optimal_squad or player_comparison."
+}
+
+// CaptainPicksAmong ranks only the given players, for a squad that is not a
+// registered FPL team yet, such as one drafted with optimal_squad.
+//
+// Scoring is the same as CaptainPicks and so is the result shape. Two things
+// differ because the caller chose the candidates: the max-2-per-club cap is
+// not applied (a squad may hold three players from one club, and any of them
+// may be the best captain), and an ID that isn't in the bootstrap is an
+// *UnknownPlayersError rather than silently dropped. Players whose club
+// blanks this gameweek are left out, as in CaptainPicks.
+func (e *Engine) CaptainPicksAmong(ctx context.Context, gameweek *int, topN int, playerIDs []int) (*CaptainResult, error) {
+	only := make(map[int]bool, len(playerIDs))
+	for _, id := range playerIDs {
+		only[id] = true
+	}
+	return e.captainPicks(ctx, gameweek, topN, only)
+}
+
+// CaptainPicksForTeam ranks the players in a manager's squad. It reads the
+// picks for the next gameweek and falls back to the current one, as
+// TransferSuggestions does, since FPL only publishes next-gameweek picks
+// after the deadline.
+func (e *Engine) CaptainPicksForTeam(ctx context.Context, teamID int, gameweek *int, topN int) (*CaptainResult, error) {
+	bootstrap, err := e.client.Bootstrap(ctx)
+	if err != nil {
+		return nil, err
+	}
+	picks, err := e.client.TeamPicks(ctx, teamID, bootstrap.NextGameweek())
+	if err != nil {
+		picks, err = e.client.TeamPicks(ctx, teamID, bootstrap.CurrentGameweek())
+		if err != nil {
+			return nil, err
+		}
+	}
+	ids := make([]int, 0, len(picks.Picks))
+	for _, p := range picks.Picks {
+		ids = append(ids, p.Element)
+	}
+	return e.CaptainPicksAmong(ctx, gameweek, topN, ids)
+}
+
+// captainPicks ranks every player when only is nil, or just the players in
+// only otherwise. See CaptainPicksAmong for how the two differ.
+func (e *Engine) captainPicks(ctx context.Context, gameweek *int, topN int, only map[int]bool) (*CaptainResult, error) {
 	if topN <= 0 {
 		topN = 5
 	}
@@ -474,6 +533,23 @@ func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*Ca
 		return nil, err
 	}
 
+	if only != nil {
+		known := make(map[int]bool, len(bootstrap.Elements))
+		for i := range bootstrap.Elements {
+			known[bootstrap.Elements[i].ID] = true
+		}
+		var unknown []int
+		for id := range only {
+			if !known[id] {
+				unknown = append(unknown, id)
+			}
+		}
+		if len(unknown) > 0 {
+			slices.Sort(unknown)
+			return nil, &UnknownPlayersError{IDs: unknown}
+		}
+	}
+
 	gw := bootstrap.NextGameweek()
 	if gameweek != nil {
 		gw = *gameweek
@@ -485,6 +561,9 @@ func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*Ca
 	scored := make([]scoredPlayer, 0, len(bootstrap.Elements))
 	for i := range bootstrap.Elements {
 		p := &bootstrap.Elements[i]
+		if only != nil && !only[p.ID] {
+			continue
+		}
 		pf := fixtureMap[p.Team]
 		if len(pf) == 0 {
 			continue // blank gameweek
@@ -509,7 +588,7 @@ func (e *Engine) CaptainPicks(ctx context.Context, gameweek *int, topN int) (*Ca
 	top := make([]scoredPlayer, 0, topN)
 	perTeam := make(map[int]int)
 	for _, s := range scored {
-		if perTeam[s.player.Team] >= maxPerTeam {
+		if only == nil && perTeam[s.player.Team] >= maxPerTeam {
 			continue
 		}
 		top = append(top, s)
