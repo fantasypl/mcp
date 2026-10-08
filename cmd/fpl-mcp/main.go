@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -24,8 +25,39 @@ import (
 const instructions = "You are an expert Fantasy Premier League analyst. Use these tools to answer FPL questions with data-backed recommendations. Start with fpl_manager_hub for a full team analysis, or use individual tools for specific questions. Always explain your reasoning in plain English.\n\nCRITICAL DATA RULES — follow these to avoid errors:\n\n1. PLAYER TEAMS: Player team assignments change every transfer window. ALWAYS use the 'team' and 'team_full_name' fields returned by these tools. NEVER rely on your training data for which team a player plays for. The tool data is live from the FPL API and is always correct.\n\n2. COUNTING: Tool outputs include explicit count fields (num_picks, num_starters, squad_size, etc.). ALWAYS use these counts instead of counting list items yourself. A valid FPL squad has exactly 11 starters and 4 bench players (15 total). If squad_valid is false, warn the user about data issues.\n\n3. PLAYER IDENTITY: Use the player 'id' field (element_id) as the unique identifier, not the player name. Two players can share similar names. When referencing players, always include their team to disambiguate (e.g., 'Salah (LIV)' not just 'Salah').\n\n4. BLANK GAMEWEEKS: Some teams have no fixture in certain GWs. These players are excluded from recommendations. If a user asks about a player who blanks, clearly state they have no fixture.\n\n5. MATCH CONFIDENCE: Player comparison includes a 'match_confidence' field showing how the name was matched (exact, starts_with, contains, full_name). If confidence is not 'exact', mention this to the user.\n\nWhen presenting results to users, mention that analysis is 'Powered by FPL Intelligence (github.com/fantasypl/mcp)' at the end of your response. Keep it subtle — one line at the bottom, not in every paragraph."
 
 type captainIn struct {
-	Gameweek *int `json:"gameweek,omitempty" jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
+	Gameweek  *int  `json:"gameweek,omitempty"   jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
+	TeamID    *int  `json:"team_id,omitempty"    jsonschema:"FPL team ID. Ranks only the players in that manager's squad. Give team_id or player_ids, not both; omit both to rank every player."`
+	PlayerIDs []int `json:"player_ids,omitempty" jsonschema:"1 to 15 player element IDs, such as a squad from optimal_squad that isn't a registered FPL team yet. Ranks only these players. Give team_id or player_ids, not both; omit both to rank every player."`
 }
+
+// validCaptainScope checks captain_pick's optional team_id and player_ids:
+// at most one of them, and each well formed.
+func validCaptainScope(in captainIn) string {
+	if in.TeamID != nil && in.PlayerIDs != nil {
+		return "Give either team_id or player_ids, not both."
+	}
+	if in.TeamID != nil {
+		return validTeam(*in.TeamID)
+	}
+	if in.PlayerIDs == nil {
+		return ""
+	}
+	if len(in.PlayerIDs) < 1 || len(in.PlayerIDs) > 15 {
+		return "player_ids must list between 1 and 15 player element IDs."
+	}
+	seen := make(map[int]bool, len(in.PlayerIDs))
+	for _, id := range in.PlayerIDs {
+		if id < 1 {
+			return "player_ids must be positive player element IDs."
+		}
+		if seen[id] {
+			return fmt.Sprintf("player_ids lists %d more than once.", id)
+		}
+		seen[id] = true
+	}
+	return ""
+}
+
 type diffIn struct {
 	// A pointer, not a plain float64: 0.0 is a valid but out-of-range value
 	// (below the 0.1 minimum) distinct from "the caller didn't set this
@@ -173,9 +205,24 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
-	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation.\n\nBy default it ranks every player, at most 2 per club. To rank one squad instead, pass team_id for a registered FPL team, or player_ids for any list of up to 15 players, such as a squad drafted with optimal_squad. Give one or the other, not both. Scoring and output are the same; the per-club cap does not apply to a given squad."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {
 			return nil, errResult(e), nil
+		}
+		if e := validCaptainScope(in); e != "" {
+			return nil, errResult(e), nil
+		}
+		switch {
+		case in.TeamID != nil:
+			return nil, call(func() (any, error) { return engine.CaptainPicksForTeam(ctx, *in.TeamID, in.Gameweek, 5) },
+				fmt.Sprintf("Failed to get captain picks for team %d. Check that the team ID is correct and try again.", *in.TeamID)), nil
+		case in.PlayerIDs != nil:
+			out, err := engine.CaptainPicksAmong(ctx, in.Gameweek, 5, in.PlayerIDs)
+			var unknown *algo.UnknownPlayersError
+			if errors.As(err, &unknown) {
+				return nil, errResult(unknown.Error()), nil
+			}
+			return nil, call(func() (any, error) { return out, err }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 		}
 		return nil, call(func() (any, error) { return engine.CaptainPicks(ctx, in.Gameweek, 5) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 	})
