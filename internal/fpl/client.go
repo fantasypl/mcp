@@ -163,7 +163,8 @@ func fetch[T any](ctx context.Context, c *Client, path string, ttl time.Duration
 }
 
 // do performs the request with the retry policy: up to 3 attempts with
-// a linear 1s, 2s backoff.
+// a linear 1s, 2s backoff. Transport errors, 5xx, 408 and 429 are retried;
+// other 4xx responses and malformed JSON fail at once.
 func do[T any](ctx context.Context, c *Client, url string) (T, error) {
 	var zero T
 	var lastErr error
@@ -182,6 +183,13 @@ func do[T any](ctx context.Context, c *Client, url string) (T, error) {
 		}
 		var de *json.SyntaxError
 		if ok := asJSONError(err, &de); ok {
+			return zero, err
+		}
+		// A client error such as 404 is an answer, not a transient fault.
+		// optimal_transfers and transfer_suggestions ask for next
+		// gameweek's picks first and expect a 404 before the deadline, so
+		// retrying it cost about 3.8s on every call.
+		if he, ok := err.(*HTTPError); ok && !retryableStatus(he.StatusCode) {
 			return zero, err
 		}
 
@@ -219,6 +227,12 @@ func attemptOnce[T any](ctx context.Context, c *Client, url string) (T, error) {
 		return zero, fmt.Errorf("fpl: decode %s: %w", url, err)
 	}
 	return out, nil
+}
+
+// retryableStatus reports whether a non-2xx status may succeed on retry:
+// any 5xx, plus 408 Request Timeout and 429 Too Many Requests.
+func retryableStatus(code int) bool {
+	return code >= 500 || code == http.StatusRequestTimeout || code == http.StatusTooManyRequests
 }
 
 func asJSONError(err error, target **json.SyntaxError) bool {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/fantasypl/mcp/internal/fpl"
 )
 
@@ -23,9 +25,9 @@ import (
 // a completed squad.
 
 // maxHitsConsidered bounds how many paid transfers beyond the free
-// allowance the sweep considers when allowHits is set — a small, fixed
-// number of extra Solve calls, each already proven sub-8s at real-data
-// scale (see optimal_squad.go's optimalSquadTimeLimit).
+// allowance the sweep considers when allowHits is set: a small, fixed
+// number of extra Solve calls, each capped at optimalSquadTimeLimit and run
+// in parallel (see solveTransferSweep).
 const maxHitsConsidered = 3
 
 // OptimalTransfersResult is optimal_transfers' response shape.
@@ -39,6 +41,11 @@ type OptimalTransfersResult struct {
 	BestNote      string               `json:"best_note"` // what the best and safest flags on each option mean
 	Options       []TransferPlanOption `json:"options"`
 	PriceRiskNote string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
+	// Partial is true when any option's search hit its time limit before
+	// proving optimality (that option has optimal: false). PartialNote then
+	// says what that means for the caller.
+	Partial     bool   `json:"partial"`
+	PartialNote string `json:"partial_note,omitempty"`
 }
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
@@ -317,20 +324,16 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 
 	played := gameweeksPlayed(bootstrap)
 
+	results, err := solveTransferSweep(candidates, budgetTenths, lockedIDs, ceilings)
+	if err != nil {
+		return nil, err
+	}
+
 	options := make([]TransferPlanOption, 0, len(ceilings))
 	bestIdx := -1
-	for i, ceiling := range ceilings {
-		result, err := Solve(candidates, SquadConstraints{
-			BudgetTenths:  budgetTenths,
-			PositionQuota: [5]int{0, 2, 5, 5, 3},
-			MaxPerClub:    3,
-			Locked:        lockedIDs,
-			MaxChanges:    ceiling,
-			TimeLimit:     optimalSquadTimeLimit,
-		})
-		if err != nil {
-			return nil, err
-		}
+	partial := false
+	for i, result := range results {
+		partial = partial || !result.Optimal
 
 		resultSet := make(map[int]bool, len(result.Squad))
 		totalCost := 0
@@ -408,9 +411,62 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		PoolNote: fmt.Sprintf(
 			"Considered the top %d/%d/%d/%d GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
-		BestNote: bestNoteText,
-		Options:  options,
+		BestNote:    bestNoteText,
+		Options:     options,
+		Partial:     partial,
+		PartialNote: partialNoteFor(partial),
 	}, nil
+}
+
+// partialNoteText explains partial when a search hit its time limit.
+const partialNoteText = "At least one option's search reached its time limit before proving it had the best squad, so that option (optimal: false) is the best found in time and a better plan may exist. Options are still valid squads."
+
+func partialNoteFor(partial bool) string {
+	if partial {
+		return partialNoteText
+	}
+	return ""
+}
+
+// solveTransferSweep runs one Solve per MaxChanges ceiling, all at once.
+//
+// Each Solve is single-threaded and capped by optimalSquadTimeLimit, so
+// running them in parallel bounds the sweep's wall time by one time limit
+// rather than one per ceiling: measured live against five top-ranked teams,
+// the sequential sweep took 6s to 27s, almost all of it in the two or three
+// searches that ran to the 8s limit.
+//
+// Ceilings must ascend. A squad that fits ceiling k also fits every larger
+// ceiling, so when a time-limited search at a larger ceiling ends below the
+// one before it, the earlier squad is carried forward. The carried result
+// keeps Optimal false, since neither search proved anything about the
+// larger ceiling.
+func solveTransferSweep(candidates []Candidate, budgetTenths int, lockedIDs []int, ceilings []int) ([]Result, error) {
+	results := make([]Result, len(ceilings))
+	var g errgroup.Group
+	for i, ceiling := range ceilings {
+		g.Go(func() error {
+			r, err := Solve(candidates, SquadConstraints{
+				BudgetTenths:  budgetTenths,
+				PositionQuota: [5]int{0, 2, 5, 5, 3},
+				MaxPerClub:    3,
+				Locked:        lockedIDs,
+				MaxChanges:    ceiling,
+				TimeLimit:     optimalSquadTimeLimit,
+			})
+			results[i] = r
+			return err
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	for i := 1; i < len(results); i++ {
+		if results[i].Value < results[i-1].Value {
+			results[i] = Result{Squad: results[i-1].Squad, Value: results[i-1].Value, Optimal: false}
+		}
+	}
+	return results, nil
 }
 
 func slotOf(p *fpl.Player, teams map[int]*fpl.Team, priceTenths int, value float64) OptimalSquadSlot {
