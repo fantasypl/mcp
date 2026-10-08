@@ -57,6 +57,23 @@ type HitResult struct {
 	PlayerIn           *PlayerSummary `json:"player_in,omitempty"`
 	Analysis           *HitAnalysis   `json:"analysis,omitempty"`
 	Verdict            string         `json:"verdict,omitempty"`
+	// Budget is set only when a team ID is given. See AnalyzeHitForTeam.
+	Budget *HitBudget `json:"budget,omitempty"`
+}
+
+// HitBudget says whether the manager can afford the transfer: bank plus
+// what FPL pays for the outgoing player, against the incoming player's
+// market price.
+type HitBudget struct {
+	BankM                  float64 `json:"bank_m"`
+	PlayerOutCostM         float64 `json:"player_out_cost_m"`                    // market price
+	PlayerOutSellingPriceM float64 `json:"player_out_selling_price_m,omitempty"` // set when selling prices are known
+	PlayerInCostM          float64 `json:"player_in_cost_m"`                     // market price
+	AvailableM             float64 `json:"available_m,omitempty"`
+	// Affordable is nil when the check could not run; Note says why.
+	Affordable *bool   `json:"affordable,omitempty"`
+	ShortfallM float64 `json:"shortfall_m,omitempty"`
+	Note       string  `json:"note"`
 }
 
 type PlayerSummary struct {
@@ -282,4 +299,64 @@ func hitVerdict(out, in *fpl.Player, netGain, netAfterHit float64, gws int, wort
 		"Not worth it. %s is only projected to outscore %s by %s points over %d GWs. "+
 			"After the -4 hit, you'd lose ~%s points.",
 		in.WebName, out.WebName, gain, gws, FloatStr(-netAfterHit))
+}
+
+// AnalyzeHitForTeam is AnalyzeHit plus an affordability check against the
+// manager's bank and the outgoing player's selling price. The projection
+// itself is unchanged. When the team cannot be fetched, or the outgoing
+// player is not in it, the budget block says so instead of failing the call.
+func (e *Engine) AnalyzeHitForTeam(ctx context.Context, teamID, playerOutID, playerInID, gameweeksAhead int) (*HitResult, error) {
+	res, err := e.AnalyzeHit(ctx, playerOutID, playerInID, gameweeksAhead)
+	if err != nil || res.Error != "" {
+		return res, err
+	}
+	bootstrap, err := e.client.Bootstrap(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var out, in *fpl.Player
+	for i := range bootstrap.Elements {
+		switch bootstrap.Elements[i].ID {
+		case playerOutID:
+			out = &bootstrap.Elements[i]
+		case playerInID:
+			in = &bootstrap.Elements[i]
+		}
+	}
+	b := &HitBudget{
+		PlayerOutCostM: float64(out.NowCost) / 10,
+		PlayerInCostM:  float64(in.NowCost) / 10,
+	}
+	res.Budget = b
+
+	status, err := e.client.ManagerStatus(ctx, teamID, bootstrap)
+	if err != nil {
+		b.Note = fmt.Sprintf("Could not fetch team %d, so affordability was not checked.", teamID)
+		return res, nil
+	}
+	picks, err := e.client.TeamPicks(ctx, teamID, bootstrap.CurrentGameweek())
+	if err != nil {
+		b.Note = fmt.Sprintf("Could not fetch team %d's squad, so affordability was not checked.", teamID)
+		return res, nil
+	}
+	if !slices.ContainsFunc(picks.Picks, func(p fpl.Pick) bool { return p.Element == playerOutID }) {
+		b.Note = fmt.Sprintf("%s is not in team %d's squad, so affordability was not checked.", out.WebName, teamID)
+		return res, nil
+	}
+
+	b.BankM = status.Bank
+	outTenths := out.NowCost
+	b.Note = marketPriceNote
+	if sp, ok := e.squadSellingPrices(ctx, teamID, []*fpl.Player{out})[out.ID]; ok {
+		outTenths = sp.SellingTenths
+		b.PlayerOutSellingPriceM = float64(sp.SellingTenths) / 10
+		b.Note = sellingPriceNote
+	}
+	available := RoundToInt(status.Bank*10) + outTenths
+	b.AvailableM = float64(available) / 10
+	b.Affordable = ptr(in.NowCost <= available)
+	if !*b.Affordable {
+		b.ShortfallM = float64(in.NowCost-available) / 10
+	}
+	return res, nil
 }

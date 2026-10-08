@@ -218,13 +218,16 @@ func markSafest(options []TransferPlanOption) {
 // optimalTransfersBudgetTenths returns the manager's total squad budget
 // (squad value + bank, in tenths) and a note describing how it was derived.
 //
-// FPL's own history.Current entries report total team value directly —
-// more accurate than summing NowCost, which reflects current prices rather
-// than what the squad would actually sell for (see ManagerHub's identical
-// reasoning). That data isn't available before a manager's first recorded
-// gameweek (e.g. a brand-new preseason entry), so this falls back to the
-// same current-price estimate transfers.go already uses and caveats.
-func optimalTransfersBudgetTenths(history *fpl.TeamHistory, squad []fpl.Player, bankTenths int) (int, string) {
+// With selling prices from the transfer history, the budget is bank plus
+// what FPL would pay for the squad, which is exact. Without them, FPL's own
+// history.Current entries report total team value at market prices as of
+// the latest recorded gameweek; and before a manager's first recorded
+// gameweek (e.g. a brand-new preseason entry) this falls back to summing
+// current prices, the same estimate transfers.go uses and caveats.
+func optimalTransfersBudgetTenths(history *fpl.TeamHistory, squad []fpl.Player, bankTenths int, selling map[int]SquadPrice) (int, string) {
+	if selling != nil {
+		return bankTenths + sellingValueTenths(selling), sellingPriceNote + " Kept players count at their selling price in total_cost_m, and incoming players at their market price."
+	}
 	if history != nil && len(history.Current) > 0 {
 		latest := history.Current[len(history.Current)-1]
 		return latest.Value, "Budget is FPL's own reported total team value (squad + bank) as of your most recent recorded gameweek."
@@ -302,8 +305,14 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 	}
 	window := buildProjectionWindow(fixtures, gw, xpHorizonGWs)
 
-	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10))
+	squadPtrs := make([]*fpl.Player, 0, len(lockedIDs))
+	for _, id := range lockedIDs {
+		squadPtrs = append(squadPtrs, byID[id])
+	}
+	selling := e.squadSellingPrices(ctx, teamID, squadPtrs)
+	budgetTenths, budgetNote := optimalTransfersBudgetTenths(history, squad, RoundToInt(mgrStatus.Bank*10), selling)
 	candidates := buildCandidates(bootstrap.Elements, window, nil, lockedSet)
+	priceAtSelling(candidates, selling)
 	priceRisks := e.priceRiskByPlayer(ctx)
 
 	ceilings := []int{mgrStatus.FreeTransfers}
@@ -338,6 +347,9 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 			if !resultSet[id] {
 				p := byID[id]
 				slot := slotOf(p, teams, p.NowCost, projectExpectedPoints(p, window[p.Team]))
+				if sp, ok := selling[id]; ok {
+					slot.SellingPriceM = float64(sp.SellingTenths) / 10
+				}
 				slot.PriceRisk = priceRiskFor(p, priceRisks)
 				transfersOut = append(transfersOut, slot)
 			}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fantasypl/mcp/internal/algo"
+	"github.com/fantasypl/mcp/internal/apifootball"
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
 	"github.com/fantasypl/mcp/internal/remotecongestion"
@@ -68,6 +69,7 @@ type hitIn struct {
 	PlayerOutID    int `json:"player_out_id"             jsonschema:"Player element ID being sold"`
 	PlayerInID     int `json:"player_in_id"              jsonschema:"Player element ID being bought"`
 	GameweeksAhead int `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
+	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
 }
 type rivalIn struct {
 	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
@@ -171,6 +173,14 @@ func newServer(client *fpl.Client) *mcp.Server {
 		if cfg := remotecongestion.ConfigFromEnv(); cfg.URL != "" {
 			engine.CongestionSource = remotecongestion.NewClient(cfg)
 		}
+
+		// Bookmaker odds, only when the user supplies their own
+		// API-Football key (FPL_MCP_APIFOOTBALL_KEY). A nil *Client must not
+		// be stored in the interface, or the engine's nil check would pass
+		// and every call would return ErrNoKey.
+		if af := apifootball.FromEnv(filepath.Join(cacheDir, "fpl-mcp", "apifootball")); af != nil {
+			engine.MarketSource = af
+		}
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
@@ -267,19 +277,34 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.LivePoints(ctx, in.TeamID) }, "Failed to get live points. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "is_hit_worth_it", Description: "Analyze whether taking a -4 point hit for a transfer is worth it.\n\nUSE THIS WHEN the user asks: \"Should I take a hit?\", \"Is it worth -4 to bring in X?\", \"Hit for Haaland worth it?\". Use player_comparison first to find player IDs if needed.\n\nProjects expected points for both players over N gameweeks, accounting for form, fixture difficulty, home/away, and playing chance."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hitIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "is_hit_worth_it", Description: "Analyze whether taking a -4 point hit for a transfer is worth it.\n\nUSE THIS WHEN the user asks: \"Should I take a hit?\", \"Is it worth -4 to bring in X?\", \"Hit for Haaland worth it?\". Use player_comparison first to find player IDs if needed.\n\nProjects expected points for both players over N gameweeks, accounting for form, fixture difficulty, home/away, and playing chance.\n\nPass team_id to also check the transfer is affordable: bank plus the outgoing player's selling price (what FPL pays you, which keeps only half of any price rise) against the incoming player's market price."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hitIn) (*mcp.CallToolResult, any, error) {
 		if in.PlayerOutID < 1 || in.PlayerInID < 1 {
 			return nil, errResult("Player IDs must be positive integers."), nil
 		}
 		if in.PlayerOutID == in.PlayerInID {
 			return nil, errResult("player_out_id and player_in_id must be different players."), nil
 		}
+		if in.TeamID != 0 {
+			if e := validTeam(in.TeamID); e != "" {
+				return nil, errResult(e), nil
+			}
+		}
 		if in.GameweeksAhead == 0 {
 			in.GameweeksAhead = 5
 		}
+		gws := clamp(in.GameweeksAhead, 1, 10)
 		return nil, call(func() (any, error) {
-			return engine.AnalyzeHit(ctx, in.PlayerOutID, in.PlayerInID, clamp(in.GameweeksAhead, 1, 10))
+			if in.TeamID != 0 {
+				return engine.AnalyzeHitForTeam(ctx, in.TeamID, in.PlayerOutID, in.PlayerInID, gws)
+			}
+			return engine.AnalyzeHit(ctx, in.PlayerOutID, in.PlayerInID, gws)
 		}, "Failed to analyze hit. Check that both player IDs are valid and try again."), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "manager_transfer_history", Description: "List every transfer a manager has made this season, with gameweek, players in and out, and prices, plus the purchase, market and selling price of each player in their current squad.\n\nUSE THIS WHEN the user asks: \"What transfers have I made?\", \"Did my Watkins hit pay off?\", \"What did I pay for Salah?\", \"What's my real budget?\", or wants to review past transfer decisions.\n\nSelling price is what FPL pays you for a player: the purchase price plus half of any rise since purchase, rounded down to 0.1m. Market price is what the player costs to buy now."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
+		if e := validTeam(in.TeamID); e != "" {
+			return nil, errResult(e), nil
+		}
+		return nil, call(func() (any, error) { return engine.TransferHistory(ctx, in.TeamID) }, fmt.Sprintf("Failed to get transfer history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans the next 10 gameweeks and scores each for every unused chip."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
@@ -340,7 +365,7 @@ func findEvent(events []fpl.Event, id int) (fpl.Event, bool) {
 }
 
 func addResources(s *mcp.Server, c *fpl.Client) {
-	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Description: "Current FPL gameweek status — which GW is active, deadlines, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Title: "Gameweek status", Description: "Current FPL gameweek status — which GW is active, deadlines, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		b, e := c.Bootstrap(ctx)
 		if e != nil {
 			return nil, e
@@ -366,7 +391,7 @@ func addResources(s *mcp.Server, c *fpl.Client) {
 		}, "", "  ")
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: "fpl://status", MIMEType: "application/json", Text: string(v)}}}, nil
 	})
-	s.AddResource(&mcp.Resource{URI: "fpl://teams", Name: "teams", Description: "All 20 Premier League teams with short names and IDs.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	s.AddResource(&mcp.Resource{URI: "fpl://teams", Name: "teams", Title: "Premier League teams", Description: "All 20 Premier League teams with short names and IDs.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		b, e := c.Bootstrap(ctx)
 		if e != nil {
 			return nil, e
@@ -390,6 +415,14 @@ func userMessage(text string) *mcp.GetPromptResult {
 	return &mcp.GetPromptResult{Messages: []*mcp.PromptMessage{{Role: "user", Content: &mcp.TextContent{Text: text}}}}
 }
 
+// teamIDArg is the team_id argument shared by the team-scoped prompts.
+var teamIDArg = &mcp.PromptArgument{
+	Name:        "team_id",
+	Title:       "FPL team ID",
+	Description: "Your FPL team ID: the number after /entry/ in your team's Points page URL, e.g. 1234567 in fantasy.premierleague.com/entry/1234567/event/5.",
+	Required:    true,
+}
+
 // addPrompts registers the pre-built prompts that appear in Claude Desktop's
 // prompt selector, helping new users discover what the server can do. Each
 // one just tells the model which tool to call and what to cover in its
@@ -397,8 +430,9 @@ func userMessage(text string) *mcp.GetPromptResult {
 func addPrompts(s *mcp.Server) {
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "analyze_my_fpl_team",
+		Title:       "Analyze my FPL team",
 		Description: "Comprehensive analysis of an FPL manager's team — squad health, captain pick, transfers, fixtures, and price risks.",
-		Arguments:   []*mcp.PromptArgument{{Name: "team_id", Required: true}},
+		Arguments:   []*mcp.PromptArgument{teamIDArg},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(fmt.Sprintf(
 			"Use the fpl_manager_hub tool with team_id %s to pull a full intelligence "+
@@ -414,6 +448,7 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "who_should_i_captain",
+		Title:       "Who should I captain?",
 		Description: "Get captain pick recommendations with detailed reasoning for this gameweek.",
 	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(
@@ -428,8 +463,13 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "find_differential_picks",
+		Title:       "Find differential picks",
 		Description: "Find underowned gems that most FPL managers are missing.",
-		Arguments:   []*mcp.PromptArgument{{Name: "max_ownership", Required: false}},
+		Arguments: []*mcp.PromptArgument{{
+			Name:        "max_ownership",
+			Title:       "Maximum ownership %",
+			Description: "Only show players owned by at most this percentage of managers. Defaults to 10.",
+		}},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		maxOwnership := req.Params.Arguments["max_ownership"]
 		if maxOwnership == "" {
@@ -449,8 +489,9 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "plan_my_transfers",
+		Title:       "Plan my transfers",
 		Description: "Get transfer suggestions based on your current squad and upcoming fixtures.",
-		Arguments:   []*mcp.PromptArgument{{Name: "team_id", Required: true}},
+		Arguments:   []*mcp.PromptArgument{teamIDArg},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(fmt.Sprintf(
 			"Use the transfer_suggestions tool with team_id %s to analyze my squad "+
@@ -466,6 +507,7 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "price_change_alert",
+		Title:       "Price change alert",
 		Description: "Check which players are about to rise or fall in price tonight.",
 	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(
