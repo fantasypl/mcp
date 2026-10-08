@@ -8,6 +8,7 @@ import (
 
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/fantasypl/mcp/internal/insights"
+	"github.com/fantasypl/mcp/internal/marketodds"
 )
 
 // Fixture Outlook — ranks teams by aggregate fixture difficulty over the next
@@ -30,6 +31,14 @@ type OutlookFixture struct {
 	// season has cross-competition coverage; informational, not folded into
 	// FDR/WeightedFDR/AdjustedDifficulty.
 	Congested bool `json:"congested,omitempty"`
+	// CleanSheetPct and ExpectedGoalsFor come from bookmaker odds (see
+	// Engine.MarketSource): the market's chance this team keeps a clean
+	// sheet, and the goals it is expected to score. Present only when a
+	// market source is configured and has odds for this fixture; unlike FDR
+	// they price in team news and form. Informational, not folded into FDR
+	// or AdjustedDifficulty.
+	CleanSheetPct    *float64 `json:"market_clean_sheet_pct,omitempty"`
+	ExpectedGoalsFor *float64 `json:"market_expected_goals,omitempty"`
 }
 
 type TeamOutlook struct {
@@ -97,6 +106,7 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 	teams := teamsByID(bootstrap)
 	teamFixtures := make(map[int][]OutlookFixture, len(bootstrap.Teams))
 	calendar := e.congestionCalendar(ctx, currentGW, currentGW+gameweeksAhead-1)
+	market := e.marketModels(ctx)
 	codeByTeamID := make(map[int]int, len(bootstrap.Teams))
 	for i := range bootstrap.Teams {
 		codeByTeamID[bootstrap.Teams[i].ID] = bootstrap.Teams[i].Code
@@ -124,22 +134,28 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 			awayCongested = isCongested(calendar, codeByTeamID[f.TeamA], kt)
 		}
 
-		teamFixtures[f.TeamH] = append(teamFixtures[f.TeamH], OutlookFixture{
+		homeFx := OutlookFixture{
 			Gameweek:    gw,
 			Opponent:    shortName(teams[f.TeamA]),
 			Venue:       "H",
 			FDR:         homeFDR,
 			WeightedFDR: homeFDR * homeWeight,
 			Congested:   homeCongested,
-		})
-		teamFixtures[f.TeamA] = append(teamFixtures[f.TeamA], OutlookFixture{
+		}
+		awayFx := OutlookFixture{
 			Gameweek:    gw,
 			Opponent:    shortName(teams[f.TeamH]),
 			Venue:       "A",
 			FDR:         awayFDR,
 			WeightedFDR: awayFDR,
 			Congested:   awayCongested,
-		})
+		}
+		if m, ok := market[marketodds.Key{Home: teams[f.TeamH].Name, Away: teams[f.TeamA].Name}]; ok {
+			homeFx.CleanSheetPct, homeFx.ExpectedGoalsFor = ptr(Round(100*m.HomeCS, 1)), ptr(Round(m.HomeXG, 2))
+			awayFx.CleanSheetPct, awayFx.ExpectedGoalsFor = ptr(Round(100*m.AwayCS, 1)), ptr(Round(m.AwayXG, 2))
+		}
+		teamFixtures[f.TeamH] = append(teamFixtures[f.TeamH], homeFx)
+		teamFixtures[f.TeamA] = append(teamFixtures[f.TeamA], awayFx)
 	}
 
 	// Iterate the teams slice, not a map: the downstream sort is stable, so map
@@ -309,6 +325,21 @@ func (e *Engine) congestionCalendar(ctx context.Context, fromGW, toGW int) map[i
 		return nil
 	}
 	return calendar
+}
+
+// marketModels best-effort fetches bookmaker-implied match models. Nil (no
+// signal) if MarketSource isn't configured or the fetch fails for any
+// reason: enrichment must never break FixtureOutlook, and a bad API key or
+// exhausted quota is an ordinary condition for a free tier.
+func (e *Engine) marketModels(ctx context.Context) map[marketodds.Key]marketodds.MatchModel {
+	if e.MarketSource == nil {
+		return nil
+	}
+	m, err := e.MarketSource.MatchModels(ctx)
+	if err != nil {
+		return nil
+	}
+	return m
 }
 
 // isCongested reports whether team code's calendar shows a fixture within
