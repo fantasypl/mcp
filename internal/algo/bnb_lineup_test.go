@@ -133,7 +133,7 @@ func TestLineupRulesValidation(t *testing.T) {
 	base := SquadConstraints{BudgetTenths: 1000, PositionQuota: fplQuota, MaxPerClub: 3, MaxChanges: -1}
 	cands := randomCandidates(rand.New(rand.NewSource(1)), [5]int{0, 3, 7, 7, 5}, 6)
 	for name, l := range map[string]LineupRules{
-		"bench weight above 1": withBenchWeight(fplLineup, 1.5),
+		"bench weight above 1":  withBenchWeight(fplLineup, 1.5),
 		"negative bench weight": withBenchWeight(fplLineup, -0.1),
 		"min above quota":       {Size: 11, Min: [5]int{0, 3, 3, 2, 1}, Max: [5]int{0, 3, 5, 5, 3}},
 		"size unreachable":      {Size: 16, Min: fplLineup.Min, Max: fplLineup.Max},
