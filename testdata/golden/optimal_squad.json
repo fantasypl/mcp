@@ -3,7 +3,9 @@
   "gameweeks_ahead": 5,
   "budget_m": 100,
   "total_cost_m": 100,
-  "projected_points": 166.26,
+  "projected_points": 132.68,
+  "projected_points_basis": "Projected points over gameweeks 1-5 for the best starting XI in a valid formation, plus 0.1 x the four bench players' projected points. Bench players count at a discount because they only score when a starter misses out.",
+  "starting_xi_gameweek_points": 26.36,
   "optimal": true,
   "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
   "squad": [
@@ -32,28 +34,20 @@
       "projected_points": 13.02
     },
     {
+      "id": 387,
+      "name": "O'Reilly",
+      "team": "MCI",
+      "position": "DEF",
+      "cost_m": 6.5,
+      "projected_points": 10.44
+    },
+    {
       "id": 388,
       "name": "Guéhi",
       "team": "MCI",
       "position": "DEF",
       "cost_m": 6,
       "projected_points": 11.33
-    },
-    {
-      "id": 389,
-      "name": "Matheus N.",
-      "team": "MCI",
-      "position": "DEF",
-      "cost_m": 6,
-      "projected_points": 9.99
-    },
-    {
-      "id": 391,
-      "name": "Gvardiol",
-      "team": "MCI",
-      "position": "DEF",
-      "cost_m": 5.5,
-      "projected_points": 9.77
     },
     {
       "id": 498,
@@ -64,20 +58,12 @@
       "projected_points": 10.38
     },
     {
-      "id": 236,
-      "name": "Dewsbury-Hall",
-      "team": "EVE",
-      "position": "MID",
-      "cost_m": 6.5,
-      "projected_points": 10.49
-    },
-    {
-      "id": 260,
-      "name": "Wilson",
-      "team": "LEE",
-      "position": "MID",
-      "cost_m": 6.5,
-      "projected_points": 10.38
+      "id": 508,
+      "name": "Davies",
+      "team": "TOT",
+      "position": "DEF",
+      "cost_m": 4,
+      "projected_points": 7.29
     },
     {
       "id": 335,
@@ -86,6 +72,14 @@
       "position": "MID",
       "cost_m": 6,
       "projected_points": 10.38
+    },
+    {
+      "id": 397,
+      "name": "Semenyo",
+      "team": "MCI",
+      "position": "MID",
+      "cost_m": 8.5,
+      "projected_points": 12.22
     },
     {
       "id": 426,
@@ -104,12 +98,12 @@
       "projected_points": 11.34
     },
     {
-      "id": 106,
-      "name": "Thiago",
-      "team": "BRE",
-      "position": "FWD",
+      "id": 480,
+      "name": "Gibbs-White",
+      "team": "NFO",
+      "position": "MID",
       "cost_m": 8,
-      "projected_points": 10.27
+      "projected_points": 11.04
     },
     {
       "id": 165,
@@ -118,6 +112,14 @@
       "position": "FWD",
       "cost_m": 7.5,
       "projected_points": 10.63
+    },
+    {
+      "id": 248,
+      "name": "Beto",
+      "team": "EVE",
+      "position": "FWD",
+      "cost_m": 5.5,
+      "projected_points": 5.99
     },
     {
       "id": 346,
@@ -132,21 +134,21 @@
     199,
     4,
     388,
+    387,
     498,
     426,
+    480,
+    397,
     452,
-    236,
-    260,
     335,
-    165,
-    106
+    165
   ],
-  "formation": "3-5-2",
+  "formation": "4-5-1",
   "bench_order": [
     531,
-    389,
-    391,
-    346
+    346,
+    248,
+    508
   ],
   "recommended_captain": {
     "id": 426,
@@ -156,10 +158,10 @@
     "reason": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 9.629)"
   },
   "recommended_vice_captain": {
-    "id": 106,
-    "name": "Thiago",
-    "team": "BRE",
-    "score": 7.279,
-    "reason": "Poor form, elite xg/90 (0.56), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 7.279)"
+    "id": 4,
+    "name": "Gabriel",
+    "team": "ARS",
+    "score": 7.012,
+    "reason": "Poor form, fpl expects 4.0pts, easy fixture (fdr 1), home advantage (score: 7.012)"
   }
 }

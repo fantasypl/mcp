@@ -29,6 +29,25 @@ import (
 // within whatever pool reached it.
 var candidatePoolCap = [5]int{0, 24, 60, 60, 36}
 
+// fplQuota is FPL's squad shape: 2 GKP, 5 DEF, 5 MID, 3 FWD.
+var fplQuota = [5]int{0, 2, 5, 5, 3}
+
+// benchWeight is what a bench player's projected points count for in the
+// squad objective (#31). A bench player scores only when a starter misses
+// out, so counting the bench at full value made the optimiser spend on
+// players who rarely score. 0.1 still breaks ties toward a playable bench.
+const benchWeight = 0.1
+
+// fplLineup is the objective both optimisers use: the best starting XI in a
+// valid FPL formation (1 GKP, 3-5 DEF, 2-5 MID, 1-3 FWD) at full value, plus
+// the four bench players at benchWeight.
+var fplLineup = LineupRules{
+	Size:        11,
+	Min:         [5]int{0, 1, minDef, minMid, minFwd},
+	Max:         [5]int{0, 1, maxDef, maxMid, maxFwd},
+	BenchWeight: benchWeight,
+}
+
 // optimalSquadTimeLimit matches the exact value bnb_test.go's
 // TestSolveAtRealisticFPLScale already proves safe at this candidate count.
 const optimalSquadTimeLimit = 8 * time.Second
@@ -98,25 +117,34 @@ func buildCandidates(elements []fpl.Player, window map[int][]projectionFixture, 
 
 // OptimalSquadResult is optimal_squad's response shape.
 //
-// Alongside the 15-man squad it suggests who to start, in what formation, the
-// bench order, and a captain and vice-captain. The lineup is chosen by the
-// same 5-gameweek projected points that selected the squad, so it is a
-// horizon lineup and can include a player who blanks in the target gameweek.
-// The captain uses captain_pick's scoring for the target gameweek alone, and
-// only among starters who have a fixture in it.
+// The squad is chosen to maximize ProjectedPoints: over the projection
+// window, the best starting XI in a valid formation at full value plus the
+// four bench players at benchWeight (see fplLineup). Alongside the squad it
+// suggests who to start in the target gameweek, in what formation, the bench
+// order, and a captain and vice-captain. That lineup uses the target
+// gameweek's projections alone, so a player who blanks that week sits on the
+// bench, and it can differ from the XI behind ProjectedPoints. The captain
+// uses captain_pick's scoring for the target gameweek, and only among
+// starters who have a fixture in it.
 type OptimalSquadResult struct {
-	Gameweek        int                `json:"gameweek"`
-	GameweeksAhead  int                `json:"gameweeks_ahead"`
-	BudgetM         float64            `json:"budget_m"`
-	TotalCostM      float64            `json:"total_cost_m"`
-	ProjectedPoints float64            `json:"projected_points"`
-	Optimal         bool               `json:"optimal"`
-	PoolNote        string             `json:"pool_note"`
-	Squad           []OptimalSquadSlot `json:"squad"`
+	Gameweek        int     `json:"gameweek"`
+	GameweeksAhead  int     `json:"gameweeks_ahead"`
+	BudgetM         float64 `json:"budget_m"`
+	TotalCostM      float64 `json:"total_cost_m"`
+	ProjectedPoints float64 `json:"projected_points"`
+	// ProjectedPointsBasis says in words what ProjectedPoints sums.
+	ProjectedPointsBasis string `json:"projected_points_basis"`
+	// StartingXIGameweekPoints is the suggested XI's projected points in the
+	// target gameweek alone.
+	StartingXIGameweekPoints float64            `json:"starting_xi_gameweek_points"`
+	Optimal                  bool               `json:"optimal"`
+	PoolNote                 string             `json:"pool_note"`
+	Squad                    []OptimalSquadSlot `json:"squad"`
 
-	// StartingXI and BenchOrder hold player ids from Squad. StartingXI lists
-	// the goalkeeper first; BenchOrder opens with the spare goalkeeper and
-	// then runs by descending projected points.
+	// StartingXI and BenchOrder hold player ids from Squad, picked on the
+	// target gameweek's projections. StartingXI lists the goalkeeper first;
+	// BenchOrder opens with the spare goalkeeper and then runs by descending
+	// projected points for that gameweek.
 	StartingXI []int  `json:"starting_xi"`
 	Formation  string `json:"formation"`
 	BenchOrder []int  `json:"bench_order"`
@@ -182,10 +210,11 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 
 	result, err := Solve(candidates, SquadConstraints{
 		BudgetTenths:  budgetTenths,
-		PositionQuota: [5]int{0, 2, 5, 5, 3},
+		PositionQuota: fplQuota,
 		MaxPerClub:    3,
 		MaxChanges:    -1,
 		TimeLimit:     optimalSquadTimeLimit,
+		Lineup:        &fplLineup,
 	})
 	if err != nil {
 		return nil, err
@@ -207,23 +236,55 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 		totalCost += c.PriceTenths
 	}
 
-	lineup := chooseLineup(squad)
+	lineup, xiPoints := chooseGameweekLineup(squad, byID, fixtures, gw)
 	captain, vice := e.pickLineupCaptains(lineup.XI, byID, teams, buildFixtureMap(fixtures, gw, teams), gw)
 
 	return &OptimalSquadResult{
 		StartingXI: lineup.XI, Formation: lineup.Formation, BenchOrder: lineup.Bench,
 		RecommendedCaptain: captain, RecommendedViceCaptain: vice,
-		Gameweek:        gw,
-		GameweeksAhead:  xpHorizonGWs,
-		BudgetM:         float64(budgetTenths) / 10,
-		TotalCostM:      float64(totalCost) / 10,
-		ProjectedPoints: Round(result.Value, 2),
-		Optimal:         result.Optimal,
+		Gameweek:                 gw,
+		GameweeksAhead:           xpHorizonGWs,
+		BudgetM:                  float64(budgetTenths) / 10,
+		TotalCostM:               float64(totalCost) / 10,
+		ProjectedPoints:          Round(result.Value, 2),
+		ProjectedPointsBasis:     projectedPointsBasis(gw),
+		StartingXIGameweekPoints: xiPoints,
+		Optimal:                  result.Optimal,
 		PoolNote: fmt.Sprintf(
 			"Considered the top %d/%d/%d/%d GKP/DEF/MID/FWD candidates by projected points — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
 		Squad: squad,
 	}, nil
+}
+
+// projectedPointsBasis describes what projected_points sums, for the
+// window starting at gw.
+func projectedPointsBasis(gw int) string {
+	return fmt.Sprintf(
+		"Projected points over gameweeks %d-%d for the best starting XI in a valid formation, plus %g x the four bench players' projected points. "+
+			"Bench players count at a discount because they only score when a starter misses out.",
+		gw, gw+xpHorizonGWs-1, benchWeight)
+}
+
+// chooseGameweekLineup picks the starting XI for gw alone: each player is
+// re-projected over that one gameweek, so a player who blanks sits on the
+// bench. It returns the lineup and the XI's projected points for gw.
+func chooseGameweekLineup(squad []OptimalSquadSlot, byID map[int]*fpl.Player, fixtures []fpl.Fixture, gw int) (lineup, float64) {
+	window := buildProjectionWindow(fixtures, gw, 1)
+	gwSlots := make([]OptimalSquadSlot, len(squad))
+	points := make(map[int]float64, len(squad))
+	for i, slot := range squad {
+		p := byID[slot.ID]
+		slot.ProjectedPoints = projectExpectedPoints(p, window[p.Team])
+		points[slot.ID] = slot.ProjectedPoints
+		gwSlots[i] = slot
+	}
+	l := chooseLineup(gwSlots)
+	total := 0.0
+	for _, id := range l.XI {
+		total += points[id]
+	}
+	return l, Round(total, 2)
 }
 
 // pickLineupCaptains scores every starter with captain_pick's own scorePlayer

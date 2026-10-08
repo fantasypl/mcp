@@ -247,7 +247,7 @@ func TestPositionSuffixDPNeverExceedsFullList(t *testing.T) {
 
 	const quota = 5
 	const maxBudget = 1000
-	suffixes := buildPositionSuffixDP(candidates, quota, maxBudget)
+	suffixes := buildPositionSuffixDP(candidates, quota, maxBudget, 0, 1)
 
 	if len(suffixes) != len(candidates)+1 {
 		t.Fatalf("got %d suffix tables, want %d (len(candidates)+1)", len(suffixes), len(candidates)+1)
@@ -552,7 +552,8 @@ func assertValidSquad(t *testing.T, squad []Candidate, c SquadConstraints) {
 
 // bruteForceSolve is a deliberately independent, naive implementation: full
 // enumeration of every valid position-quota combination, checked against
-// budget and club cap directly, sharing no code with Solve/bnb.go.
+// budget and club cap directly, sharing no code with Solve/bnb.go. With
+// c.Lineup set, each squad is scored by bruteLineupValue.
 func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 	byPos := map[int][]Candidate{}
 	for _, cnd := range candidates {
@@ -583,8 +584,12 @@ func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 				}
 			}
 			val := 0.0
-			for _, cnd := range chosen {
-				val += cnd.Value
+			if c.Lineup != nil {
+				val = bruteLineupValue(chosen, c)
+			} else {
+				for _, cnd := range chosen {
+					val += cnd.Value
+				}
 			}
 			if val > best.Value {
 				best = Result{Squad: append([]Candidate(nil), chosen...), Value: val}
