@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fantasypl/mcp/internal/algo"
@@ -30,12 +31,14 @@ type Config struct {
 }
 
 // ConfigFromEnv reads FPL_MCP_WEIGHTS_URL, FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID,
-// and FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET.
+// and FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET, trimming surrounding whitespace
+// (a value pasted into an MCP client's user_config with a leading space
+// would otherwise fail URL parsing and silently fall back to defaults).
 func ConfigFromEnv() Config {
 	return Config{
-		URL:             os.Getenv("FPL_MCP_WEIGHTS_URL"),
-		AccessClientID:  os.Getenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID"),
-		AccessClientKey: os.Getenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET"),
+		URL:             strings.TrimSpace(os.Getenv("FPL_MCP_WEIGHTS_URL")),
+		AccessClientID:  strings.TrimSpace(os.Getenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID")),
+		AccessClientKey: strings.TrimSpace(os.Getenv("FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET")),
 	}
 }
 

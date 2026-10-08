@@ -80,3 +80,39 @@ func TestTeamFixtureCalendarFailsSoftOnBadResponse(t *testing.T) {
 		t.Fatal("expected an error on a non-200 response")
 	}
 }
+
+// Whitespace around env values (issue #28) must not break URL parsing or
+// leak into the auth headers.
+func TestConfigFromEnvTrimsWhitespaceAndFetches(t *testing.T) {
+	var gotAuth, gotID, gotSecret string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		gotID = r.Header.Get("CF-Access-Client-Id")
+		gotSecret = r.Header.Get("CF-Access-Client-Secret")
+		_, _ = w.Write([]byte(`{"3":["2025-09-16T18:45:00Z"]}`))
+	}))
+	defer srv.Close()
+
+	t.Setenv("FPL_MCP_CONGESTION_URL", " "+srv.URL+" \n")
+	t.Setenv("FPL_MCP_CONGESTION_TOKEN", " tok\t")
+	t.Setenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_ID", "\tcid ")
+	t.Setenv("FPL_MCP_CONGESTION_ACCESS_CLIENT_SECRET", " csecret\n")
+
+	cfg := ConfigFromEnv()
+	if cfg.URL != srv.URL {
+		t.Errorf("URL = %q, want %q", cfg.URL, srv.URL)
+	}
+
+	c := NewClient(cfg)
+	c.HTTP = srv.Client()
+	calendar, err := c.TeamFixtureCalendar(context.Background(), "2026-2027", 1, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(calendar[3]) != 1 {
+		t.Errorf("unexpected calendar: %+v", calendar)
+	}
+	if gotAuth != "Bearer tok" || gotID != "cid" || gotSecret != "csecret" {
+		t.Errorf("headers = (%q, %q, %q), want (Bearer tok, cid, csecret)", gotAuth, gotID, gotSecret)
+	}
+}
