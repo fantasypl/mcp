@@ -578,6 +578,15 @@ func bruteForceSolve(candidates []Candidate, c SquadConstraints) Result {
 			if cost > c.BudgetTenths {
 				return
 			}
+			inSquad := map[int]bool{}
+			for _, cnd := range chosen {
+				inSquad[cnd.ID] = true
+			}
+			for _, id := range c.Forced {
+				if !inSquad[id] {
+					return
+				}
+			}
 			for _, n := range club {
 				if n > c.MaxPerClub {
 					return

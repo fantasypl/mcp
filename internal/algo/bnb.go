@@ -40,6 +40,12 @@ type SquadConstraints struct {
 	Locked     []int
 	MaxChanges int // -1 = unlimited
 
+	// Forced candidates must all be in the squad (optimal_squad's
+	// include_player_ids). Unlike Locked, which only makes a candidate free
+	// of MaxChanges, a Forced candidate can never be left out. Every Forced
+	// ID must be among the candidates.
+	Forced []int
+
 	// TimeLimit caps how long Solve searches before giving up on proving
 	// optimality and returning its best incumbent so far instead — see
 	// Result.Optimal. Zero (the default) means no limit: Solve always
@@ -133,6 +139,10 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		return nil, err
 	}
 	locked := toSet(c.Locked)
+	forced := toSet(c.Forced)
+	if err := validateForced(candidates, c); err != nil {
+		return nil, err
+	}
 
 	// With a lineup objective, bounds use max(Value, 0): a bench weight
 	// below 1 makes a negative Value worth more on the bench than in the
@@ -159,7 +169,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		}
 		byPosition[cnd.Position] = append(byPosition[cnd.Position], cnd)
 	}
-	pruned := pruneDominated(byPosition, locked, c.PositionQuota)
+	pruned := pruneDominated(byPosition, locked, forced, c.PositionQuota)
 
 	for pos := 1; pos <= numPositions; pos++ {
 		if len(pruned[pos]) < c.PositionQuota[pos] {
@@ -177,6 +187,37 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		byPositionSorted[pos] = group
 	}
 
+	// Forced candidates are in every squad, so they start the search
+	// already chosen and stay out of the branching pool and its bound
+	// tables. The search then fills quota - forcedCount places per
+	// position from searchSorted.
+	var searchSorted [5][]Candidate
+	var forcedCands []Candidate
+	var forcedCount [5]int
+	var forcedVals [5][]float64 // per position, best first
+	forcedCost, forcedChanges := 0, 0
+	forcedClub := map[int]int{}
+	for pos := 1; pos <= numPositions; pos++ {
+		for _, cnd := range byPositionSorted[pos] {
+			if !forced[cnd.ID] {
+				searchSorted[pos] = append(searchSorted[pos], cnd)
+				continue
+			}
+			forcedCands = append(forcedCands, cnd)
+			forcedCount[pos]++
+			forcedCost += cnd.PriceTenths
+			forcedClub[cnd.Club]++
+			forcedVals[pos] = append(forcedVals[pos], cnd.Value)
+			if !locked[cnd.ID] {
+				forcedChanges++
+			}
+		}
+	}
+	var posLeft0 [5]int
+	for pos := 1; pos <= numPositions; pos++ {
+		posLeft0[pos] = c.PositionQuota[pos] - forcedCount[pos]
+	}
+
 	// Branch order: GKP, FWD, MID, DEF — smallest/cheapest quota first, so
 	// the search finds a strong incumbent (and starts pruning against it)
 	// as early as possible. Within each position, value-descending, so the
@@ -185,7 +226,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	var blockStart [5]int // pool index where each position's block begins — maps a node's idx to an offset within its position's own sorted list
 	for _, pos := range [...]int{1, 4, 3, 2} {
 		blockStart[pos] = len(pool)
-		pool = append(pool, byPositionSorted[pos]...)
+		pool = append(pool, searchSorted[pos]...)
 	}
 
 	// Each DP table is sized to min(c.BudgetTenths, that position's own
@@ -200,7 +241,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	var tableBudget [5]int
 	totalMaxCost := 0
 	for pos := 1; pos <= numPositions; pos++ {
-		posMax := positionMaxCost(byPositionSorted[pos], c.PositionQuota[pos])
+		posMax := positionMaxCost(searchSorted[pos], c.PositionQuota[pos])
 		totalMaxCost += posMax
 		tableBudget[pos] = min(c.BudgetTenths, posMax)
 	}
@@ -234,21 +275,50 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		if t, ok := dpCache[key]; ok {
 			return t
 		}
-		t := buildPositionSuffixDP(byPositionSorted[pos], c.PositionQuota[pos], tableBudget[pos], bench, benchWeight)
+		t := buildPositionSuffixDP(searchSorted[pos], c.PositionQuota[pos], tableBudget[pos], bench, benchWeight)
 		dpCache[key] = t
 		return t
 	}
-	var forms []formation
+	// With forced players, a formation's bench places split between forced
+	// and searched picks, and each split is its own additive problem: the
+	// forced players contribute a constant (their lowest benched), and the
+	// searched picks fill the rest of the bench. A squad's value under a
+	// formation is the best split's, so searching every split stays exact.
+	// Without forced players there is one split per formation.
+	var splits []formation
 	for _, bench := range enumerateBenches(c) {
-		f := formation{bench: bench}
+		var rec func(pos int, f formation)
+		rec = func(pos int, f formation) {
+			if pos > numPositions {
+				splits = append(splits, f)
+				return
+			}
+			places := c.PositionQuota[pos] - forcedCount[pos]
+			for bf := max(0, bench[pos]-places); bf <= min(forcedCount[pos], bench[pos]); bf++ {
+				g := f
+				g.bench[pos] = bench[pos] - bf
+				for i, v := range forcedVals[pos] {
+					if i >= forcedCount[pos]-bf {
+						v *= benchWeight
+					}
+					g.forcedValue += v
+				}
+				rec(pos+1, g)
+			}
+		}
+		rec(1, formation{})
+	}
+
+	var forms []formation
+	for _, f := range splits {
 		var fullRow [5][]float64
 		for pos := 1; pos <= numPositions; pos++ {
-			f.dpSuffix[pos] = dpFor(pos, bench[pos])
+			f.dpSuffix[pos] = dpFor(pos, f.bench[pos])
 			row := make([]float64, mergeCap+1)
 			for b := 0; b <= mergeCap; b++ {
 				// dpSuffix[pos][0] covers pos's entire candidate list
 				// (offset 0 = nothing excluded yet).
-				row[b] = f.dpSuffix[pos][0].bestValue(c.PositionQuota[pos], b)
+				row[b] = f.dpSuffix[pos][0].bestValue(posLeft0[pos], b)
 			}
 			fullRow[pos] = row
 		}
@@ -260,8 +330,12 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		for i := numPositions - 2; i >= 0; i-- {
 			f.suffixAfter[i] = mergeValueArrays(fullRow[blockOrder[i+1]], f.suffixAfter[i+1], mergeCap)
 		}
-		first := pool[0].Position
-		f.rootBound = bound(f.dpSuffix[first][0], f.suffixAfter, blockIndexOf, mergeCap, first, c.PositionQuota, c.BudgetTenths, 0)
+		if len(pool) == 0 {
+			f.rootBound = math.Inf(1) // every place is forced: one squad to score
+		} else {
+			first := pool[0].Position
+			f.rootBound = bound(f.dpSuffix[first][0], f.suffixAfter, blockIndexOf, mergeCap, first, posLeft0, c.BudgetTenths-forcedCost, f.forcedValue)
+		}
 		forms = append(forms, f)
 	}
 	// Most promising formation first, so its incumbent can prune the rest.
@@ -282,7 +356,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	// clamped at 0.
 	var clubTopSuffix [5][]map[int][]float64
 	for pos := 1; pos <= numPositions; pos++ {
-		clubTopSuffix[pos] = buildClubTopSuffix(byPositionSorted[pos], c.MaxPerClub)
+		clubTopSuffix[pos] = buildClubTopSuffix(searchSorted[pos], c.MaxPerClub)
 	}
 	var clubTopAfter [numPositions]map[int][]float64
 	clubTopAfter[numPositions-1] = map[int][]float64{}
@@ -300,7 +374,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	s := &solver{
 		pool: pool, blockStart: blockStart, mergeCap: mergeCap,
 		blockIndexOf: blockIndexOf, clubTopByIdx: clubTopByIdx,
-		locked: locked, c: c, best: Result{Value: negInf},
+		locked: locked, forced: forced, forcedCount: forcedCount, c: c, best: Result{Value: negInf},
 		orig: orig, benchWeight: benchWeight,
 	}
 	// Seed s.best with a cheap, ratio-greedy constructive squad before the
@@ -324,7 +398,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 			continue // no squad under this formation can beat the incumbent
 		}
 		s.form = &forms[i]
-		s.recurse(0, nil, 0, c.PositionQuota, map[int]int{}, 0)
+		s.recurse(0, append([]Candidate(nil), forcedCands...), forcedCost, posLeft0, cloneClubCount(forcedClub), forcedChanges)
 		if s.timedOut {
 			break
 		}
@@ -389,10 +463,30 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 // search remains the source of truth regardless of whether a seed exists.
 func greedyFeasibleSeed(byPositionSorted [5][]Candidate, c SquadConstraints) (Result, bool) {
 	locked := toSet(c.Locked)
+	forced := toSet(c.Forced)
 	spent := 0
 	changesUsed := 0
 	clubCount := map[int]int{}
 	var squad []Candidate
+	var picks [5]int
+
+	// Forced candidates go in first, across every position, so their
+	// budget and club places are reserved before anything else is picked.
+	// validateForced has already checked they fit together.
+	for pos := 1; pos <= numPositions; pos++ {
+		for _, cnd := range byPositionSorted[pos] {
+			if !forced[cnd.ID] {
+				continue
+			}
+			squad = append(squad, cnd)
+			spent += cnd.PriceTenths
+			clubCount[cnd.Club]++
+			if !locked[cnd.ID] {
+				changesUsed++
+			}
+			picks[pos]++
+		}
+	}
 
 	for pos := 1; pos <= numPositions; pos++ {
 		group := append([]Candidate(nil), byPositionSorted[pos]...)
@@ -407,10 +501,13 @@ func greedyFeasibleSeed(byPositionSorted [5][]Candidate, c SquadConstraints) (Re
 			return group[i].Value/float64(group[i].PriceTenths) > group[j].Value/float64(group[j].PriceTenths)
 		})
 
-		picked := 0
+		picked := picks[pos]
 		for _, cnd := range group {
 			if picked >= c.PositionQuota[pos] {
 				break
+			}
+			if forced[cnd.ID] {
+				continue // already in
 			}
 			isLocked := locked[cnd.ID]
 			newChanges := changesUsed
@@ -444,7 +541,8 @@ const negInf = -(1 << 62) // a value no real squad total can reach, used as "no 
 // formation is one way to split each position's quota into starters and
 // bench, with the bound tables that split implies.
 type formation struct {
-	bench       [5]int                  // bench[pos]: how many of pos's quota sit on the bench
+	bench       [5]int                  // bench[pos]: how many of pos's searched (not forced) picks sit on the bench
+	forcedValue float64                 // the forced players' value under this split (see solve)
 	dpSuffix    [5][]positionDP         // dpSuffix[pos][j]: exact-count DP over pos's own sorted list from offset j onward — see buildPositionSuffixDP
 	suffixAfter [numPositions][]float64 // suffixAfter[i]: best combined value of every position after blockOrder[i], full quota, sharing budget
 	rootBound   float64                 // bound on any squad's value under this formation
@@ -460,6 +558,8 @@ type solver struct {
 	benchWeight  float64
 	clubTopByIdx []map[int][]float64 // clubTopByIdx[idx]: club -> top MaxPerClub still-available values at that node — see clubCapBound
 	locked       map[int]bool
+	forced       map[int]bool
+	forcedCount  [5]int // forced candidates per position, chosen before the search starts
 	c            SquadConstraints
 	best         Result
 	nodeCount    int       // recurse() call count — see solveDebug
@@ -959,14 +1059,14 @@ func (dp positionDP) bestValue(k, budget int) float64 {
 // MaxChanges) that price/value dominance doesn't account for, so discarding
 // one could make an otherwise-reachable, hit-free squad invisible to the
 // search.
-func pruneDominated(byPosition [5][]Candidate, locked map[int]bool, quota [5]int) [5][]Candidate {
+func pruneDominated(byPosition [5][]Candidate, locked, forced map[int]bool, quota [5]int) [5][]Candidate {
 	var out [5][]Candidate
 	for pos := 1; pos <= numPositions; pos++ {
 		group := byPosition[pos]
 		k := quota[pos]
 		var frontier []Candidate
 		for _, b := range group {
-			if locked[b.ID] {
+			if locked[b.ID] || forced[b.ID] {
 				frontier = append(frontier, b)
 				continue
 			}
@@ -1032,6 +1132,59 @@ func validateConstraints(c SquadConstraints) error {
 	return nil
 }
 
+// validateForced checks c.Forced against what any squad allows: each ID is
+// a candidate, listed once, and together they fit the position quotas, the
+// club cap, the budget and MaxChanges. A forced set that passes can still
+// leave too little budget to fill the other places; Solve then reports no
+// feasible squad.
+func validateForced(candidates []Candidate, c SquadConstraints) error {
+	if len(c.Forced) == 0 {
+		return nil
+	}
+	byID := make(map[int]Candidate, len(candidates))
+	for _, cnd := range candidates {
+		byID[cnd.ID] = cnd
+	}
+	locked := toSet(c.Locked)
+	seen := map[int]bool{}
+	var posCount [5]int
+	clubCount := map[int]int{}
+	cost, changes := 0, 0
+	for _, id := range c.Forced {
+		cnd, ok := byID[id]
+		if !ok {
+			return fmt.Errorf("forced candidate %d is not among the candidates", id)
+		}
+		if seen[id] {
+			return fmt.Errorf("forced candidate %d is listed twice", id)
+		}
+		seen[id] = true
+		posCount[cnd.Position]++
+		clubCount[cnd.Club]++
+		cost += cnd.PriceTenths
+		if !locked[id] {
+			changes++
+		}
+	}
+	for pos := 1; pos <= numPositions; pos++ {
+		if posCount[pos] > c.PositionQuota[pos] {
+			return fmt.Errorf("position %d: %d forced candidates, quota is %d", pos, posCount[pos], c.PositionQuota[pos])
+		}
+	}
+	for club, n := range clubCount {
+		if n > c.MaxPerClub {
+			return fmt.Errorf("club %d: %d forced candidates, max per club is %d", club, n, c.MaxPerClub)
+		}
+	}
+	if cost > c.BudgetTenths {
+		return fmt.Errorf("forced candidates cost %d, budget is %d", cost, c.BudgetTenths)
+	}
+	if c.MaxChanges >= 0 && changes > c.MaxChanges {
+		return fmt.Errorf("%d forced candidates are not locked, max changes is %d", changes, c.MaxChanges)
+	}
+	return nil
+}
+
 // enumerateBenches lists every valid formation as bench counts per
 // position: starters s[pos] in [Min, min(Max, quota)] summing to Size, and
 // bench = quota - s. Without a lineup objective it returns the single
@@ -1061,19 +1214,26 @@ func enumerateBenches(c SquadConstraints) [][5]int {
 }
 
 // formationValue is the value of a partial selection under the formation
-// being searched: within each position, picks arrive best first (pool
-// order), so a pick at index i of that position's picks is benched exactly
-// when i >= quota - bench. That holds for a partly filled position too,
-// since every later pick from it is worth no more.
+// (and forced/searched bench split) being searched: the forced players add
+// the split's constant, and within each position, searched picks arrive
+// best first (pool order), so the pick at index i of a position's searched
+// picks is benched exactly when i >= searched places - searched bench.
+// That holds for a partly filled position too, since every later pick from
+// it is worth no more.
 func (s *solver) formationValue(chosen []Candidate) float64 {
 	var seen [5]int
-	total := 0.0
+	total := s.form.forcedValue
 	for _, cnd := range chosen {
 		v := cnd.Value
-		if seen[cnd.Position] >= s.c.PositionQuota[cnd.Position]-s.form.bench[cnd.Position] {
+		if s.forced[cnd.ID] {
+			continue // counted in forcedValue
+		}
+		pos := cnd.Position
+		places := s.c.PositionQuota[pos] - s.forcedCount[pos]
+		if seen[pos] >= places-s.form.bench[pos] {
 			v *= s.benchWeight
 		}
-		seen[cnd.Position]++
+		seen[pos]++
 		total += v
 	}
 	return total

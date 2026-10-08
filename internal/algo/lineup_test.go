@@ -161,7 +161,7 @@ func bruteForceBestXI(squad []OptimalSquadSlot) float64 {
 // End to end: optimal_squad returns a lineup and captain alongside the 15.
 func TestOptimalSquadIncludesLineupAndCaptain(t *testing.T) {
 	e := newEngineForOptimalSquad(t, "midseason")
-	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil)
+	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
