@@ -22,9 +22,11 @@ type ManagerHubResult struct {
 	PreppingFor           string               `json:"prepping_for"`
 	GameweekStatus        fpl.GameweekStatus   `json:"gameweek_status"` // next deadline and gameweek states; same helper as fpl://status
 	ManagerStatus         *fpl.ManagerStatus   `json:"manager_status"`
-	SquadValue            float64              `json:"squad_value"`
+	SquadValue            float64              `json:"squad_value"`                   // at market prices
+	SquadSellingValue     float64              `json:"squad_selling_value,omitempty"` // what FPL would pay for the squad; set when the transfer history is available
 	Bank                  float64              `json:"bank"`
-	TotalBudget           float64              `json:"total_budget"`
+	TotalBudget           float64              `json:"total_budget"` // bank plus squad_selling_value when set, else bank plus squad_value
+	BudgetNote            string               `json:"budget_note"`  // says which prices total_budget used
 	SeasonSummary         HubSeasonSummary     `json:"season_summary"`
 	SquadSize             int                  `json:"squad_size"`
 	SquadValid            bool                 `json:"squad_valid"`
@@ -73,7 +75,9 @@ type HubSquadEntry struct {
 	Team          string   `json:"team"`
 	TeamFullName  string   `json:"team_full_name"`
 	Position      string   `json:"position"`
-	Cost          float64  `json:"cost"`
+	Cost          float64  `json:"cost"`                     // market price
+	PurchasePrice float64  `json:"purchase_price,omitempty"` // set when the transfer history is available
+	SellingPrice  float64  `json:"selling_price,omitempty"`  // set when the transfer history is available
 	Form          float64  `json:"form"`
 	PointsPerGame float64  `json:"points_per_game"`
 	EPNext        float64  `json:"ep_next"`
@@ -244,9 +248,10 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		}
 	}
 
-	// Real squad value from history, not summed now_cost: FPL's history
-	// "value" is total team value (squad + bank), and now_cost inflates
-	// relative to what the squad would actually sell for.
+	// Squad value from history: FPL's history "value" is total team value
+	// (squad + bank) at market prices as of the latest recorded gameweek.
+	// It overstates the budget for any player who has risen since purchase,
+	// so the budget below uses selling prices whenever they are available.
 	var squadValue, bank float64
 	season := history.Current
 	if len(season) > 0 {
@@ -262,6 +267,20 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, nextGW, teams)
+
+	squadPlayers := make([]*fpl.Player, 0, len(picks.Picks))
+	for _, pick := range picks.Picks {
+		if p := playersByID[pick.Element]; p != nil {
+			squadPlayers = append(squadPlayers, p)
+		}
+	}
+	selling := e.squadSellingPrices(ctx, teamID, squadPlayers)
+	totalBudget, budgetNote := Round(squadValue+bank, 1), marketPriceNote
+	var squadSellingValue float64
+	if selling != nil {
+		squadSellingValue = float64(sellingValueTenths(selling)) / 10
+		totalBudget, budgetNote = Round(squadSellingValue+bank, 1), sellingPriceNote
+	}
 
 	squad := make([]HubSquadEntry, 0, len(picks.Picks))
 	for _, pick := range picks.Picks {
@@ -301,7 +320,9 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		if status == "" {
 			status = "a"
 		}
+		sp := selling[p.ID]
 		squad = append(squad, HubSquadEntry{
+			PurchasePrice: float64(sp.PurchaseTenths) / 10, SellingPrice: float64(sp.SellingTenths) / 10,
 			Slot: pick.Position, Starter: pick.Position <= 11, ElementID: p.ID,
 			Name: p.WebName, Team: shortName(team), TeamFullName: fullName(team),
 			Position: Position(p.ElementType), Cost: float64(p.NowCost) / 10,
@@ -414,7 +435,8 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 
 	return &ManagerHubResult{
 		TeamID: teamID, Gameweek: currentGW, PreppingFor: fmt.Sprintf("GW%d", nextGW), GameweekStatus: fpl.StatusAt(bootstrap, e.Now()),
-		ManagerStatus: mgrStatus, SquadValue: squadValue, Bank: bank, TotalBudget: Round(squadValue+bank, 1),
+		ManagerStatus: mgrStatus, SquadValue: squadValue, Bank: bank, TotalBudget: totalBudget,
+		SquadSellingValue: squadSellingValue, BudgetNote: budgetNote,
 		SeasonSummary: HubSeasonSummary{
 			TotalPoints: totalPoints, GameweeksPlayed: len(season), AvgPointsPerGW: avgPointsPerGW,
 			BestGameweek: bestGW, WorstGameweek: worstGW, ChipsUsed: chipsUsed,
