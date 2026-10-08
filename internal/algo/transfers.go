@@ -49,14 +49,15 @@ type TransferSuggestion struct {
 }
 
 type TransferOutPlayer struct {
-	ID         int     `json:"id"`
-	Name       string  `json:"name"`
-	Team       string  `json:"team"`
-	Position   string  `json:"position"`
-	Cost       float64 `json:"cost"`
-	Form       float64 `json:"form"`
-	ValueScore float64 `json:"value_score"`
-	Reasoning  string  `json:"reasoning"`
+	ID           int     `json:"id"`
+	Name         string  `json:"name"`
+	Team         string  `json:"team"`
+	Position     string  `json:"position"`
+	Cost         float64 `json:"cost"`                    // market price
+	SellingPrice float64 `json:"selling_price,omitempty"` // what FPL pays; set when the transfer history is available
+	Form         float64 `json:"form"`
+	ValueScore   float64 `json:"value_score"`
+	Reasoning    string  `json:"reasoning"`
 	// PriceRisk is set when price_predictions flags this player; see
 	// priceRiskByPlayer. Informational only: it does not affect ranking.
 	PriceRisk string `json:"price_risk,omitempty"`
@@ -309,6 +310,16 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 		})
 	}
 
+	squadPlayers := make([]*fpl.Player, 0, len(squad))
+	for _, se := range squad {
+		squadPlayers = append(squadPlayers, se.player)
+	}
+	sellingPrices := e.squadSellingPrices(ctx, teamID, squadPlayers)
+	budgetNote := marketPriceNote
+	if sellingPrices != nil {
+		budgetNote = sellingPriceNote
+	}
+
 	// Worst value first: these are the sell candidates.
 	slices.SortStableFunc(squad, func(a, b squadEntry) int {
 		switch {
@@ -338,10 +349,14 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 
 	suggestions := make([]TransferSuggestion, 0, len(sellCandidates))
 	for _, sell := range sellCandidates {
-		// FPL pays selling_price, not current price, but purchase price isn't
-		// exposed by this endpoint — current price is the best available
-		// estimate, as required by the transfer estimate contract.
+		// FPL pays the selling price, not the market price. Without the
+		// transfer history the market price is the best available estimate.
 		budget := sell.cost + bankM
+		var sellingPrice float64
+		if sp, ok := sellingPrices[sell.player.ID]; ok {
+			sellingPrice = float64(sp.SellingTenths) / 10
+			budget = sellingPrice + bankM
+		}
 		posType := sell.player.ElementType
 
 		var replacements []TransferInOption
@@ -408,7 +423,7 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 		suggestions = append(suggestions, TransferSuggestion{
 			TransferOut: TransferOutPlayer{
 				ID: sell.player.ID, Name: sell.player.WebName, Team: sell.team,
-				Position: sell.position, Cost: sell.cost, Form: sell.form,
+				Position: sell.position, Cost: sell.cost, SellingPrice: sellingPrice, Form: sell.form,
 				ValueScore: sell.valueScore, Reasoning: e.sellReason(&sell),
 				PriceRisk: priceRiskFor(sell.player, priceRisks),
 			},
@@ -442,7 +457,7 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 		Gameweek:            nextGW,
 		FreeTransfers:       freeTransfers,
 		BankBalanceM:        bankM,
-		BudgetNote:          "Budget estimates use current player prices. FPL's selling price may differ if a player's value has risen since purchase — check the FPL app for your exact budget.",
+		BudgetNote:          budgetNote,
 		NumSuggestions:      len(suggestions),
 		TransferSuggestions: suggestions,
 		SquadSize:           len(squadOverview),

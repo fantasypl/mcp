@@ -53,10 +53,18 @@ type ChipUsage struct {
 
 // ManagerTransfer is one entry of GET /entry/{team_id}/transfers/ — a single
 // transfer a manager made this season, most recent first.
+//
+// ElementInCost is the price paid for the incoming player, which becomes
+// their purchase price. ElementOutCost is what FPL paid for the outgoing
+// player: their selling price at the time, not their market price.
 type ManagerTransfer struct {
 	Event          int `json:"event"`
 	ElementIn      int `json:"element_in"`
 	ElementInCost  int `json:"element_in_cost"`
 	ElementOut     int `json:"element_out"`
 	ElementOutCost int `json:"element_out_cost"`
+
+	// Time is when the transfer was made (RFC 3339, UTC). It orders
+	// transfers within one gameweek.
+	Time string `json:"time,omitempty"`
 }
