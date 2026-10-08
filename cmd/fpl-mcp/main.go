@@ -340,7 +340,7 @@ func findEvent(events []fpl.Event, id int) (fpl.Event, bool) {
 }
 
 func addResources(s *mcp.Server, c *fpl.Client) {
-	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Description: "Current FPL gameweek status — which GW is active, deadlines, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	s.AddResource(&mcp.Resource{URI: "fpl://status", Name: "status", Title: "Gameweek status", Description: "Current FPL gameweek status — which GW is active, deadlines, and season progress.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		b, e := c.Bootstrap(ctx)
 		if e != nil {
 			return nil, e
@@ -366,7 +366,7 @@ func addResources(s *mcp.Server, c *fpl.Client) {
 		}, "", "  ")
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: "fpl://status", MIMEType: "application/json", Text: string(v)}}}, nil
 	})
-	s.AddResource(&mcp.Resource{URI: "fpl://teams", Name: "teams", Description: "All 20 Premier League teams with short names and IDs.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	s.AddResource(&mcp.Resource{URI: "fpl://teams", Name: "teams", Title: "Premier League teams", Description: "All 20 Premier League teams with short names and IDs.", MIMEType: "application/json"}, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		b, e := c.Bootstrap(ctx)
 		if e != nil {
 			return nil, e
@@ -390,6 +390,14 @@ func userMessage(text string) *mcp.GetPromptResult {
 	return &mcp.GetPromptResult{Messages: []*mcp.PromptMessage{{Role: "user", Content: &mcp.TextContent{Text: text}}}}
 }
 
+// teamIDArg is the team_id argument shared by the team-scoped prompts.
+var teamIDArg = &mcp.PromptArgument{
+	Name:        "team_id",
+	Title:       "FPL team ID",
+	Description: "Your FPL team ID: the number after /entry/ in your team's Points page URL, e.g. 1234567 in fantasy.premierleague.com/entry/1234567/event/5.",
+	Required:    true,
+}
+
 // addPrompts registers the pre-built prompts that appear in Claude Desktop's
 // prompt selector, helping new users discover what the server can do. Each
 // one just tells the model which tool to call and what to cover in its
@@ -397,8 +405,9 @@ func userMessage(text string) *mcp.GetPromptResult {
 func addPrompts(s *mcp.Server) {
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "analyze_my_fpl_team",
+		Title:       "Analyze my FPL team",
 		Description: "Comprehensive analysis of an FPL manager's team — squad health, captain pick, transfers, fixtures, and price risks.",
-		Arguments:   []*mcp.PromptArgument{{Name: "team_id", Required: true}},
+		Arguments:   []*mcp.PromptArgument{teamIDArg},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(fmt.Sprintf(
 			"Use the fpl_manager_hub tool with team_id %s to pull a full intelligence "+
@@ -414,6 +423,7 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "who_should_i_captain",
+		Title:       "Who should I captain?",
 		Description: "Get captain pick recommendations with detailed reasoning for this gameweek.",
 	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(
@@ -428,8 +438,13 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "find_differential_picks",
+		Title:       "Find differential picks",
 		Description: "Find underowned gems that most FPL managers are missing.",
-		Arguments:   []*mcp.PromptArgument{{Name: "max_ownership", Required: false}},
+		Arguments: []*mcp.PromptArgument{{
+			Name:        "max_ownership",
+			Title:       "Maximum ownership %",
+			Description: "Only show players owned by at most this percentage of managers. Defaults to 10.",
+		}},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		maxOwnership := req.Params.Arguments["max_ownership"]
 		if maxOwnership == "" {
@@ -449,8 +464,9 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "plan_my_transfers",
+		Title:       "Plan my transfers",
 		Description: "Get transfer suggestions based on your current squad and upcoming fixtures.",
-		Arguments:   []*mcp.PromptArgument{{Name: "team_id", Required: true}},
+		Arguments:   []*mcp.PromptArgument{teamIDArg},
 	}, func(_ context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(fmt.Sprintf(
 			"Use the transfer_suggestions tool with team_id %s to analyze my squad "+
@@ -466,6 +482,7 @@ func addPrompts(s *mcp.Server) {
 
 	s.AddPrompt(&mcp.Prompt{
 		Name:        "price_change_alert",
+		Title:       "Price change alert",
 		Description: "Check which players are about to rise or fall in price tonight.",
 	}, func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		return userMessage(

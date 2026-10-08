@@ -42,7 +42,39 @@
     { "name": "chip_strategy", "description": "When to use each remaining chip" },
     { "name": "rival_tracker", "description": "Mini-league rival analysis and counter-strategies" },
     { "name": "league_analyzer", "description": "Win probability predictions for a mini-league" },
-    { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" }
+    { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" },
+    { "name": "optimal_squad", "description": "Highest-projected 15-man squad under a budget, from an exact optimizer" },
+    { "name": "optimal_transfers", "description": "Optimal transfers for your current squad, from an exact optimizer" }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_my_fpl_team",
+      "description": "Comprehensive analysis of an FPL manager's team — squad health, captain pick, transfers, fixtures, and price risks.",
+      "arguments": ["team_id"],
+      "text": "Use the fpl_manager_hub tool with team_id ${arguments.team_id} to pull a full intelligence report for my FPL team. Then give me a comprehensive analysis covering:\n1. Squad health — any injured, doubtful, or poor-form starters I should worry about\n2. Captain recommendation — who should I captain and why\n3. Transfer priorities — which players should I sell and who are the best replacements\n4. Fixture outlook — which of my players have great or terrible upcoming fixtures\n5. Price change risks — am I about to lose value on anyone\n6. Overall verdict — a 1-paragraph summary of my team's state and the single most important action to take this gameweek"
+    },
+    {
+      "name": "find_differential_picks",
+      "description": "Find underowned gems that most FPL managers are missing.",
+      "arguments": ["max_ownership"],
+      "text": "Use the differential_finder tool with max_ownership_pct ${arguments.max_ownership} to find underowned players who are outperforming their ownership. Then:\n- Highlight the top 3 differentials I should seriously consider\n- For each one, explain WHY they're flying under the radar\n- Rate their upcoming fixtures\n- Tell me if they're a short-term punt or a long-term hold\n- Flag any risks (rotation, tough fixtures coming, underlying stats not matching output)\nI want players that can give me a real rank boost."
+    },
+    {
+      "name": "plan_my_transfers",
+      "description": "Get transfer suggestions based on your current squad and upcoming fixtures.",
+      "arguments": ["team_id"],
+      "text": "Use the transfer_suggestions tool with team_id ${arguments.team_id} to analyze my squad and suggest transfers. Then walk me through the plan:\n1. Who are the weakest links in my squad and why?\n2. What are the best replacements and what makes them better?\n3. Should I take a hit (-4 points) for an extra transfer or save it?\n4. Are any suggested transfers also good for upcoming fixture swings?\n5. Are any targets about to rise in price (buy now vs. wait)?\nGive me a clear action plan: exactly which transfers to make and in what order."
+    },
+    {
+      "name": "price_change_alert",
+      "description": "Check which players are about to rise or fall in price tonight.",
+      "text": "Use the price_predictions tool to check tonight's likely price changes. Then give me a briefing:\n- Which players are most likely to RISE in price tonight?\n- Which players are most likely to FALL?\n- Do I need to rush any transfers through before the price change?\n- Are any of the risers worth buying even if I wasn't planning a transfer?\n- Are any of the fallers players I should panic-sell?\nKeep it actionable — tell me exactly what to do before tonight's deadline."
+    },
+    {
+      "name": "who_should_i_captain",
+      "description": "Get captain pick recommendations with detailed reasoning for this gameweek.",
+      "text": "Use the captain_pick tool to get the top 5 captain recommendations for this gameweek. Then explain the results to me in plain English:\n- Who is the #1 pick and why?\n- What makes them stand out (xG, fixtures, form, penalties)?\n- Is there a high-risk high-reward differential captain option?\n- Any injury flags or rotation risks I should be aware of?\nGive me a clear final recommendation with your confidence level."
+    }
   ],
   "keywords": ["fantasy-premier-league", "fpl", "football", "soccer", "fantasy-sports"],
   "license": "MIT",
