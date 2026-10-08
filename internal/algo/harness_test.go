@@ -15,7 +15,7 @@ func testdataPath(parts ...string) string {
 	return filepath.Join(append([]string{"..", "..", "testdata"}, parts...)...)
 }
 
-func loadJSON[T any](t *testing.T, path string) T {
+func loadJSON[T any](t testing.TB, path string) T {
 	t.Helper()
 	b, err := os.ReadFile(path)
 	if err != nil {

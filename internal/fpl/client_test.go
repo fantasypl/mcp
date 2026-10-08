@@ -208,6 +208,44 @@ func TestNoRetryOnMalformedJSON(t *testing.T) {
 	}
 }
 
+// A 404 is an answer, not a fault: the next gameweek's picks 404 until its
+// deadline passes, and retrying that cost optimal_transfers about 3.8s.
+func TestNoRetryOnClientError(t *testing.T) {
+	for _, status := range []int{http.StatusNotFound, http.StatusForbidden} {
+		var hits int32
+		c, slept, _ := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+			atomic.AddInt32(&hits, 1)
+			w.WriteHeader(status)
+		})
+		if _, err := c.Bootstrap(context.Background()); err == nil {
+			t.Fatalf("status %d: expected failure", status)
+		}
+		if hits != 1 || len(*slept) != 0 {
+			t.Errorf("status %d: attempts = %d, sleeps = %v, want 1 attempt and no sleep", status, hits, *slept)
+		}
+	}
+}
+
+// 429 and 408 are transient and still retried.
+func TestRetryOnRateLimit(t *testing.T) {
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusRequestTimeout} {
+		var hits int32
+		c, _, _ := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+			if atomic.AddInt32(&hits, 1) < 2 {
+				w.WriteHeader(status)
+				return
+			}
+			w.Write([]byte(`{"elements":[]}`))
+		})
+		if _, err := c.Bootstrap(context.Background()); err != nil {
+			t.Fatalf("status %d: expected success on retry: %v", status, err)
+		}
+		if hits != 2 {
+			t.Errorf("status %d: attempts = %d, want 2", status, hits)
+		}
+	}
+}
+
 // The FPL API rejects requests without a browser-shaped User-Agent, so this is
 // load-bearing rather than cosmetic.
 func TestUserAgentSent(t *testing.T) {

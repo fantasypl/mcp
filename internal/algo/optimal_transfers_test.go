@@ -2,6 +2,7 @@ package algo
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 // newEngineWithSquadAndHistory wires both the synthetic squad and season
 // history fixtures into a stub client — optimal_transfers needs history for
 // its ManagerStatus/budget derivation, unlike TransferSuggestions.
-func newEngineWithSquadAndHistory(t *testing.T, fixture string) *Engine {
+func newEngineWithSquadAndHistory(t testing.TB, fixture string) *Engine {
 	t.Helper()
 	squad := loadJSON[*fpl.TeamPicks](t, testdataPath("picks_squad1.json"))
 	history := loadJSON[*fpl.TeamHistory](t, testdataPath("history_squad1.json"))
@@ -82,7 +83,7 @@ func TestOptimalTransfersDefaultHasExactlyOneOption(t *testing.T) {
 // avoid needlessly repeating the same expensive computation in every test —
 // including a realistic-scale timing check through the full pipeline
 // (translation, pool-cap prefilter, and up to 1+maxHitsConsidered
-// sequential Solve calls), mirroring TestOptimalSquadRealisticScaleTiming's
+// parallel Solve calls), mirroring TestOptimalSquadRealisticScaleTiming's
 // worst-case-elapsed approach for this tool's harder, Locked-constrained
 // search.
 func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
@@ -103,12 +104,27 @@ func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 	}
 
 	t.Run("stays within worst-case latency", func(t *testing.T) {
-		worstCase := time.Duration(1+maxHitsConsidered) * (optimalSquadTimeLimit + 2*time.Second)
+		// The searches run in parallel, so the sweep costs one time limit,
+		// not one per option (#22). The margin covers setup and -race.
+		worstCase := optimalSquadTimeLimit + 4*time.Second
 		if elapsed > worstCase {
-			t.Errorf("OptimalTransfers(allowHits=true) took %v, want well under %v", elapsed, worstCase)
+			t.Errorf("OptimalTransfers(allowHits=true) took %v, want under %v", elapsed, worstCase)
 		}
 		for _, opt := range result.Options {
 			t.Logf("num_transfers=%d optimal=%v net_projected_points=%.2f", opt.NumTransfers, opt.Optimal, opt.NetProjectedPoints)
+		}
+	})
+
+	t.Run("partial says whether any search hit its time limit", func(t *testing.T) {
+		anyTimedOut := false
+		for _, opt := range result.Options {
+			anyTimedOut = anyTimedOut || !opt.Optimal
+		}
+		if result.Partial != anyTimedOut {
+			t.Errorf("Partial = %v, want %v (any option with optimal=false)", result.Partial, anyTimedOut)
+		}
+		if (result.PartialNote != "") != result.Partial {
+			t.Errorf("PartialNote = %q, want it set exactly when Partial is true", result.PartialNote)
 		}
 	})
 
@@ -194,6 +210,51 @@ func TestOptimalTransfersAllowHitsSweepProperties(t *testing.T) {
 			}
 		}
 	})
+}
+
+// A squad that fits a smaller MaxChanges ceiling also fits a larger one, so a
+// time-limited search at the larger ceiling must never report less (#22).
+func TestSolveTransferSweepCarriesForwardAcrossCeilings(t *testing.T) {
+	rng := rand.New(rand.NewSource(7))
+	cands := realisticFPLCandidates(rng, true)
+	var locked []int
+	for pos := 1; pos <= numPositions; pos++ {
+		n := 0
+		for _, c := range cands {
+			if c.Position == pos && n < [5]int{0, 2, 5, 5, 3}[pos] {
+				locked = append(locked, c.ID)
+				n++
+			}
+		}
+	}
+	results, err := solveTransferSweep(cands, 1000, locked, []int{0, 1, 2, 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i < len(results); i++ {
+		if results[i].Value < results[i-1].Value {
+			t.Errorf("ceiling %d value %.2f is below ceiling %d's %.2f", i, results[i].Value, i-1, results[i-1].Value)
+		}
+	}
+}
+
+// BenchmarkOptimalTransfersAllowHits times the full allow_hits sweep on the
+// midseason fixture, to catch the kind of slowdown reported in #22. Each
+// iteration is bounded by one optimalSquadTimeLimit since the searches run
+// in parallel. Run with: go test ./internal/algo -bench OptimalTransfersAllowHits -benchtime 3x
+func BenchmarkOptimalTransfersAllowHits(b *testing.B) {
+	e := newEngineWithSquadAndHistory(b, "midseason")
+	ctx := context.Background()
+	b.ResetTimer()
+	for b.Loop() {
+		got, err := e.OptimalTransfers(ctx, syntheticTeamID, nil, true)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if r := got.(*OptimalTransfersResult); len(r.Options) != 1+maxHitsConsidered {
+			b.Fatalf("got %d options, want %d", len(r.Options), 1+maxHitsConsidered)
+		}
+	}
 }
 
 // A brand-new manager with no recorded gameweek history should still get a
