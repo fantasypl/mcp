@@ -5,37 +5,40 @@
   "budget_m": 100.5,
   "budget_note": "Budget is FPL's own reported total team value (squad + bank) as of your most recent recorded gameweek.",
   "pool_note": "Considered the top 24/60/60/36 GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
+  "projected_points_basis": "Projected points over gameweeks 1-5 for the best starting XI in a valid formation, plus 0.1 x the four bench players' projected points. Bench players count at a discount because they only score when a starter misses out.",
   "best_note": "best marks the option with the highest net projected points, not the lowest risk. confidence rates how far each option's incoming players can be trusted (share of available minutes played, and goal involvements versus expected), and safest marks the most reliable option.",
   "options": [
     {
       "num_transfers": 1,
       "hit_cost": 0,
-      "projected_points": 102.04,
-      "net_projected_points": 102.04,
+      "projected_points": 94.3,
+      "net_projected_points": 94.3,
       "optimal": true,
       "best": true,
-      "confidence": "high",
-      "confidence_notes": [],
+      "confidence": "medium",
+      "confidence_notes": [
+        "Semenyo: 23 goal involvements from 14.2 expected, which tends to regress"
+      ],
       "safest": true,
-      "total_cost_m": 93.5,
+      "total_cost_m": 97,
       "transfers_out": [
         {
-          "id": 58,
-          "name": "Forster",
-          "team": "BOU",
-          "position": "GKP",
-          "cost_m": 4,
-          "projected_points": 0
+          "id": 134,
+          "name": "Oriola",
+          "team": "BHA",
+          "position": "MID",
+          "cost_m": 4.5,
+          "projected_points": 2.14
         }
       ],
       "transfers_in": [
         {
-          "id": 199,
-          "name": "Benitez",
-          "team": "CRY",
-          "position": "GKP",
-          "cost_m": 4.5,
-          "projected_points": 14.42
+          "id": 397,
+          "name": "Semenyo",
+          "team": "MCI",
+          "position": "MID",
+          "cost_m": 8.5,
+          "projected_points": 12.22
         }
       ]
     }

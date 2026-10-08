@@ -32,15 +32,18 @@ const maxHitsConsidered = 3
 
 // OptimalTransfersResult is optimal_transfers' response shape.
 type OptimalTransfersResult struct {
-	TeamID        int                  `json:"team_id"`
-	Gameweek      int                  `json:"gameweek"`
-	FreeTransfers int                  `json:"free_transfers"`
-	BudgetM       float64              `json:"budget_m"`
-	BudgetNote    string               `json:"budget_note"`
-	PoolNote      string               `json:"pool_note"`
-	BestNote      string               `json:"best_note"` // what the best and safest flags on each option mean
-	Options       []TransferPlanOption `json:"options"`
-	PriceRiskNote string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
+	TeamID        int     `json:"team_id"`
+	Gameweek      int     `json:"gameweek"`
+	FreeTransfers int     `json:"free_transfers"`
+	BudgetM       float64 `json:"budget_m"`
+	BudgetNote    string  `json:"budget_note"`
+	PoolNote      string  `json:"pool_note"`
+	// ProjectedPointsBasis says in words what each option's projected_points
+	// sums: the best XI plus a discounted bench, as optimal_squad uses.
+	ProjectedPointsBasis string               `json:"projected_points_basis"`
+	BestNote             string               `json:"best_note"` // what the best and safest flags on each option mean
+	Options              []TransferPlanOption `json:"options"`
+	PriceRiskNote        string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
 	// Partial is true when any option's search hit its time limit before
 	// proving optimality (that option has optimal: false). PartialNote then
 	// says what that means for the caller.
@@ -50,8 +53,11 @@ type OptimalTransfersResult struct {
 
 // TransferPlanOption is one point on the transfers-vs-hit-cost sweep.
 type TransferPlanOption struct {
-	NumTransfers       int     `json:"num_transfers"`
-	HitCost            int     `json:"hit_cost"`
+	NumTransfers int `json:"num_transfers"`
+	HitCost      int `json:"hit_cost"`
+	// ProjectedPoints is the resulting squad's value: the best XI's
+	// projected points plus the bench at benchWeight (see
+	// OptimalTransfersResult.ProjectedPointsBasis), before any hit cost.
 	ProjectedPoints    float64 `json:"projected_points"`
 	NetProjectedPoints float64 `json:"net_projected_points"`
 	Optimal            bool    `json:"optimal"`
@@ -411,10 +417,11 @@ func (e *Engine) OptimalTransfers(ctx context.Context, teamID int, gameweek *int
 		PoolNote: fmt.Sprintf(
 			"Considered the top %d/%d/%d/%d GKP/DEF/MID/FWD candidates by projected points, plus every player already in your squad — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
-		BestNote:    bestNoteText,
-		Options:     options,
-		Partial:     partial,
-		PartialNote: partialNoteFor(partial),
+		ProjectedPointsBasis: projectedPointsBasis(gw),
+		BestNote:             bestNoteText,
+		Options:              options,
+		Partial:              partial,
+		PartialNote:          partialNoteFor(partial),
 	}, nil
 }
 
@@ -448,11 +455,12 @@ func solveTransferSweep(candidates []Candidate, budgetTenths int, lockedIDs []in
 		g.Go(func() error {
 			r, err := Solve(candidates, SquadConstraints{
 				BudgetTenths:  budgetTenths,
-				PositionQuota: [5]int{0, 2, 5, 5, 3},
+				PositionQuota: fplQuota,
 				MaxPerClub:    3,
 				Locked:        lockedIDs,
 				MaxChanges:    ceiling,
 				TimeLimit:     optimalSquadTimeLimit,
+				Lineup:        &fplLineup,
 			})
 			results[i] = r
 			return err

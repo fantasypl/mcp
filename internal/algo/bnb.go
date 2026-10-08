@@ -2,6 +2,7 @@ package algo
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"time"
 )
@@ -61,6 +62,30 @@ type SquadConstraints struct {
 	// is always a valid, fully-constraint-satisfying squad — just not
 	// guaranteed to be the best possible one.
 	TimeLimit time.Duration
+
+	// Lineup, when set, changes the objective from the plain sum of every
+	// selected Value to a starting lineup plus a discounted bench: the best
+	// Lineup.Size starters under Lineup's per-position limits count fully,
+	// and everyone else counts at Lineup.BenchWeight. nil keeps the plain
+	// sum. See LineupRules.
+	Lineup *LineupRules
+}
+
+// LineupRules describes the starting lineup the objective rewards.
+//
+// For a fixed formation (how many of each position start), the objective
+// is additive within each position: its best players start and the rest
+// count at BenchWeight. So Solve searches each valid formation as its own
+// additive problem, with the same knapsack and club-cap bounds as the
+// plain sum, and a squad's value is its best formation's. Every formation
+// shares one incumbent and one deadline, and a formation whose root bound
+// cannot beat the incumbent is skipped without searching.
+type LineupRules struct {
+	Size int    // starters, e.g. 11
+	Min  [5]int // fewest starters per position (index 1..4)
+	Max  [5]int // most starters per position (index 1..4)
+	// BenchWeight is what a non-starter's Value counts for, in [0, 1].
+	BenchWeight float64
 }
 
 // Result is one feasible squad and its total value.
@@ -109,6 +134,24 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	}
 	locked := toSet(c.Locked)
 
+	// With a lineup objective, bounds use max(Value, 0): a bench weight
+	// below 1 makes a negative Value worth more on the bench than in the
+	// XI, so only a clamped value is a safe per-player ceiling. The true
+	// values are kept in orig for scoring complete squads.
+	var orig map[int]Candidate
+	if c.Lineup != nil {
+		orig = make(map[int]Candidate, len(candidates))
+		clamped := make([]Candidate, len(candidates))
+		for i, cnd := range candidates {
+			orig[cnd.ID] = cnd
+			if cnd.Value < 0 {
+				cnd.Value = 0
+			}
+			clamped[i] = cnd
+		}
+		candidates = clamped
+	}
+
 	var byPosition [5][]Candidate
 	for _, cnd := range candidates {
 		if cnd.Position < 1 || cnd.Position > numPositions {
@@ -145,12 +188,7 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 		pool = append(pool, byPositionSorted[pos]...)
 	}
 
-	// A suffix family of knapsack-exact-count DP tables per position, built
-	// once here and queried (O(1) per lookup) by bound() at every node —
-	// see buildPositionSuffixDP's doc comment for what it computes and why
-	// a family (not one global table) is needed.
-	//
-	// Each table is sized to min(c.BudgetTenths, that position's own
+	// Each DP table is sized to min(c.BudgetTenths, that position's own
 	// maximum possible cost) rather than c.BudgetTenths directly — table
 	// size is O(budget), and c.BudgetTenths can be enormous (callers using
 	// it as a practically-unlimited sentinel, e.g. to find an unconstrained
@@ -159,51 +197,75 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	// so capping there loses no correctness while keeping table size tied
 	// to real candidate prices instead of an arbitrary caller-supplied
 	// budget figure.
-	var dpSuffix [5][]positionDP
+	var tableBudget [5]int
 	totalMaxCost := 0
 	for pos := 1; pos <= numPositions; pos++ {
 		posMax := positionMaxCost(byPositionSorted[pos], c.PositionQuota[pos])
 		totalMaxCost += posMax
-		tableBudget := c.BudgetTenths
-		if posMax < tableBudget {
-			tableBudget = posMax
-		}
-		dpSuffix[pos] = buildPositionSuffixDP(byPositionSorted[pos], c.PositionQuota[pos], tableBudget)
+		tableBudget[pos] = min(c.BudgetTenths, posMax)
 	}
 
 	// bound's budget-sharing merge (see its doc comment) needs a single
 	// common budget range to combine positions' DP rows over — same
 	// reasoning as each table's own cap above: use the real cost ceiling,
 	// not a possibly-enormous caller-supplied budget.
-	mergeCap := c.BudgetTenths
-	if totalMaxCost < mergeCap {
-		mergeCap = totalMaxCost
-	}
+	mergeCap := min(c.BudgetTenths, totalMaxCost)
 	blockOrder := [numPositions]int{1, 4, 3, 2}
 	var blockIndexOf [5]int
 	for i, pos := range blockOrder {
 		blockIndexOf[pos] = i
 	}
-	var fullRow [5][]float64
-	for pos := 1; pos <= numPositions; pos++ {
-		row := make([]float64, mergeCap+1)
-		for b := 0; b <= mergeCap; b++ {
-			// dpSuffix[pos][0] covers pos's entire candidate list (offset 0
-			// = nothing excluded yet) — the same table the old single
-			// global build produced.
-			row[b] = dpSuffix[pos][0].bestValue(c.PositionQuota[pos], b)
+
+	benchWeight := 1.0
+	if c.Lineup != nil {
+		benchWeight = c.Lineup.BenchWeight
+	}
+
+	// One set of bound tables per formation. A formation fixes how many of
+	// each position sit on the bench, which makes the objective additive
+	// within each position (see LineupRules), so each formation gets the
+	// same suffix-DP and budget-merge machinery the plain sum uses. The
+	// plain sum is the single formation with nobody benched. Tables depend
+	// only on (position, bench count), so formations that agree on a
+	// position share them.
+	dpCache := map[[2]int][]positionDP{}
+	dpFor := func(pos, bench int) []positionDP {
+		key := [2]int{pos, bench}
+		if t, ok := dpCache[key]; ok {
+			return t
 		}
-		fullRow[pos] = row
+		t := buildPositionSuffixDP(byPositionSorted[pos], c.PositionQuota[pos], tableBudget[pos], bench, benchWeight)
+		dpCache[key] = t
+		return t
 	}
-	// suffixAfter[i] = the best combined value from every position AFTER
-	// blockOrder[i] in branch order, each at its full original quota,
-	// sharing a budget — computed back-to-front so each merge only ever
-	// combines two already-computed pieces.
-	var suffixAfter [numPositions][]float64
-	suffixAfter[numPositions-1] = make([]float64, mergeCap+1) // nothing after the last block
-	for i := numPositions - 2; i >= 0; i-- {
-		suffixAfter[i] = mergeValueArrays(fullRow[blockOrder[i+1]], suffixAfter[i+1], mergeCap)
+	var forms []formation
+	for _, bench := range enumerateBenches(c) {
+		f := formation{bench: bench}
+		var fullRow [5][]float64
+		for pos := 1; pos <= numPositions; pos++ {
+			f.dpSuffix[pos] = dpFor(pos, bench[pos])
+			row := make([]float64, mergeCap+1)
+			for b := 0; b <= mergeCap; b++ {
+				// dpSuffix[pos][0] covers pos's entire candidate list
+				// (offset 0 = nothing excluded yet).
+				row[b] = f.dpSuffix[pos][0].bestValue(c.PositionQuota[pos], b)
+			}
+			fullRow[pos] = row
+		}
+		// suffixAfter[i] = the best combined value from every position
+		// AFTER blockOrder[i] in branch order, each at its full original
+		// quota, sharing a budget — computed back-to-front so each merge
+		// only ever combines two already-computed pieces.
+		f.suffixAfter[numPositions-1] = make([]float64, mergeCap+1) // nothing after the last block
+		for i := numPositions - 2; i >= 0; i-- {
+			f.suffixAfter[i] = mergeValueArrays(fullRow[blockOrder[i+1]], f.suffixAfter[i+1], mergeCap)
+		}
+		first := pool[0].Position
+		f.rootBound = bound(f.dpSuffix[first][0], f.suffixAfter, blockIndexOf, mergeCap, first, c.PositionQuota, c.BudgetTenths, 0)
+		forms = append(forms, f)
 	}
+	// Most promising formation first, so its incumbent can prune the rest.
+	sort.SliceStable(forms, func(i, j int) bool { return forms[i].rootBound > forms[j].rootBound })
 
 	// Phase 2: an independent, club-cap-only bound, precomputed the same
 	// node-aware way as dpSuffix above — clubTopSuffix[pos][j] mirrors
@@ -215,6 +277,9 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	// doc comment relies on). clubTopByIdx[idx] is the final per-node
 	// combination, precomputed once per pool index (not per DFS node —
 	// see clubCapBound's doc comment for why that's sound and sufficient).
+	// It counts every player at full value, which stays a valid ceiling for
+	// a benched one: BenchWeight is at most 1 and lineup values are
+	// clamped at 0.
 	var clubTopSuffix [5][]map[int][]float64
 	for pos := 1; pos <= numPositions; pos++ {
 		clubTopSuffix[pos] = buildClubTopSuffix(byPositionSorted[pos], c.MaxPerClub)
@@ -233,9 +298,10 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	}
 
 	s := &solver{
-		pool: pool, dpSuffix: dpSuffix, blockStart: blockStart, mergeCap: mergeCap,
-		suffixAfter: suffixAfter, blockIndexOf: blockIndexOf, clubTopByIdx: clubTopByIdx,
+		pool: pool, blockStart: blockStart, mergeCap: mergeCap,
+		blockIndexOf: blockIndexOf, clubTopByIdx: clubTopByIdx,
 		locked: locked, c: c, best: Result{Value: negInf},
+		orig: orig, benchWeight: benchWeight,
 	}
 	// Seed s.best with a cheap, ratio-greedy constructive squad before the
 	// exhaustive search starts — see greedyFeasibleSeed's doc comment for
@@ -247,12 +313,22 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	// backtracking to ANY affordable complete squad, even before TimeLimit
 	// has a real incumbent to fall back on).
 	if seed, ok := greedyFeasibleSeed(byPositionSorted, c); ok {
+		seed.Value = s.objective(seed.Squad)
 		s.best = seed
 	}
 	if c.TimeLimit > 0 {
 		s.deadline = time.Now().Add(c.TimeLimit)
 	}
-	s.recurse(0, nil, 0, c.PositionQuota, map[int]int{}, 0)
+	for i := range forms {
+		if forms[i].rootBound <= s.best.Value {
+			continue // no squad under this formation can beat the incumbent
+		}
+		s.form = &forms[i]
+		s.recurse(0, nil, 0, c.PositionQuota, map[int]int{}, 0)
+		if s.timedOut {
+			break
+		}
+	}
 
 	if s.best.Value == negInf {
 		if s.timedOut {
@@ -265,6 +341,11 @@ func solve(candidates []Candidate, c SquadConstraints) (*solver, error) {
 	// returned, so "did the search finish" is all Optimal needs to
 	// capture — no per-update bookkeeping required.
 	s.best.Optimal = !s.timedOut
+	if s.orig != nil {
+		for i, cnd := range s.best.Squad {
+			s.best.Squad[i] = s.orig[cnd.ID]
+		}
+	}
 
 	// Deterministic output ordering — the search itself doesn't guarantee
 	// one, and callers (golden fixtures in particular) need stability.
@@ -360,14 +441,24 @@ func greedyFeasibleSeed(byPositionSorted [5][]Candidate, c SquadConstraints) (Re
 
 const negInf = -(1 << 62) // a value no real squad total can reach, used as "no result yet"
 
+// formation is one way to split each position's quota into starters and
+// bench, with the bound tables that split implies.
+type formation struct {
+	bench       [5]int                  // bench[pos]: how many of pos's quota sit on the bench
+	dpSuffix    [5][]positionDP         // dpSuffix[pos][j]: exact-count DP over pos's own sorted list from offset j onward — see buildPositionSuffixDP
+	suffixAfter [numPositions][]float64 // suffixAfter[i]: best combined value of every position after blockOrder[i], full quota, sharing budget
+	rootBound   float64                 // bound on any squad's value under this formation
+}
+
 type solver struct {
-	pool         []Candidate             // branch order: position blocks, value-descending within each
-	dpSuffix     [5][]positionDP         // dpSuffix[pos][j]: exact-count DP over pos's own sorted list from offset j onward — see buildPositionSuffixDP
-	blockStart   [5]int                  // pool index where each position's block begins — maps a node's idx to its offset j within that block
-	mergeCap     int                     // common budget range suffixAfter's rows are sized to
-	suffixAfter  [numPositions][]float64 // suffixAfter[i]: best combined value of every position after blockOrder[i], full quota, sharing budget
-	blockIndexOf [5]int                  // position -> its index in the fixed branch order
-	clubTopByIdx []map[int][]float64     // clubTopByIdx[idx]: club -> top MaxPerClub still-available values at that node — see clubCapBound
+	pool         []Candidate       // branch order: position blocks, value-descending within each
+	form         *formation        // the formation being searched
+	blockStart   [5]int            // pool index where each position's block begins — maps a node's idx to its offset j within that block
+	mergeCap     int               // common budget range suffixAfter's rows are sized to
+	blockIndexOf [5]int            // position -> its index in the fixed branch order
+	orig         map[int]Candidate // true (unclamped) candidates by ID; nil without a lineup objective
+	benchWeight  float64
+	clubTopByIdx []map[int][]float64 // clubTopByIdx[idx]: club -> top MaxPerClub still-available values at that node — see clubCapBound
 	locked       map[int]bool
 	c            SquadConstraints
 	best         Result
@@ -402,10 +493,12 @@ func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int,
 	for _, n := range posLeft {
 		needed += n
 	}
-	currentValue := sumValue(chosen)
+	currentValue := s.formationValue(chosen)
 	if needed == 0 {
-		if currentValue > s.best.Value {
-			s.best = Result{Squad: append([]Candidate(nil), chosen...), Value: currentValue}
+		// A squad's value is its best formation's, which may beat the
+		// formation being searched.
+		if v := s.objective(chosen); v > s.best.Value {
+			s.best = Result{Squad: append([]Candidate(nil), chosen...), Value: v}
 		}
 		return
 	}
@@ -419,7 +512,7 @@ func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int,
 	// good) by the DFS reaching this node, so dpSuffix[cnd.Position][j] is
 	// exactly the right "still available" table to bound against.
 	j := idx - s.blockStart[cnd.Position]
-	currentDP := s.dpSuffix[cnd.Position][j]
+	currentDP := s.form.dpSuffix[cnd.Position][j]
 
 	// Two independent, differently-relaxed upper bounds on the same true
 	// value: posBound is exact on price/budget/position-quota, ignoring
@@ -428,7 +521,7 @@ func (s *solver) recurse(idx int, chosen []Candidate, spent int, posLeft [5]int,
 	// upper bound (the real, fully-constrained optimum is <= both), and
 	// combining them this way needs no reasoning about their interaction —
 	// see clubCapBound's doc comment for why that matters here.
-	posBound := bound(currentDP, s.suffixAfter, s.blockIndexOf, s.mergeCap, cnd.Position, posLeft, s.c.BudgetTenths-spent, currentValue)
+	posBound := bound(currentDP, s.form.suffixAfter, s.blockIndexOf, s.mergeCap, cnd.Position, posLeft, s.c.BudgetTenths-spent, currentValue)
 	clBound := clubCapBound(s.clubTopByIdx[idx], clubCount, s.c.MaxPerClub, currentValue)
 	nodeBound := posBound
 	if clBound < nodeBound {
@@ -720,7 +813,7 @@ func mergeClubTops(a, b map[int][]float64, maxPerClub int) map[int][]float64 {
 	return out
 }
 
-func buildPositionSuffixDP(candidates []Candidate, quota int, maxBudget int) []positionDP {
+func buildPositionSuffixDP(candidates []Candidate, quota, maxBudget, bench int, benchWeight float64) []positionDP {
 	if maxBudget < 0 {
 		maxBudget = 0
 	}
@@ -738,7 +831,7 @@ func buildPositionSuffixDP(candidates []Candidate, quota int, maxBudget int) []p
 	suffixes := make([]positionDP, m+1)
 	suffixes[m] = snapshotAtMost(raw, maxBudget)
 	for j := m - 1; j >= 0; j-- {
-		insertIntoExactTable(raw, candidates[j], quota, maxBudget)
+		insertIntoExactTable(raw, candidates[j], quota, maxBudget, bench, benchWeight)
 		suffixes[j] = snapshotAtMost(raw, maxBudget)
 	}
 	return suffixes
@@ -750,18 +843,30 @@ func buildPositionSuffixDP(candidates []Candidate, quota int, maxBudget int) []p
 // form throughout buildPositionSuffixDP's insertion loop so later
 // insertions stay correct; only a snapshot copy (see snapshotAtMost) is
 // ever converted to "at most" semantics.
-func insertIntoExactTable(raw [][]float64, cnd Candidate, quota, maxBudget int) {
+//
+// bench is how many of the position's picks sit on the bench, each counting
+// at benchWeight. Candidates arrive in ascending value order (the suffix
+// family is built back to front over a value-descending list), so a
+// candidate that becomes the k-th pick is the largest of those k, and the
+// bench is always the first bench picks made: weight benchWeight for
+// k <= bench, 1 otherwise. That is the best bench for any chosen set (bench
+// the lowest values), so each entry stays exact. bench = 0 is the plain sum.
+func insertIntoExactTable(raw [][]float64, cnd Candidate, quota, maxBudget, bench int, benchWeight float64) {
 	price := cnd.PriceTenths
 	if price > maxBudget {
 		return // can never be afforded regardless of what else is picked
 	}
 	for k := quota; k >= 1; k-- {
+		value := cnd.Value
+		if k <= bench {
+			value *= benchWeight
+		}
 		for b := maxBudget; b >= price; b-- {
 			prev := raw[k-1][b-price]
 			if prev == unreachableValue {
 				continue
 			}
-			if v := prev + cnd.Value; v > raw[k][b] {
+			if v := prev + value; v > raw[k][b] {
 				raw[k][b] = v
 			}
 		}
@@ -911,7 +1016,105 @@ func validateConstraints(c SquadConstraints) error {
 	if c.MaxPerClub <= 0 {
 		return fmt.Errorf("max per club must be positive, got %d", c.MaxPerClub)
 	}
+	if l := c.Lineup; l != nil {
+		if l.BenchWeight < 0 || l.BenchWeight > 1 {
+			return fmt.Errorf("bench weight must be in [0, 1], got %v", l.BenchWeight)
+		}
+		for pos := 1; pos <= numPositions; pos++ {
+			if l.Min[pos] < 0 || l.Min[pos] > l.Max[pos] || l.Min[pos] > c.PositionQuota[pos] {
+				return fmt.Errorf("position %d: lineup needs %d-%d starters from a quota of %d", pos, l.Min[pos], l.Max[pos], c.PositionQuota[pos])
+			}
+		}
+		if len(enumerateBenches(c)) == 0 {
+			return fmt.Errorf("no lineup of %d starters fits the per-position limits and quotas", l.Size)
+		}
+	}
 	return nil
+}
+
+// enumerateBenches lists every valid formation as bench counts per
+// position: starters s[pos] in [Min, min(Max, quota)] summing to Size, and
+// bench = quota - s. Without a lineup objective it returns the single
+// all-starters split, which is the plain sum.
+func enumerateBenches(c SquadConstraints) [][5]int {
+	l := c.Lineup
+	if l == nil {
+		return [][5]int{{}}
+	}
+	var out [][5]int
+	var cur [5]int
+	var rec func(pos, starters int)
+	rec = func(pos, starters int) {
+		if pos > numPositions {
+			if starters == l.Size {
+				out = append(out, cur)
+			}
+			return
+		}
+		for st := l.Min[pos]; st <= min(l.Max[pos], c.PositionQuota[pos]); st++ {
+			cur[pos] = c.PositionQuota[pos] - st
+			rec(pos+1, starters+st)
+		}
+	}
+	rec(1, 0)
+	return out
+}
+
+// formationValue is the value of a partial selection under the formation
+// being searched: within each position, picks arrive best first (pool
+// order), so a pick at index i of that position's picks is benched exactly
+// when i >= quota - bench. That holds for a partly filled position too,
+// since every later pick from it is worth no more.
+func (s *solver) formationValue(chosen []Candidate) float64 {
+	var seen [5]int
+	total := 0.0
+	for _, cnd := range chosen {
+		v := cnd.Value
+		if seen[cnd.Position] >= s.c.PositionQuota[cnd.Position]-s.form.bench[cnd.Position] {
+			v *= s.benchWeight
+		}
+		seen[cnd.Position]++
+		total += v
+	}
+	return total
+}
+
+// objective scores a complete squad with true (unclamped) values: the plain
+// sum without a lineup objective, otherwise the best formation's starters
+// at full value plus everyone else at BenchWeight.
+func (s *solver) objective(squad []Candidate) float64 {
+	if s.orig == nil {
+		return sumValue(squad)
+	}
+	var byPos [5][]float64
+	for _, cnd := range squad {
+		byPos[cnd.Position] = append(byPos[cnd.Position], s.orig[cnd.ID].Value)
+	}
+	return lineupValue(byPos, s.c)
+}
+
+// lineupValue is the best formation's value for one squad: per position,
+// the best players start at full value and the rest count at BenchWeight.
+// byPos is sorted in place.
+func lineupValue(byPos [5][]float64, c SquadConstraints) float64 {
+	for pos := range byPos {
+		sort.Sort(sort.Reverse(sort.Float64Slice(byPos[pos])))
+	}
+	best := math.Inf(-1)
+	for _, bench := range enumerateBenches(c) {
+		total := 0.0
+		for pos := 1; pos <= numPositions; pos++ {
+			starters := c.PositionQuota[pos] - bench[pos]
+			for i, v := range byPos[pos] {
+				if i >= starters {
+					v *= c.Lineup.BenchWeight
+				}
+				total += v
+			}
+		}
+		best = max(best, total)
+	}
+	return best
 }
 
 // positionMaxCost returns the sum of the k most expensive candidates'
