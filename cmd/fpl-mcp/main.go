@@ -101,6 +101,7 @@ type hitIn struct {
 	PlayerOutID    int `json:"player_out_id"             jsonschema:"Player element ID being sold"`
 	PlayerInID     int `json:"player_in_id"              jsonschema:"Player element ID being bought"`
 	GameweeksAhead int `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
+	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
 }
 type rivalIn struct {
 	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
@@ -323,19 +324,34 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.LivePoints(ctx, in.TeamID) }, "Failed to get live points. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "is_hit_worth_it", Description: "Analyze whether taking a -4 point hit for a transfer is worth it.\n\nUSE THIS WHEN the user asks: \"Should I take a hit?\", \"Is it worth -4 to bring in X?\", \"Hit for Haaland worth it?\". Use player_comparison first to find player IDs if needed.\n\nProjects expected points for both players over N gameweeks, accounting for form, fixture difficulty, home/away, and playing chance."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hitIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "is_hit_worth_it", Description: "Analyze whether taking a -4 point hit for a transfer is worth it.\n\nUSE THIS WHEN the user asks: \"Should I take a hit?\", \"Is it worth -4 to bring in X?\", \"Hit for Haaland worth it?\". Use player_comparison first to find player IDs if needed.\n\nProjects expected points for both players over N gameweeks, accounting for form, fixture difficulty, home/away, and playing chance.\n\nPass team_id to also check the transfer is affordable: bank plus the outgoing player's selling price (what FPL pays you, which keeps only half of any price rise) against the incoming player's market price."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hitIn) (*mcp.CallToolResult, any, error) {
 		if in.PlayerOutID < 1 || in.PlayerInID < 1 {
 			return nil, errResult("Player IDs must be positive integers."), nil
 		}
 		if in.PlayerOutID == in.PlayerInID {
 			return nil, errResult("player_out_id and player_in_id must be different players."), nil
 		}
+		if in.TeamID != 0 {
+			if e := validTeam(in.TeamID); e != "" {
+				return nil, errResult(e), nil
+			}
+		}
 		if in.GameweeksAhead == 0 {
 			in.GameweeksAhead = 5
 		}
+		gws := clamp(in.GameweeksAhead, 1, 10)
 		return nil, call(func() (any, error) {
-			return engine.AnalyzeHit(ctx, in.PlayerOutID, in.PlayerInID, clamp(in.GameweeksAhead, 1, 10))
+			if in.TeamID != 0 {
+				return engine.AnalyzeHitForTeam(ctx, in.TeamID, in.PlayerOutID, in.PlayerInID, gws)
+			}
+			return engine.AnalyzeHit(ctx, in.PlayerOutID, in.PlayerInID, gws)
 		}, "Failed to analyze hit. Check that both player IDs are valid and try again."), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "manager_transfer_history", Description: "List every transfer a manager has made this season, with gameweek, players in and out, and prices, plus the purchase, market and selling price of each player in their current squad.\n\nUSE THIS WHEN the user asks: \"What transfers have I made?\", \"Did my Watkins hit pay off?\", \"What did I pay for Salah?\", \"What's my real budget?\", or wants to review past transfer decisions.\n\nSelling price is what FPL pays you for a player: the purchase price plus half of any rise since purchase, rounded down to 0.1m. Market price is what the player costs to buy now."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
+		if e := validTeam(in.TeamID); e != "" {
+			return nil, errResult(e), nil
+		}
+		return nil, call(func() (any, error) { return engine.TransferHistory(ctx, in.TeamID) }, fmt.Sprintf("Failed to get transfer history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans the next 10 gameweeks and scores each for every unused chip."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {

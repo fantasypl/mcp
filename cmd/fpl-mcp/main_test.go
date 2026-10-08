@@ -121,12 +121,12 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("tools/list: %v", err)
 	}
-	if len(tools.Tools) != 15 {
+	if len(tools.Tools) != 16 {
 		names := make([]string, len(tools.Tools))
 		for i, tl := range tools.Tools {
 			names[i] = tl.Name
 		}
-		t.Errorf("got %d tools, want 15: %v", len(tools.Tools), names)
+		t.Errorf("got %d tools, want 16: %v", len(tools.Tools), names)
 	}
 
 	resources, err := clientSession.ListResources(ctx, nil)
@@ -337,6 +337,12 @@ func TestToolValidation(t *testing.T) {
 		{"is_hit_worth_it", map[string]any{"player_out_id": -1, "player_in_id": 10}},
 		{"is_hit_worth_it", map[string]any{"player_out_id": 10, "player_in_id": -1}},
 		{"is_hit_worth_it", map[string]any{"player_out_id": 0, "player_in_id": 10}},
+		{"is_hit_worth_it", map[string]any{"player_out_id": 10, "player_in_id": 11, "team_id": -1}},
+		{"is_hit_worth_it", map[string]any{"player_out_id": 10, "player_in_id": 11, "team_id": 99_999_999}},
+
+		{"manager_transfer_history", map[string]any{"team_id": 0}},
+		{"manager_transfer_history", map[string]any{"team_id": -1}},
+		{"manager_transfer_history", map[string]any{"team_id": 99_999_999}},
 
 		{"fpl_manager_hub", map[string]any{"team_id": 0}},
 		{"fpl_manager_hub", map[string]any{"team_id": -1}},
