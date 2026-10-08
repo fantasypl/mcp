@@ -142,8 +142,12 @@ type OptimalSquadSlot struct {
 	Name            string  `json:"name"`
 	Team            string  `json:"team"`
 	Position        string  `json:"position"`
-	CostM           float64 `json:"cost_m"`
+	CostM           float64 `json:"cost_m"` // market price
 	ProjectedPoints float64 `json:"projected_points"`
+	// SellingPriceM is set only on optimal_transfers' transfers_out legs,
+	// when the manager's transfer history could be fetched: what FPL pays
+	// for the player, as opposed to CostM, the market price.
+	SellingPriceM float64 `json:"selling_price_m,omitempty"`
 	// PriceRisk is set only on optimal_transfers legs, when price_predictions
 	// flags the player. It is informational and never affects selection.
 	PriceRisk string `json:"price_risk,omitempty"`
