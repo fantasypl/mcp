@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 
@@ -139,6 +143,117 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	}
 	if len(prompts.Prompts) != 5 {
 		t.Errorf("got %d prompts, want 5", len(prompts.Prompts))
+	}
+
+	// Clients show title in pickers and argument forms (#27).
+	for _, r := range resources.Resources {
+		if r.Title == "" {
+			t.Errorf("resource %s has no title", r.URI)
+		}
+	}
+	for _, p := range prompts.Prompts {
+		if p.Title == "" {
+			t.Errorf("prompt %s has no title", p.Name)
+		}
+		for _, a := range p.Arguments {
+			if a.Title == "" || a.Description == "" {
+				t.Errorf("prompt %s argument %s needs a title and description", p.Name, a.Name)
+			}
+		}
+	}
+}
+
+// mcpb/manifest.json declares every tool and prompt so Claude Desktop, which
+// may check runtime prompts against the manifest (#27), sees the same set the
+// server registers. A manifest prompt's text must match what prompts/get
+// renders when each argument is the manifest's ${arguments.name} placeholder.
+func TestManifestMatchesServer(t *testing.T) {
+	raw, err := os.ReadFile("../../mcpb/manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		Tools []struct {
+			Name string `json:"name"`
+		} `json:"tools"`
+		Prompts []struct {
+			Name        string   `json:"name"`
+			Description string   `json:"description"`
+			Arguments   []string `json:"arguments"`
+			Text        string   `json:"text"`
+		} `json:"prompts"`
+	}
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	t1, t2 := mcp.NewInMemoryTransports()
+	serverSession, err := newServer(fpl.NewClient()).Connect(ctx, t1, nil)
+	if err != nil {
+		t.Fatalf("server connect: %v", err)
+	}
+	defer serverSession.Close()
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.1"}, nil).Connect(ctx, t2, nil)
+	if err != nil {
+		t.Fatalf("client connect: %v", err)
+	}
+	defer cs.Close()
+
+	tools, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var serverTools, manifestTools []string
+	for _, tl := range tools.Tools {
+		serverTools = append(serverTools, tl.Name)
+	}
+	for _, tl := range manifest.Tools {
+		manifestTools = append(manifestTools, tl.Name)
+	}
+	sort.Strings(serverTools)
+	sort.Strings(manifestTools)
+	if !slices.Equal(serverTools, manifestTools) {
+		t.Errorf("manifest tools %v, server tools %v", manifestTools, serverTools)
+	}
+
+	prompts, err := cs.ListPrompts(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(manifest.Prompts) != len(prompts.Prompts) {
+		t.Fatalf("manifest declares %d prompts, server registers %d", len(manifest.Prompts), len(prompts.Prompts))
+	}
+	declared := map[string]int{}
+	for i, p := range manifest.Prompts {
+		declared[p.Name] = i
+	}
+	for _, p := range prompts.Prompts {
+		i, ok := declared[p.Name]
+		if !ok {
+			t.Errorf("prompt %s is not declared in the manifest", p.Name)
+			continue
+		}
+		mp := manifest.Prompts[i]
+		if mp.Description != p.Description {
+			t.Errorf("prompt %s description: manifest %q, server %q", p.Name, mp.Description, p.Description)
+		}
+		args := map[string]string{}
+		var names []string
+		for _, a := range p.Arguments {
+			args[a.Name] = "${arguments." + a.Name + "}"
+			names = append(names, a.Name)
+		}
+		if !slices.Equal(names, mp.Arguments) {
+			t.Errorf("prompt %s arguments: manifest %v, server %v", p.Name, mp.Arguments, names)
+		}
+		res, err := cs.GetPrompt(ctx, &mcp.GetPromptParams{Name: p.Name, Arguments: args})
+		if err != nil {
+			t.Fatalf("prompts/get %s: %v", p.Name, err)
+		}
+		if got := res.Messages[0].Content.(*mcp.TextContent).Text; got != mp.Text {
+			t.Errorf("prompt %s text differs from the manifest:\nserver:   %q\nmanifest: %q", p.Name, got, mp.Text)
+		}
 	}
 }
 
