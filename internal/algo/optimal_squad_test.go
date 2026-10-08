@@ -119,7 +119,7 @@ func newEngineForOptimalSquad(t *testing.T, fixture string) *Engine {
 
 func TestOptimalSquadMatchesGolden(t *testing.T) {
 	bothFixtures(t, func(t *testing.T, e *Engine, suffix string) {
-		got, err := e.OptimalSquad(context.Background(), 1000, nil, nil)
+		got, err := e.OptimalSquad(context.Background(), 1000, nil, nil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -129,7 +129,7 @@ func TestOptimalSquadMatchesGolden(t *testing.T) {
 
 func TestOptimalSquadRespectsConstraints(t *testing.T) {
 	e := newEngineForOptimalSquad(t, "midseason")
-	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil)
+	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,13 +162,13 @@ func TestOptimalSquadRespectsConstraints(t *testing.T) {
 
 func TestOptimalSquadExcludesRequestedPlayers(t *testing.T) {
 	e := newEngineForOptimalSquad(t, "midseason")
-	baseline, err := e.OptimalSquad(context.Background(), 1000, nil, nil)
+	baseline, err := e.OptimalSquad(context.Background(), 1000, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	excludeID := baseline.Squad[0].ID
 
-	got, err := e.OptimalSquad(context.Background(), 1000, nil, []int{excludeID})
+	got, err := e.OptimalSquad(context.Background(), 1000, nil, []int{excludeID}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func TestOptimalSquadRealisticScaleTiming(t *testing.T) {
 	e := newEngineForOptimalSquad(t, "midseason")
 
 	start := time.Now()
-	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil)
+	got, err := e.OptimalSquad(context.Background(), 1000, nil, nil, nil)
 	elapsed := time.Since(start)
 	if err != nil {
 		t.Fatal(err)

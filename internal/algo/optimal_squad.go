@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/fantasypl/mcp/internal/fpl"
 )
@@ -152,6 +155,9 @@ type OptimalSquadResult struct {
 	// none of them has a fixture in the target gameweek.
 	RecommendedCaptain     *LineupCaptain `json:"recommended_captain"`
 	RecommendedViceCaptain *LineupCaptain `json:"recommended_vice_captain"`
+
+	// Include is set only when include_player_ids was given.
+	Include *IncludeCost `json:"include,omitempty"`
 }
 
 // LineupCaptain is a captaincy recommendation for a suggested lineup.
@@ -181,11 +187,27 @@ type OptimalSquadSlot struct {
 	PriceRisk string `json:"price_risk,omitempty"`
 }
 
+// SquadRequestError is a caller mistake in an optimal_squad request, such
+// as a forced player set no squad can hold. Its message is written for the
+// caller and safe to show as is.
+type SquadRequestError struct{ Msg string }
+
+func (e *SquadRequestError) Error() string { return e.Msg }
+
+func squadRequestErrorf(format string, args ...any) error {
+	return &SquadRequestError{Msg: fmt.Sprintf(format, args...)}
+}
+
 // OptimalSquad builds the projected-points-maximizing 15-man squad under
 // budgetTenths (tenths of a million), optionally starting the 5-gameweek
-// projection window from gameweek (defaults to the next gameweek) and
-// excluding excludeIDs from consideration entirely.
-func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *int, excludeIDs []int) (*OptimalSquadResult, error) {
+// projection window from gameweek (defaults to the next gameweek),
+// excluding excludeIDs from consideration entirely, and always including
+// includeIDs.
+//
+// With includeIDs, it also solves without them, in parallel, so the result
+// can show what forcing them in costs. A forced set that no squad can hold
+// returns a *SquadRequestError.
+func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *int, excludeIDs, includeIDs []int) (*OptimalSquadResult, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
 		return nil, err
@@ -206,25 +228,60 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 		excluded[id] = true
 	}
 
-	candidates := buildCandidates(bootstrap.Elements, window, excluded, nil)
+	byID := make(map[int]*fpl.Player, len(bootstrap.Elements))
+	for i := range bootstrap.Elements {
+		byID[bootstrap.Elements[i].ID] = &bootstrap.Elements[i]
+	}
+	teams := teamsByID(bootstrap)
 
-	result, err := Solve(candidates, SquadConstraints{
+	included, err := checkIncluded(includeIDs, excluded, byID, teams, budgetTenths)
+	if err != nil {
+		return nil, err
+	}
+
+	// Included players always reach Solve, even outside the pool cap.
+	candidates := buildCandidates(bootstrap.Elements, window, excluded, toSet(included))
+	constraints := SquadConstraints{
 		BudgetTenths:  budgetTenths,
 		PositionQuota: fplQuota,
 		MaxPerClub:    3,
 		MaxChanges:    -1,
 		TimeLimit:     optimalSquadTimeLimit,
 		Lineup:        &fplLineup,
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	byID := make(map[int]*fpl.Player, len(bootstrap.Elements))
-	for i := range bootstrap.Elements {
-		byID[bootstrap.Elements[i].ID] = &bootstrap.Elements[i]
+	// The two searches run in parallel so the forced comparison costs no
+	// extra wall time.
+	var result, unforced Result
+	var g errgroup.Group
+	g.Go(func() error {
+		c := constraints
+		c.Forced = included
+		r, err := Solve(candidates, c)
+		if err != nil && len(included) > 0 {
+			cost := 0
+			for _, id := range included {
+				cost += byID[id].NowCost
+			}
+			return squadRequestErrorf(
+				"No valid squad includes all of include_player_ids: they cost £%.1fm of the £%.1fm budget, which leaves too little to fill the other %d places.",
+				float64(cost)/10, float64(budgetTenths)/10, 15-len(included))
+		}
+		result = r
+		return err
+	})
+	if len(included) > 0 {
+		g.Go(func() error {
+			// Built without the forced players' pool exemption, so the
+			// comparison is with the squad optimal_squad picks unprompted.
+			r, err := Solve(buildCandidates(bootstrap.Elements, window, excluded, nil), constraints)
+			unforced = r
+			return err
+		})
 	}
-	teams := teamsByID(bootstrap)
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
 
 	// result.Squad is already sorted by position then ID (bnb.go's
 	// deterministic tie-break), matching the desired GKP/DEF/MID/FWD display
@@ -253,8 +310,83 @@ func (e *Engine) OptimalSquad(ctx context.Context, budgetTenths int, gameweek *i
 		PoolNote: fmt.Sprintf(
 			"Considered the top %d/%d/%d/%d GKP/DEF/MID/FWD candidates by projected points — a near-optimal, not certified-optimal-over-every-player, approximation needed to keep the search tractable.",
 			candidatePoolCap[1], candidatePoolCap[2], candidatePoolCap[3], candidatePoolCap[4]),
-		Squad: squad,
+		Squad:   squad,
+		Include: includeCost(included, result, unforced),
 	}, nil
+}
+
+// IncludeCost reports what forcing include_player_ids into the squad costs.
+type IncludeCost struct {
+	PlayerIDs []int `json:"player_ids"`
+	// ProjectedPointsWithout is the best squad's projected_points without
+	// the forced players, on the same basis as projected_points.
+	ProjectedPointsWithout float64 `json:"projected_points_without"`
+	// PointsCost is ProjectedPointsWithout minus projected_points: what the
+	// constraint gives up. Zero when the best squad already has them.
+	PointsCost float64 `json:"points_cost"`
+	// Optimal is false when either search hit its time limit, so the cost is
+	// an estimate.
+	Optimal bool `json:"optimal"`
+}
+
+// includeCost compares the forced and unforced searches. The forced squad
+// is also a valid unforced squad, so a time-limited unforced search that
+// scored lower is replaced by the forced value: the cost is never negative.
+func includeCost(included []int, forced, unforced Result) *IncludeCost {
+	if len(included) == 0 {
+		return nil
+	}
+	without := max(unforced.Value, forced.Value)
+	return &IncludeCost{
+		PlayerIDs:              included,
+		ProjectedPointsWithout: Round(without, 2),
+		PointsCost:             Round(without-forced.Value, 2),
+		Optimal:                forced.Optimal && unforced.Optimal,
+	}
+}
+
+// checkIncluded validates include_player_ids before any search, so an
+// impossible request gets an error naming the problem. It returns the ids
+// deduplicated, in request order.
+func checkIncluded(includeIDs []int, excluded map[int]bool, byID map[int]*fpl.Player, teams map[int]*fpl.Team, budgetTenths int) ([]int, error) {
+	var out []int
+	seen := map[int]bool{}
+	byPos := map[int][]string{}
+	byClub := map[int][]string{}
+	cost := 0
+	for _, id := range includeIDs {
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		p := byID[id]
+		if p == nil {
+			return nil, squadRequestErrorf("include_player_ids: no player has id %d.", id)
+		}
+		if excluded[id] {
+			return nil, squadRequestErrorf("Player %d (%s) is in both include_player_ids and exclude_player_ids.", id, p.WebName)
+		}
+		out = append(out, id)
+		byPos[p.ElementType] = append(byPos[p.ElementType], p.WebName)
+		byClub[p.Team] = append(byClub[p.Team], p.WebName)
+		cost += p.NowCost
+	}
+	for pos := 1; pos <= numPositions; pos++ {
+		if n := len(byPos[pos]); n > fplQuota[pos] {
+			return nil, squadRequestErrorf("include_player_ids has %d %s players (%s); a squad holds %d.",
+				n, Position(pos), strings.Join(byPos[pos], ", "), fplQuota[pos])
+		}
+	}
+	for club, names := range byClub {
+		if len(names) > 3 {
+			return nil, squadRequestErrorf("include_player_ids has %d %s players (%s); a squad holds at most 3 from one club.",
+				len(names), shortName(teams[club]), strings.Join(names, ", "))
+		}
+	}
+	if cost > budgetTenths {
+		return nil, squadRequestErrorf("include_player_ids cost £%.1fm together, over the £%.1fm budget.", float64(cost)/10, float64(budgetTenths)/10)
+	}
+	return out, nil
 }
 
 // projectedPointsBasis describes what projected_points sums, for the

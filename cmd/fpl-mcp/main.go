@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -48,6 +49,7 @@ type optimalSquadIn struct {
 	BudgetM          *float64 `json:"budget_m,omitempty"           jsonschema:"Total squad budget in millions. Default 100.0."`
 	Gameweek         *int     `json:"gameweek,omitempty"           jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
 	ExcludePlayerIDs []int    `json:"exclude_player_ids,omitempty" jsonschema:"Player element IDs to exclude from consideration."`
+	IncludePlayerIDs []int    `json:"include_player_ids,omitempty" jsonschema:"Player element IDs that must be in the squad. The rest of the squad is filled optimally, and the result's include field shows the points cost of forcing them in."`
 }
 type optimalTransfersIn struct {
 	TeamID    int   `json:"team_id"              jsonschema:"FPL team ID"`
@@ -230,7 +232,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return engine.TransferSuggestions(ctx, in.TeamID, clamp(in.FreeTransfers, 1, 5), maxf(in.Bank, 0))
 		}, "Failed to get transfer suggestions. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "optimal_squad", Description: "Build the highest-scoring 15-man FPL squad achievable under a budget, using an exact combinatorial optimizer (branch-and-bound), not a heuristic.\n\nUSE THIS WHEN the user asks: \"Build me the best possible squad\", \"Optimal team for £100m?\", \"What's the mathematically best squad?\", or wants a from-scratch squad rather than advice on their existing one.\n\nSelects the 15-man squad (2 GKP/5 DEF/5 MID/3 FWD, max 3 per club) that maximizes projected_points: over the next 5 gameweeks, the best starting XI in a valid formation counts in full and the four bench players count at 0.1 of their projected points, since the bench only scores when a starter misses out. projected_points_basis states this in the output. It then suggests a starting XI for the target gameweek alone (starting_xi_gameweek_points), with its formation, a bench order, and a captain and vice-captain from that XI, so a player who blanks that week is benched. That XI can differ from the 5-gameweek XI behind projected_points. The captain uses captain_pick's scoring for the target gameweek. Considers a large but bounded candidate pool per position, so the result is near-optimal rather than certified optimal against every player in the game."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalSquadIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "optimal_squad", Description: "Build the highest-scoring 15-man FPL squad achievable under a budget, using an exact combinatorial optimizer (branch-and-bound), not a heuristic.\n\nUSE THIS WHEN the user asks: \"Build me the best possible squad\", \"Optimal team for £100m?\", \"What's the mathematically best squad?\", or wants a from-scratch squad rather than advice on their existing one.\n\nSelects the 15-man squad (2 GKP/5 DEF/5 MID/3 FWD, max 3 per club) that maximizes projected_points: over the next 5 gameweeks, the best starting XI in a valid formation counts in full and the four bench players count at 0.1 of their projected points, since the bench only scores when a starter misses out. projected_points_basis states this in the output. It then suggests a starting XI for the target gameweek alone (starting_xi_gameweek_points), with its formation, a bench order, and a captain and vice-captain from that XI, so a player who blanks that week is benched. That XI can differ from the 5-gameweek XI behind projected_points. The captain uses captain_pick's scoring for the target gameweek. Set include_player_ids to force players into the squad (for example, to see the best squad around a player you want); the include field then gives projected_points without them and the points_cost of the constraint. An impossible set (too many in one position, more than 3 from one club, over budget, or an id also in exclude_player_ids) returns an error saying why. Considers a large but bounded candidate pool per position, so the result is near-optimal rather than certified optimal against every player in the game."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalSquadIn) (*mcp.CallToolResult, any, error) {
 		if e := validBudgetM(in.BudgetM); e != "" {
 			return nil, errResult(e), nil
 		}
@@ -241,9 +243,12 @@ func newServer(client *fpl.Client) *mcp.Server {
 		if in.BudgetM != nil {
 			budgetM = *in.BudgetM
 		}
-		return nil, call(func() (any, error) {
-			return engine.OptimalSquad(ctx, algo.RoundToInt(budgetM*10), in.Gameweek, in.ExcludePlayerIDs)
-		}, "Failed to build an optimal squad. Please try again."), nil
+		out, err := engine.OptimalSquad(ctx, algo.RoundToInt(budgetM*10), in.Gameweek, in.ExcludePlayerIDs, in.IncludePlayerIDs)
+		var reqErr *algo.SquadRequestError
+		if errors.As(err, &reqErr) {
+			return nil, errResult(reqErr.Msg), nil
+		}
+		return nil, call(func() (any, error) { return out, err }, "Failed to build an optimal squad. Please try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "optimal_transfers", Description: "Find the combinatorially optimal transfers for your current FPL squad — an exact optimizer, not a heuristic single-swap suggester.\n\nUSE THIS WHEN the user asks: \"What's the best possible transfer(s) this week?\", \"Prove my transfer is optimal\", \"Should I make multiple transfers?\", or wants the mathematically best move rather than a quick suggestion. Prefer transfer_suggestions for a faster, single-swap recommendation with detailed reasoning.\n\nAuto-detects your bank, free transfers, and current squad from your team ID. Set allow_hits to also weigh paid transfers (-4 each beyond your free allowance) against their projected points gain — every option considered is returned, not just the best one, so the tradeoff is visible. Each option's projected_points is the resulting squad's best starting XI over the next 5 gameweeks plus 0.1 of the bench's projected points, as in optimal_squad (projected_points_basis states this). \"best\" means the highest net projected points, not the lowest risk: each option also has a confidence rating (high/medium/low, from the minutes and goal-involvement record of its incoming players) and one option is marked \"safest\". This may take longer than transfer_suggestions: each option is a search capped at 8 seconds, and with allow_hits set the up to 4 searches run in parallel. If a search hits its cap, that option has optimal: false and the result has partial: true, meaning a better plan may exist."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalTransfersIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {

@@ -136,7 +136,7 @@ func genBasic(ctx context.Context, out string) error {
 			return e.TransferSuggestions(c, syntheticTeamID, 2, 0)
 		}},
 		{"optimal_squad", "", func(c context.Context, e *algo.Engine) (any, error) {
-			return e.OptimalSquad(c, 1000, nil, nil)
+			return e.OptimalSquad(c, 1000, nil, nil, nil)
 		}},
 		// allow_hits isn't golden-tested: at higher MaxChanges ceilings the
 		// search routinely hits optimalSquadTimeLimit before proving
