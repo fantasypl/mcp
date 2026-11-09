@@ -1,4 +1,5 @@
 {
+  "ep_note": "ep_next, ep_this and every ep_ ranking here are FPL's own fields as FPL publishes them. In 2026-27 FPL sets ep_next equal to form (the last 30 days' average) for every available player, and to 0 for most flagged ones, so treat it as recent form, not a projection.",
   "gameweek": 1,
   "insights": {
     "blank_gw_warnings": [],
