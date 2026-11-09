@@ -109,7 +109,8 @@ type rivalIn struct {
 	TeamID   int `json:"team_id"   jsonschema:"FPL team ID"`
 }
 type leagueIn struct {
-	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
+	LeagueID int  `json:"league_id"         jsonschema:"Mini-league ID"`
+	TeamID   *int `json:"team_id,omitempty" jsonschema:"Optional FPL team ID. When set, the result adds caller: that manager's rank, points_gap_to_leader, required_ppg_over_leader and win_probability."`
 }
 
 func errResult(message string) map[string]any {
@@ -380,11 +381,16 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.RivalAnalysis(ctx, in.LeagueID, in.TeamID) }, "Failed to analyze rivals. Check that the league ID and team ID are correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "league_analyzer", Description: "Predict who will win a mini-league based on current form, squad quality, and chips remaining.\n\nUSE THIS WHEN the user asks: \"Who's going to win my league?\", \"League predictions\", \"Who's the favourite?\", \"Analyze league standings\", \"Win probability\", or any question about league-wide chances WITHOUT needing a specific team ID.\n\nDoes NOT require the user's team ID — just the league ID. Analyzes the top managers in the league and calculates win probability for each based on: points gap, squad quality, chips remaining, recent momentum, team value, and injury concerns.\n\nThe league ID is in the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c"}, func(ctx context.Context, _ *mcp.CallToolRequest, in leagueIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "league_analyzer", Description: "Predict who will win a mini-league based on current form, squad quality, and chips remaining.\n\nUSE THIS WHEN the user asks: \"Who's going to win my league?\", \"League predictions\", \"Who's the favourite?\", \"Analyze league standings\", \"Win probability\", or any question about league-wide chances WITHOUT needing a specific team ID.\n\nDoes NOT require the user's team ID — just the league ID. Pass team_id to add the caller's own row: rank, points_gap_to_leader, required_ppg_over_leader and win_probability.\n\nwin_probabilities has a row for every manager on the first standings page (up to 50). They come from a Monte Carlo of the rest of the season: each manager's remaining gameweeks are drawn from the mean and spread of their own net scores this season (leaving out Bench Boost, Triple Captain and Free Hit weeks), blended with the league average, plus a fixed allowance per unused chip. win_probability_method states the model in full. A league bigger than one page is flagged in standings_note. The top 10 also get a detailed row with squad quality, chips, momentum, team value and injured starters; those are information and do not enter the probabilities.\n\nThe league ID is in the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c"}, func(ctx context.Context, _ *mcp.CallToolRequest, in leagueIn) (*mcp.CallToolResult, any, error) {
 		if e := validLeague(in.LeagueID); e != "" {
 			return nil, errResult(e), nil
 		}
-		return nil, call(func() (any, error) { return engine.AnalyzeLeague(ctx, in.LeagueID) }, "Failed to analyze league. Check that the league ID is correct and try again."), nil
+		if in.TeamID != nil {
+			if e := validTeam(*in.TeamID); e != "" {
+				return nil, errResult(e), nil
+			}
+		}
+		return nil, call(func() (any, error) { return engine.AnalyzeLeagueForTeam(ctx, in.LeagueID, in.TeamID) }, "Failed to analyze league. Check that the league ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "squad_scout", Description: "Deep scout report using FPL's hidden data fields most managers don't know about.\n\nUSE THIS WHEN the user asks: \"Any hidden insights?\", \"Set piece takers?\", \"Suspension risks?\", \"What does FPL's own data say?\", or for a deeper dive beyond what fpl_manager_hub provides.\n\nSurfaces: blank GW warnings, FPL's expected points (ep_next), set piece duties, yellow card suspension risks, ICT breakdown, points per million rankings."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {

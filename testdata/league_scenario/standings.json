@@ -4,6 +4,7 @@
     "name": "The Bootleg Bin"
   },
   "standings": {
+    "has_next": false,
     "results": [
       {
         "entry": 999001,
