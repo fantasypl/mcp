@@ -53,7 +53,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `player_comparison` | Head-to-head comparison of 2-4 players |
 | `live_points` | Live points during an active gameweek |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
-| `chip_strategy` | When to use each remaining chip |
+| `chip_strategy` | When to use each remaining chip, with a confidence comparable across chips, the next-best gameweek and the factors behind each candidate. Optional `league_id` adds rivals' remaining chips |
 | `rival_tracker` | Mini-league rival analysis and counter-strategies |
 | `league_analyzer` | Win probability predictions for a mini-league |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields |

@@ -31,7 +31,70 @@
         "predicted_dgw_teams": 2,
         "fixture_count": 10,
         "avg_fdr": 3
-      }
+      },
+      "chip_score": 79.4,
+      "next_best_gameweek": 3,
+      "next_best_score": 34.4,
+      "gap_to_next": 45,
+      "margin_over_next_pct": 56.7,
+      "confidence": "high",
+      "candidates": [
+        {
+          "gameweek": 4,
+          "chip_score": 79.4,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 3,
+          "chip_score": 34.4,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 2,
+          "chip_score": 9.4,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 6,
+          "chip_score": 9.4,
+          "factors": {
+            "fixture_count": 9,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 2,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 7,
+          "chip_score": 9.4,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 1,
+            "avg_fdr": 3
+          }
+        }
+      ]
     },
     {
       "chip": "Bench Boost",
@@ -44,7 +107,80 @@
         "predicted_dgw_teams": 2,
         "fixture_count": 11,
         "avg_fdr": 3
-      }
+      },
+      "chip_score": 44.5,
+      "next_best_gameweek": 8,
+      "next_best_score": 31,
+      "gap_to_next": 13.5,
+      "margin_over_next_pct": 30.3,
+      "confidence": "high",
+      "candidates": [
+        {
+          "gameweek": 5,
+          "chip_score": 44.5,
+          "factors": {
+            "fixture_count": 11,
+            "dgw_teams": 2,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3,
+            "bench_players_playing": 4,
+            "bench_fixtures": 4
+          }
+        },
+        {
+          "gameweek": 8,
+          "chip_score": 31,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 3,
+            "blank_teams": 0,
+            "avg_fdr": 3,
+            "bench_players_playing": 4,
+            "bench_fixtures": 4
+          }
+        },
+        {
+          "gameweek": 2,
+          "chip_score": 27,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3,
+            "bench_players_playing": 4,
+            "bench_fixtures": 4
+          }
+        },
+        {
+          "gameweek": 3,
+          "chip_score": 27,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3,
+            "bench_players_playing": 4,
+            "bench_fixtures": 4
+          }
+        },
+        {
+          "gameweek": 4,
+          "chip_score": 27,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3,
+            "bench_players_playing": 4,
+            "bench_fixtures": 4
+          }
+        }
+      ]
     },
     {
       "chip": "Free Hit",
@@ -58,7 +194,70 @@
         "blank_teams": 2,
         "fixture_count": 9,
         "avg_fdr": 3
-      }
+      },
+      "chip_score": 12.2,
+      "next_best_gameweek": 5,
+      "next_best_score": 12.2,
+      "gap_to_next": 0,
+      "margin_over_next_pct": 0,
+      "confidence": "low",
+      "candidates": [
+        {
+          "gameweek": 5,
+          "chip_score": 12.2,
+          "factors": {
+            "fixture_count": 11,
+            "dgw_teams": 2,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 6,
+          "chip_score": 12.2,
+          "factors": {
+            "fixture_count": 9,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 2,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 7,
+          "chip_score": 9.2,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 1,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 8,
+          "chip_score": 8.2,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 3,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        },
+        {
+          "gameweek": 2,
+          "chip_score": 6.2,
+          "factors": {
+            "fixture_count": 10,
+            "dgw_teams": 0,
+            "predicted_dgw_teams": 2,
+            "blank_teams": 0,
+            "avg_fdr": 3
+          }
+        }
+      ]
     }
   ],
   "pending_dgws": {
@@ -134,5 +333,7 @@
     "source_errors": [
       "premierleague.com: failed to fetch"
     ]
-  }
+  },
+  "confidence_scale": "chip_score is in each chip's own units (Bench Boost, Triple Captain, Free Hit and Wildcard are scored by different formulas), so compare it only between gameweeks for the same chip, never across chips. confidence is comparable across chips: it is the recommended gameweek's margin over the same chip's next-best gameweek, as a share of its score (margin_over_next_pct), labelled high at 25% or more, medium at 10% or more, and low below that. It says how clear-cut the choice of gameweek is, not how likely the chip is to pay off. confidence_score is deprecated and equals chip_score.",
+  "season_outlook": []
 }
