@@ -70,6 +70,10 @@ type fixtureIn struct {
 	Position       string `json:"position,omitempty"        jsonschema:"Filter by position: GKP, DEF, MID, or FWD. Optional."`
 }
 type priceIn struct{}
+type chipIn struct {
+	TeamID   int  `json:"team_id"             jsonschema:"FPL team ID"`
+	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. When set, the result adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
+}
 type transferIn struct {
 	TeamID        int     `json:"team_id"                  jsonschema:"FPL team ID"`
 	FreeTransfers int     `json:"free_transfers,omitempty" jsonschema:"Available free transfers. Default 1."`
@@ -103,10 +107,6 @@ type hitIn struct {
 	PlayerInID     int `json:"player_in_id"              jsonschema:"Player element ID being bought"`
 	GameweeksAhead int `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
 	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
-}
-type chipIn struct {
-	TeamID   int  `json:"team_id"             jsonschema:"FPL team ID"`
-	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. When set, the result adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
 }
 type rivalIn struct {
 	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
