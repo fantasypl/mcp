@@ -1,0 +1,139 @@
+{
+  "elements": [
+    {
+      "id": 12,
+      "stats": {
+        "minutes": 89,
+        "total_points": 2,
+        "bps": 13,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 13,
+      "stats": {
+        "minutes": 90,
+        "total_points": 5,
+        "bps": 22,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 40,
+      "stats": {
+        "minutes": 86,
+        "total_points": 6,
+        "bps": 22,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 45,
+      "stats": {
+        "minutes": 90,
+        "total_points": 3,
+        "bps": 6,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 55,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 82,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 10,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 172,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 356,
+      "stats": {
+        "minutes": 90,
+        "total_points": 6,
+        "bps": 32,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 379,
+      "stats": {
+        "minutes": 63,
+        "total_points": 13,
+        "bps": 61,
+        "bonus": 3
+      }
+    },
+    {
+      "id": 387,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 389,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 480,
+      "stats": {
+        "minutes": 90,
+        "total_points": 3,
+        "bps": 3,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 498,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 526,
+      "stats": {
+        "minutes": 6,
+        "total_points": 1,
+        "bps": -1,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 536,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 14,
+        "bonus": 0
+      }
+    }
+  ]
+}
