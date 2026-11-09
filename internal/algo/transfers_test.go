@@ -194,8 +194,8 @@ func TestSellReasonPriority(t *testing.T) {
 	// character — sentence capitalization, not title case — so "FDR"
 	// renders as "fdr" here. This is required behavior, not a casing bug.
 	toughFixture := &squadEntry{player: newPlayer(), form: 5.0, status: "a", fixture: &TeamFixture{FDR: 5}}
-	if got := e.sellReason(toughFixture); got != "Tough upcoming fixture (fdr 5)" {
-		t.Errorf("got %q, want %q", got, "Tough upcoming fixture (fdr 5)")
+	if got := e.sellReason(toughFixture); got != "Tough upcoming fixture (fdr 5.0)" {
+		t.Errorf("got %q, want %q", got, "Tough upcoming fixture (fdr 5.0)")
 	}
 
 	// No fixture at all defaults FDR to 3, below the tough-fixture threshold.
@@ -206,7 +206,7 @@ func TestSellReasonPriority(t *testing.T) {
 
 	// Multiple reasons combine, in the defined checked order.
 	multi := &squadEntry{player: newPlayer(), form: 1.0, status: "d", fixture: &TeamFixture{FDR: 5}}
-	want := "Poor form, injury/suspension concern, tough upcoming fixture (fdr 5)"
+	want := "Poor form, injury/suspension concern, tough upcoming fixture (fdr 5.0)"
 	if got := e.sellReason(multi); got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
