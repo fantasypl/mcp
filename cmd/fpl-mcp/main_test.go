@@ -133,8 +133,8 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resources/list: %v", err)
 	}
-	if len(resources.Resources) != 2 {
-		t.Errorf("got %d resources, want 2", len(resources.Resources))
+	if len(resources.Resources) != 3 {
+		t.Errorf("got %d resources, want 3", len(resources.Resources))
 	}
 
 	prompts, err := clientSession.ListPrompts(ctx, nil)

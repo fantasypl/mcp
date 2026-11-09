@@ -59,7 +59,11 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `squad_scout` | Deep scout report using FPL's less-visible data fields |
 | `manager_transfer_history` | A manager's transfers this season, and the purchase, market and selling price of each current squad player |
 
-Plus two resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress) and `fpl://teams` (all 20 Premier League teams) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+Plus three resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress), `fpl://teams` (all 20 Premier League teams) and `fpl://calibration` (how well each signal has ranked next-gameweek points this season; see below) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+
+### Signal calibration
+
+`fpl://calibration` reports the Spearman rank correlation between each signal (form, points per game, `captain_score`, xGI per 90, minutes share, fixture difficulty) and the points players scored the following gameweek, overall and for DEF, MID and FWD, with sample sizes and 95% intervals. The server doesn't compute it, because rebuilding every gameweek takes too long for a resource read. `fplctl calibrate` writes it to `calibration.json` in the fpl-mcp cache directory, where the server reads it (or set `FPL_MCP_CALIBRATION_FILE`). Re-run it after each gameweek. It uses the vaastav corpus, which publishes each gameweek's results some time after it ends.
 
 ## fplctl
 
@@ -76,6 +80,7 @@ fplctl finishing-regression [--season S] [--split-gw N] [--to N] [--group-size N
 fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-from N] [--split-gw N] [--to N] [--group-size N] [--min-matches N] [--min-avg-minutes F] [--exclude-gk] [--root DIR]
 fplctl elo-capture [--root DIR]
 fplctl congestion-capture [--root DIR]
+fplctl calibrate [--season S] [--from N] [--to N] [--out FILE] [--root DIR]
 ```
 
 ## Development

@@ -404,6 +404,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}, fmt.Sprintf("Failed to analyze team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	addResources(s, client, time.Now)
+	addCalibrationResource(s, calibrationPath())
 	addPrompts(s)
 	return s
 }
