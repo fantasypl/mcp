@@ -105,9 +105,30 @@ type hitIn struct {
 	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
 }
 type rivalIn struct {
-	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
-	TeamID   int `json:"team_id"   jsonschema:"FPL team ID"`
+	LeagueID     int   `json:"league_id"                jsonschema:"Mini-league ID"`
+	TeamID       int   `json:"team_id"                  jsonschema:"FPL team ID"`
+	RivalTeamIDs []int `json:"rival_team_ids,omitempty" jsonschema:"Optional: up to 10 FPL team IDs to compare with. With target_ranks, the rivals are the union of both. Omit both to compare with the managers ranked within three places of you."`
+	TargetRanks  []int `json:"target_ranks,omitempty"   jsonschema:"Optional: up to 10 league ranks to compare with, for example [1, 2, 3] for the leaders."`
 }
+
+// validRivalSelection checks rival_tracker's optional rival lists.
+func validRivalSelection(in rivalIn) string {
+	if len(in.RivalTeamIDs) > 10 || len(in.TargetRanks) > 10 {
+		return "rival_team_ids and target_ranks take at most 10 entries each."
+	}
+	for _, id := range in.RivalTeamIDs {
+		if e := validTeam(id); e != "" {
+			return "rival_team_ids: " + e
+		}
+	}
+	for _, r := range in.TargetRanks {
+		if r < 1 {
+			return "target_ranks must be positive league ranks."
+		}
+	}
+	return ""
+}
+
 type leagueIn struct {
 	LeagueID int  `json:"league_id"         jsonschema:"Mini-league ID"`
 	TeamID   *int `json:"team_id,omitempty" jsonschema:"Optional FPL team ID. When set, the result adds caller: that manager's rank, points_gap_to_leader, required_ppg_over_leader and win_probability."`
@@ -372,16 +393,20 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.ChipStrategy(ctx, in.TeamID) }, "Failed to get chip strategy. Check that the team ID is correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "rival_tracker", Description: "Analyze your mini-league rivals and get strategies to beat them.\n\nUSE THIS WHEN the user asks: \"How do I beat my rivals?\", \"What's my mini-league looking like?\", \"What players do my rivals have?\", \"Show me my league standings\", or any rival/league question.\n\nCompares your squad against nearby rivals, finds differentials (players you have that they don't), identifies rival weaknesses, predicts their likely next transfers, and suggests counter-strategies.\n\nThe user needs their league ID (from the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c) and their team ID."}, func(ctx context.Context, _ *mcp.CallToolRequest, in rivalIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "rival_tracker", Description: "Analyze your mini-league rivals and get strategies to beat them.\n\nUSE THIS WHEN the user asks: \"How do I beat my rivals?\", \"What's my mini-league looking like?\", \"What players do my rivals have?\", \"Show me my league standings\", or any rival/league question.\n\nCompares your squad against nearby rivals (ranked within three places), or against the rivals you choose with rival_team_ids or target_ranks (for example [1, 2, 3] to chase the leaders), finds differentials (players you have that they don't), identifies rival weaknesses, predicts their likely next transfers, and suggests counter-strategies. You and every rival also get gameweek_points (each gameweek before and after hits) and chips_used with gameweeks, so score trends and chip timing can be compared.\n\nThe user needs their league ID (from the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c) and their team ID."}, func(ctx context.Context, _ *mcp.CallToolRequest, in rivalIn) (*mcp.CallToolResult, any, error) {
 		if e := validLeague(in.LeagueID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
-		return nil, call(func() (any, error) { return engine.RivalAnalysis(ctx, in.LeagueID, in.TeamID) }, "Failed to analyze rivals. Check that the league ID and team ID are correct and try again."), nil
+		if e := validRivalSelection(in); e != "" {
+			return nil, errResult(e), nil
+		}
+		sel := algo.RivalSelection{TeamIDs: in.RivalTeamIDs, TargetRanks: in.TargetRanks}
+		return nil, call(func() (any, error) { return engine.RivalAnalysisWith(ctx, in.LeagueID, in.TeamID, sel) }, "Failed to analyze rivals. Check that the league ID and team ID are correct and try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "league_analyzer", Description: "Predict who will win a mini-league based on current form, squad quality, and chips remaining.\n\nUSE THIS WHEN the user asks: \"Who's going to win my league?\", \"League predictions\", \"Who's the favourite?\", \"Analyze league standings\", \"Win probability\", or any question about league-wide chances WITHOUT needing a specific team ID.\n\nDoes NOT require the user's team ID — just the league ID. Pass team_id to add the caller's own row: rank, points_gap_to_leader, required_ppg_over_leader and win_probability.\n\nwin_probabilities has a row for every manager on the first standings page (up to 50). They come from a Monte Carlo of the rest of the season: each manager's remaining gameweeks are drawn from the mean and spread of their own net scores this season (leaving out Bench Boost, Triple Captain and Free Hit weeks), blended with the league average, plus a fixed allowance per unused chip. win_probability_method states the model in full. A league bigger than one page is flagged in standings_note. The top 10 also get a detailed row with squad quality, chips, momentum, team value and injured starters; those are information and do not enter the probabilities.\n\nThe league ID is in the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c"}, func(ctx context.Context, _ *mcp.CallToolRequest, in leagueIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "league_analyzer", Description: "Predict who will win a mini-league based on current form, squad quality, and chips remaining.\n\nUSE THIS WHEN the user asks: \"Who's going to win my league?\", \"League predictions\", \"Who's the favourite?\", \"Analyze league standings\", \"Win probability\", or any question about league-wide chances WITHOUT needing a specific team ID.\n\nDoes NOT require the user's team ID — just the league ID. Pass team_id to add the caller's own row: rank, points_gap_to_leader, required_ppg_over_leader, win_probability, and gaps to every other manager with the points per gameweek needed to catch each one ahead.\n\nwin_probabilities has a row for every manager on the first standings page (up to 50). They come from a Monte Carlo of the rest of the season: each manager's remaining gameweeks are drawn from the mean and spread of their own net scores this season (leaving out Bench Boost, Triple Captain and Free Hit weeks), blended with the league average, plus a fixed allowance per unused chip. win_probability_method states the model in full. A league bigger than one page is flagged in standings_note. The top 10 also get a detailed row with squad quality, chips, momentum, team value and injured starters; those are information and do not enter the probabilities.\n\nThe league ID is in the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c"}, func(ctx context.Context, _ *mcp.CallToolRequest, in leagueIn) (*mcp.CallToolResult, any, error) {
 		if e := validLeague(in.LeagueID); e != "" {
 			return nil, errResult(e), nil
 		}

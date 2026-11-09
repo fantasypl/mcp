@@ -88,20 +88,22 @@ type ManagerFetchError struct {
 }
 
 type ManagerAnalysis struct {
-	ManagerName      string   `json:"manager_name"`
-	TeamName         string   `json:"team_name"`
-	TeamID           int      `json:"team_id"`
-	Rank             int      `json:"rank"`
-	TotalPoints      int      `json:"total_points"`
-	GWPoints         int      `json:"gw_points"`
-	PointsFromLeader int      `json:"points_from_leader"`
-	SquadQuality     float64  `json:"squad_quality"`
-	ChipsRemaining   []string `json:"chips_remaining"`
-	MomentumLast5GW  float64  `json:"momentum_last_5gw"`
-	Bank             float64  `json:"bank"`
-	TeamValue        float64  `json:"team_value"`
-	InjuredStarters  int      `json:"injured_starters"`
-	WinProbability   float64  `json:"win_probability"` // from the simulation; see LeagueAnalysisResult.WinProbabilityMethod
+	ManagerName      string          `json:"manager_name"`
+	TeamName         string          `json:"team_name"`
+	TeamID           int             `json:"team_id"`
+	Rank             int             `json:"rank"`
+	TotalPoints      int             `json:"total_points"`
+	GWPoints         int             `json:"gw_points"`
+	PointsFromLeader int             `json:"points_from_leader"`
+	SquadQuality     float64         `json:"squad_quality"`
+	ChipsRemaining   []string        `json:"chips_remaining"`
+	MomentumLast5GW  float64         `json:"momentum_last_5gw"`
+	Bank             float64         `json:"bank"`
+	TeamValue        float64         `json:"team_value"`
+	InjuredStarters  int             `json:"injured_starters"`
+	WinProbability   float64         `json:"win_probability"` // from the simulation; see LeagueAnalysisResult.WinProbabilityMethod
+	GameweekPoints   []GameweekScore `json:"gameweek_points"` // from the season history (#53)
+	ChipsUsed        []fpl.ChipUsed  `json:"chips_used"`
 }
 
 // calculateSquadQuality scores the starting XI's recent output plus how easy
@@ -289,6 +291,8 @@ func (e *Engine) AnalyzeLeagueForTeam(ctx context.Context, leagueID int, callerI
 			MomentumLast5GW:  Round(momentum(history.Current, currentGW), 1),
 			Bank:             Round(float64(picks.EntryHistory.Bank)/10, 1),
 			TeamValue:        Round(teamValue(picks.Picks, playersByID), 1),
+			GameweekPoints:   gameweekScores(history),
+			ChipsUsed:        chipsPlayed(history),
 		}
 		injured := 0
 		for _, pick := range picks.Picks {
@@ -397,6 +401,7 @@ func leagueCallerRow(callerID *int, table []LeagueWinChance, gwsRemaining int) *
 		return &LeagueCallerRow{
 			TeamID: row.TeamID, Rank: row.Rank, TotalPoints: row.TotalPoints,
 			PointsGapToLeader: gap, RequiredPPGOverLeader: required, WinProbability: row.WinProbability,
+			Gaps: leagueGaps(row.TeamID, table, gwsRemaining),
 		}
 	}
 	return &LeagueCallerRow{
