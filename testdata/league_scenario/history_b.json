@@ -3,6 +3,8 @@
     {
       "event": 1,
       "points": 55,
+      "event_transfers_cost": 0,
+      "total_points": 55,
       "value": 0,
       "bank": 0
     }

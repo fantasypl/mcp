@@ -35,8 +35,16 @@ type TeamHistory struct {
 
 // HistoryGameweek is one gameweek's result within the current season.
 type HistoryGameweek struct {
-	Event  int `json:"event"`
-	Points int `json:"points"`
+	Event int `json:"event"`
+
+	// Points is the gameweek score before transfer hits, as FPL shows it
+	// on the points page. EventTransfersCost is the hit cost taken that
+	// gameweek (4 per extra transfer). TotalPoints is FPL's official
+	// season total after this gameweek, which is net of every hit: the sum
+	// of Points minus EventTransfersCost so far.
+	Points             int `json:"points"`
+	EventTransfersCost int `json:"event_transfers_cost"`
+	TotalPoints        int `json:"total_points"`
 
 	// Value is total team value in tenths (squad + bank, not squad alone —
 	// see ManagerHub's squad-value calculation) and Bank is the bank
