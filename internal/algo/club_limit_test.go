@@ -132,16 +132,15 @@ func TestTransferSuggestionsClubLimitOKAcrossTheResponse(t *testing.T) {
 func TestHubDifferentialTargetsFlagFullClubs(t *testing.T) {
 	e := hubEngine(t)
 	stub := e.client.(*StubClient)
-	_, counts := squadClubs(t, e)
+	clubOf, counts := squadClubs(t, e)
 
 	// Make an Arsenal player (a full club in the squad) the clear top
-	// differential: tiny ownership, outstanding output.
-	var arsenal int
-	for club, n := range counts {
-		if n == maxPlayersPerClub {
-			arsenal = club
-			break
-		}
+	// differential: tiny ownership, outstanding output. Arsenal is taken from
+	// Gabriel (ID 4), not by ranging over counts: Villa is full too, and map
+	// order is random.
+	arsenal := clubOf[4]
+	if counts[arsenal] != maxPlayersPerClub {
+		t.Fatalf("fixture changed: the squad holds %d Arsenal players, want 3", counts[arsenal])
 	}
 	var target *fpl.Player
 	for i := range stub.bootstrap.Elements {
