@@ -26,7 +26,7 @@ const (
 )
 
 // The players behind issue #23's report. Saka is an attacking midfielder;
-// Bogle is a £4.6m defender whose ep_next comes from clean sheets and
+// Bogle is a £4.6m defender whose projection comes from clean sheets and
 // defensive contributions, with few attacking returns.
 var (
 	pSaka       = fpl.Player{ID: sakaID, WebName: "Saka", ElementType: 3, NowCost: 104, Minutes: 900, ExpectedGoalInvolvements: 6.5}
@@ -43,13 +43,13 @@ var (
 	}
 )
 
-// Issue #23 regression: ep_next ranked Bogle, a £4.6m defender, above Saka.
+// Issue #23 regression: a points projection ranked Bogle, a £4.6m defender, above Saka.
 // The hub must still recommend Saka, and say why in one line.
 func TestCaptainChoiceSakaOverBogle(t *testing.T) {
 	squad := asStarters(
-		HubSquadEntry{ElementID: sakaID, Name: "Saka", Position: "MID", Cost: 10.4, CaptainScore: 12.4, EPNext: 6.1},
-		HubSquadEntry{ElementID: bogleID, Name: "Bogle", Position: "DEF", Cost: 4.6, CaptainScore: 8.9, EPNext: 6.8},
-		HubSquadEntry{ElementID: gibbsWhiteID, Name: "Gibbs-White", Position: "MID", Cost: 7.5, CaptainScore: 10.2, EPNext: 5.0},
+		HubSquadEntry{ElementID: sakaID, Name: "Saka", Position: "MID", Cost: 10.4, CaptainScore: 12.4, ProjectedPoints: 6.1},
+		HubSquadEntry{ElementID: bogleID, Name: "Bogle", Position: "DEF", Cost: 4.6, CaptainScore: 8.9, ProjectedPoints: 6.8},
+		HubSquadEntry{ElementID: gibbsWhiteID, Name: "Gibbs-White", Position: "MID", Cost: 7.5, CaptainScore: 10.2, ProjectedPoints: 5.0},
 	)
 	got := captainChoice(squad, allFour)
 	if got == nil || got.Name != "Saka" {
@@ -66,12 +66,12 @@ func TestCaptainChoiceSakaOverBogle(t *testing.T) {
 }
 
 // The sanity check matters most inside the tie band: Bogle's captain_score
-// is within 5% of Saka's and his ep_next is higher, but ep_next can't break
+// is within 5% of Saka's and his projection is higher, but it can't break
 // the tie for a player with no attacking threat.
 func TestCaptainChoiceSanityCheckInsideTieBand(t *testing.T) {
 	squad := asStarters(
-		HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1},
-		HubSquadEntry{ElementID: bogleID, Name: "Bogle", CaptainScore: 12.0, EPNext: 6.8},
+		HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 6.1},
+		HubSquadEntry{ElementID: bogleID, Name: "Bogle", CaptainScore: 12.0, ProjectedPoints: 6.8},
 	)
 	if got := captainChoice(squad, allFour); got.Name != "Saka" {
 		t.Errorf("captainChoice = %s (%s), want Saka", got.Name, got.Reason)
@@ -79,10 +79,10 @@ func TestCaptainChoiceSanityCheckInsideTieBand(t *testing.T) {
 }
 
 func TestCaptainChoiceTiebreak(t *testing.T) {
-	t.Run("within 5%, higher ep_next wins", func(t *testing.T) {
+	t.Run("within 5%, higher projected_points wins", func(t *testing.T) {
 		squad := asStarters(
-			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1},
-			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0, EPNext: 7.9},
+			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 6.1},
+			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0, ProjectedPoints: 7.9},
 		)
 		got := captainChoice(squad, allFour)
 		if got.Name != "Haaland" {
@@ -97,8 +97,8 @@ func TestCaptainChoiceTiebreak(t *testing.T) {
 
 	t.Run("more than 5% clear, captain_score wins", func(t *testing.T) {
 		squad := asStarters(
-			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1},
-			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 11.0, EPNext: 7.9},
+			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 6.1},
+			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 11.0, ProjectedPoints: 7.9},
 		)
 		got := captainChoice(squad, allFour)
 		if got.Name != "Saka" {
@@ -111,10 +111,10 @@ func TestCaptainChoiceTiebreak(t *testing.T) {
 		}
 	})
 
-	t.Run("an ep_next tie keeps the captain_score leader", func(t *testing.T) {
+	t.Run("a projected_points tie keeps the captain_score leader", func(t *testing.T) {
 		squad := asStarters(
-			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 7.0},
-			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0, EPNext: 7.0},
+			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 7.0},
+			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0, ProjectedPoints: 7.0},
 		)
 		got := captainChoice(squad, allFour)
 		if got.Name != "Saka" || !strings.Contains(got.Reason, "leads both") {
@@ -126,8 +126,8 @@ func TestCaptainChoiceTiebreak(t *testing.T) {
 func TestCaptainChoiceEdgeCases(t *testing.T) {
 	t.Run("agreement", func(t *testing.T) {
 		squad := asStarters(
-			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 7.5},
-			HubSquadEntry{ElementID: bogleID, Name: "Bogle", CaptainScore: 8.9, EPNext: 6.8},
+			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 7.5},
+			HubSquadEntry{ElementID: bogleID, Name: "Bogle", CaptainScore: 8.9, ProjectedPoints: 6.8},
 		)
 		got := captainChoice(squad, allFour)
 		if got.Name != "Saka" || !strings.Contains(got.Reason, "leads both") {
@@ -136,29 +136,29 @@ func TestCaptainChoiceEdgeCases(t *testing.T) {
 	})
 
 	t.Run("bench players are not candidates", func(t *testing.T) {
-		squad := asStarters(HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1})
-		squad = append(squad, HubSquadEntry{Slot: 13, ElementID: haalandID, Name: "Haaland", CaptainScore: 15, EPNext: 9})
+		squad := asStarters(HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 6.1})
+		squad = append(squad, HubSquadEntry{Slot: 13, ElementID: haalandID, Name: "Haaland", CaptainScore: 15, ProjectedPoints: 9})
 		if got := captainChoice(squad, allFour); got.Name != "Saka" {
 			t.Errorf("captainChoice = %s, want Saka: a benched player can't be captain", got.Name)
 		}
 	})
 
-	t.Run("preseason, no ep_next", func(t *testing.T) {
+	t.Run("no starter has a projection", func(t *testing.T) {
 		squad := asStarters(
 			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4},
 			HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0},
 		)
 		got := captainChoice(squad, allFour)
-		if got.Name != "Saka" || !strings.Contains(got.Reason, "no ep_next") {
-			t.Errorf("captainChoice = %s (%q), want Saka with no ep_next", got.Name, got.Reason)
+		if got.Name != "Saka" || !strings.Contains(got.Reason, "No starter has projected points") {
+			t.Errorf("captainChoice = %s (%q), want Saka with no projection", got.Name, got.Reason)
 		}
 	})
 
 	t.Run("too few minutes is not attacking threat", func(t *testing.T) {
 		newSigning := fpl.Player{ID: 99, Minutes: 180, ExpectedGoalInvolvements: 2.0}
 		squad := asStarters(
-			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1},
-			HubSquadEntry{ElementID: 99, Name: "NewSigning", CaptainScore: 12.2, EPNext: 8.0},
+			HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, ProjectedPoints: 6.1},
+			HubSquadEntry{ElementID: 99, Name: "NewSigning", CaptainScore: 12.2, ProjectedPoints: 8.0},
 		)
 		got := captainChoice(squad, captainPlayers(pSaka, newSigning))
 		if got.Name != "Saka" || !strings.Contains(got.Reason, "under 270 minutes") {
@@ -194,5 +194,41 @@ func TestManagerHubCaptainChoiceWired(t *testing.T) {
 	}
 	if got.CaptainChoice.Reason == "" {
 		t.Error("CaptainChoice has no reason")
+	}
+}
+
+// Issue #42: inside the 5% band the tiebreak uses projected_points, not
+// ep_next. Haaland has the higher ep_next (a hot run) but the lower
+// projection, so Saka keeps the armband.
+func TestCaptainChoiceTiebreakUsesProjectionNotEPNext(t *testing.T) {
+	squad := asStarters(
+		HubSquadEntry{ElementID: sakaID, Name: "Saka", CaptainScore: 12.4, EPNext: 6.1, ProjectedPoints: 7.8},
+		HubSquadEntry{ElementID: haalandID, Name: "Haaland", CaptainScore: 12.0, EPNext: 7.9, ProjectedPoints: 6.0},
+	)
+	got := captainChoice(squad, allFour)
+	if got.Name != "Saka" {
+		t.Fatalf("captainChoice = %s (%q), want Saka: ep_next must not break the tie", got.Name, got.Reason)
+	}
+	if got.ProjectedPoints != 7.8 {
+		t.Errorf("projected_points = %.1f, want 7.8", got.ProjectedPoints)
+	}
+	if strings.Contains(got.Reason, "ep_next") {
+		t.Errorf("reason %q still cites ep_next", got.Reason)
+	}
+}
+
+// Issue #42: the signal note compares captain_score with projected_points and
+// no longer calls ep_next FPL's projection.
+func TestCaptainSignalNoteUsesProjection(t *testing.T) {
+	squad := []HubSquadEntry{
+		{Starter: true, Name: "Gibbs-White", CaptainScore: 12.93, EPNext: 9.0, ProjectedPoints: 5.0},
+		{Starter: true, Name: "Joao Pedro", CaptainScore: 10.30, EPNext: 1.0, ProjectedPoints: 8.2},
+	}
+	got := captainSignalNote(squad)
+	if !strings.Contains(got, "projected_points favours Joao Pedro") {
+		t.Errorf("note %q should name Joao Pedro as the projection's favourite", got)
+	}
+	if strings.Contains(got, "FPL's own projection") || strings.Contains(got, "ep_next") {
+		t.Errorf("note %q still presents ep_next as a projection", got)
 	}
 }

@@ -42,7 +42,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 
 | Tool | Description |
 |---|---|
-| `fpl_manager_hub` | Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point. Season totals are net of hits, with the gross figure and hit cost alongside |
+| `fpl_manager_hub` | Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point. Each squad player has `projected_points`, a next-gameweek estimate that drives the suggested bench order and captain tiebreak. Season totals are net of hits, with the gross figure and hit cost alongside |
 | `captain_pick` | Top 5 captain recommendations for a gameweek, from every player or from one squad given by `team_id` or `player_ids` |
 | `differential_finder` | Underowned players outperforming their ownership |
 | `fixture_outlook` | Teams ranked by upcoming fixture difficulty |
@@ -57,10 +57,14 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `chip_strategy` | When to use each remaining chip |
 | `rival_tracker` | Mini-league rival analysis and counter-strategies |
 | `league_analyzer` | Win probability predictions for a mini-league |
-| `squad_scout` | Deep scout report using FPL's less-visible data fields |
+| `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
 | `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
 
 Plus two resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress) and `fpl://teams` (all 20 Premier League teams) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+
+### A note on `ep_next`
+
+FPL's `ep_next` field is labelled "expected points", but in 2026-27 FPL sets it equal to `form` for every available player and to 0 for most flagged ones. This server no longer treats it as a forecast. Tools that rank players for the next gameweek use `projected_points` instead: season points per game, scaled by the share of team games the player started, FPL fixture difficulty, home or away, and chance of playing. `ep_next` stays in tool output, unchanged, for one more release and is deprecated.
 
 ## fplctl
 
