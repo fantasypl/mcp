@@ -53,7 +53,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `player_comparison` | Head-to-head comparison of 2-4 players |
 | `live_points` | Live points during an active gameweek |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
-| `chip_strategy` | When to use each remaining chip, with a confidence comparable across chips, the next-best gameweek and the factors behind each candidate. Optional `league_id` adds rivals' remaining chips |
+| `chip_strategy` | When to use each remaining chip |
 | `rival_tracker` | Mini-league rival analysis and counter-strategies |
 | `league_analyzer` | Win probability predictions for a mini-league |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields |
@@ -77,6 +77,10 @@ fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-
 fplctl elo-capture [--root DIR]
 fplctl congestion-capture [--root DIR]
 ```
+
+### Chip confidence
+
+`chip_strategy`'s `chip_score` is in each chip's own units, so compare it only between gameweeks for the same chip. `confidence` (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over that chip's next-best gameweek. Each recommendation also lists `next_best_gameweek`, `gap_to_next` and its top five `candidates` with the factors behind them. Pass `league_id` to see rivals' remaining chips.
 
 ## Development
 
