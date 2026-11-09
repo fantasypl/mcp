@@ -119,6 +119,7 @@
       "transfer_in_options": [
         {
           "captain_score": 3.0,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.8,
@@ -136,6 +137,7 @@
         },
         {
           "captain_score": 2.5,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.8,
@@ -153,6 +155,7 @@
         },
         {
           "captain_score": 0.1,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.4,
@@ -170,6 +173,7 @@
         },
         {
           "captain_score": 0.1,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.4,
@@ -187,6 +191,7 @@
         },
         {
           "captain_score": 0.1,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.4,
@@ -219,6 +224,7 @@
       "transfer_in_options": [
         {
           "captain_score": 1.5,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 1.4,
@@ -236,6 +242,7 @@
         },
         {
           "captain_score": 1.5,
+          "club_limit_ok": true,
           "cost": 4.0,
           "fixture": {
             "fdr": 2.2,
@@ -253,6 +260,7 @@
         },
         {
           "captain_score": 5.0,
+          "club_limit_ok": true,
           "cost": 6.0,
           "fixture": {
             "fdr": 1.8,
@@ -270,6 +278,7 @@
         },
         {
           "captain_score": 4.8,
+          "club_limit_ok": true,
           "cost": 5.0,
           "fixture": {
             "fdr": 1.8,
@@ -287,6 +296,7 @@
         },
         {
           "captain_score": 4.7,
+          "club_limit_ok": true,
           "cost": 5.0,
           "fixture": {
             "fdr": 1.4,

@@ -90,6 +90,7 @@ type optimalTransfersIn struct {
 type compareIn struct {
 	PlayerNames    []string `json:"player_names"              jsonschema:"Two to four player names"`
 	GameweeksAhead int      `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
+	TeamID         *int     `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, each player gains legality: whether one transfer from that squad can bring him in within the 3-per-club limit and the budget. Players who cannot are left out of the verdict."`
 }
 type teamIn struct {
 	TeamID int `json:"team_id" jsonschema:"FPL team ID"`
@@ -267,7 +268,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 	mcp.AddTool(s, &mcp.Tool{Name: "price_predictions", Description: "Predict which FPL players are likely to rise or fall in price tonight.\n\nUSE THIS WHEN the user asks: \"Who's about to rise in price?\", \"Should I make my transfer now before prices change?\", \"Price change predictions?\", or any price-related question.\n\nBuy before a rise to gain free team value. Sell before a fall to avoid losing value."}, func(ctx context.Context, _ *mcp.CallToolRequest, _ priceIn) (*mcp.CallToolResult, any, error) {
 		return nil, call(func() (any, error) { return engine.PricePredictions(ctx, 0) }, "Failed to get price predictions. The FPL API may be temporarily unavailable — try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "transfer_suggestions", Description: "Get transfer recommendations for a specific FPL team.\n\nUSE THIS WHEN the user asks: \"Who should I transfer in/out?\", \"Best transfers this week?\", \"How to improve my team?\". Prefer fpl_manager_hub for a full analysis instead.\n\nEach player to sell gets its own list of replacements, ranked independently, so the same player can top several lists but can only be bought once. Check for repeats before recommending more than one transfer."}, func(ctx context.Context, _ *mcp.CallToolRequest, in transferIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "transfer_suggestions", Description: "Get transfer recommendations for a specific FPL team.\n\nUSE THIS WHEN the user asks: \"Who should I transfer in/out?\", \"Best transfers this week?\", \"How to improve my team?\". Prefer fpl_manager_hub for a full analysis instead.\n\nEach player to sell gets its own list of replacements, ranked independently, so the same player can top several lists but can only be bought once. Check for repeats before recommending more than one transfer.\n\nEvery option keeps the 3-per-club limit after its own transfer; options that would not are left out. club_limit_ok is false for an option that is legal alone but would make four from one club together with the top picks of the suggestions listed before it, and club_limit_note says which."}, func(ctx context.Context, _ *mcp.CallToolRequest, in transferIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
@@ -316,7 +317,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
 		}, fmt.Sprintf("Failed to find optimal transfers for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict.\n\nPass team_id when the question is who to buy: each player then gains legality (in_squad, club_limit_ok, budget_ok, legal_buy and a note naming the sale that works), and the verdict only considers players that squad could have next gameweek, so it never recommends a fourth player from one club."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
 		if len(in.PlayerNames) < 2 {
 			return nil, errResult("Provide at least 2 player names to compare (max 4)."), nil
 		}
@@ -326,8 +327,13 @@ func newServer(client *fpl.Client) *mcp.Server {
 		if in.GameweeksAhead == 0 {
 			in.GameweeksAhead = 5
 		}
+		if in.TeamID != nil {
+			if e := validTeam(*in.TeamID); e != "" {
+				return nil, errResult(e), nil
+			}
+		}
 		return nil, call(func() (any, error) {
-			return engine.ComparePlayers(ctx, in.PlayerNames, clamp(in.GameweeksAhead, 1, 10))
+			return engine.ComparePlayersForTeam(ctx, in.PlayerNames, clamp(in.GameweeksAhead, 1, 10), in.TeamID)
 		}, "Failed to compare players. Check the player names and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "live_points", Description: "Get live points for a specific FPL team during an active gameweek.\n\nUSE THIS WHEN the user asks: \"How's my team doing?\", \"Live score?\", \"Am I getting any bonus points?\", \"Any auto-subs?\". Only useful during an active gameweek when matches are being played or have just finished."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {

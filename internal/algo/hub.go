@@ -417,7 +417,9 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		transferSuggestions = []TransferSuggestion{}
 	}
 
-	diffTargets := diffResult.Differentials
+	// Differentials are found across the whole game, so flag those from a
+	// club this squad already holds three of, and rank them last (#43).
+	diffTargets := flagDifferentialClubLimits(diffResult.Differentials, squadPlayers, playersByID, teams)
 	if len(diffTargets) > 10 {
 		diffTargets = diffTargets[:10]
 	}
