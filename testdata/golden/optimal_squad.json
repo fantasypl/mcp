@@ -155,13 +155,13 @@
     "name": "B.Fernandes",
     "team": "MUN",
     "score": 9.629,
-    "reason": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, easy fixture (fdr 1), elite ict index (score: 9.629)"
+    "reason": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, easy fixture (fdr 1.4), elite ict index (score: 9.629)"
   },
   "recommended_vice_captain": {
     "id": 4,
     "name": "Gabriel",
     "team": "ARS",
     "score": 7.012,
-    "reason": "Poor form, easy fixture (fdr 1), home advantage (score: 7.012)"
+    "reason": "Poor form, easy fixture (fdr 1.4), home advantage (score: 7.012)"
   }
 }
