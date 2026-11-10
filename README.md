@@ -51,7 +51,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `transfer_suggestions` | Transfer recommendations for a team. Every option keeps the 3-per-club limit, and `club_limit_ok` flags options that break it together with earlier suggestions |
 | `optimal_squad` | The highest-projected-points 15-man squad achievable under a budget, via an exact combinatorial optimizer |
 | `optimal_transfers` | Combinatorially optimal transfers for a team's current squad, weighed against hit cost. Set `wildcard` for the best squad reachable on a Wildcard, budgeted at bank plus selling prices |
-| `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict |
+| `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict. `fields` passes through any bootstrap element field per player; `include_gameweeks` adds the last N finished gameweeks and a consistency measure (steady vs haul-dependent) |
 | `live_points` | Live points during an active gameweek |
 | `manager_history` | A manager's season gameweek by gameweek: points before and after hits, bench points, ranks, chips, captain and auto-subs, and the best captain in the XI with the points forgone |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |

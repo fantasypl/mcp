@@ -44,6 +44,9 @@ type CompareResult struct {
 	Verdict        string
 	// Warnings lists matches the caller should double-check; see matchWarnings.
 	Warnings []string
+	// GameweekHistoryNote explains gameweek_history; set only when it was
+	// asked for.
+	GameweekHistoryNote string
 }
 
 func compareError(msg string) *CompareResult {
@@ -75,7 +78,8 @@ func (c CompareResult) MarshalJSON() ([]byte, error) {
 			GameweeksAhead int             `json:"gameweeks_ahead"`
 			Players        []PlayerProfile `json:"players"`
 			Verdict        string          `json:"verdict"`
-		}{c.Warnings, c.Gameweek, c.GameweeksAhead, c.Players, c.Verdict})
+			GameweekNote   string          `json:"gameweek_history_note,omitempty"`
+		}{c.Warnings, c.Gameweek, c.GameweeksAhead, c.Players, c.Verdict, c.GameweekHistoryNote})
 	default:
 		return json.Marshal(struct {
 			Error string `json:"error"`
@@ -137,6 +141,10 @@ type PlayerProfile struct {
 	UpcomingFixtures           []UpcomingFixture `json:"upcoming_fixtures"`
 	BlankGameweeks             []int             `json:"blank_gameweeks"`
 	Legality                   *BuyLegality      `json:"legality,omitempty"`
+	// Fields and GameweekHistory are present only when asked for; see
+	// CompareOptions.
+	Fields          map[string]json.RawMessage `json:"fields,omitempty"`
+	GameweekHistory *GameweekHistory           `json:"gameweek_history,omitempty"`
 
 	// avgFDR and gameweeksAhead are internal: JSON renders avg_fdr under a
 	// key whose name embeds gameweeks_ahead (e.g. "avg_fdr_next_5_gws"), which
