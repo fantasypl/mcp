@@ -84,6 +84,10 @@ fplctl elo-capture [--root DIR]
 fplctl congestion-capture [--root DIR]
 ```
 
+### Chip confidence
+
+`chip_strategy`'s `chip_score` is in each chip's own units, so compare it only between gameweeks for the same chip. `confidence` (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over that chip's next-best gameweek. Each recommendation also lists `next_best_gameweek`, `gap_to_next` and its top five `candidates` with the factors behind them. Pass `league_id` to see rivals' remaining chips.
+
 ## Development
 
 ```bash
