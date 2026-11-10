@@ -32,11 +32,12 @@ type ManagerHubResult struct {
 	SquadValid            bool                 `json:"squad_valid"`
 	NumStarters           int                  `json:"num_starters"`
 	NumBench              int                  `json:"num_bench"`
-	Squad                 []HubSquadEntry      `json:"squad"`                 // the manager's own picks; slots 12-15 are their real bench order
-	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"` // bench re-ordered by ep_next; never alters Squad
+	Squad                 []HubSquadEntry      `json:"squad"`                  // the manager's own picks; slots 12-15 are their real bench order
+	SuggestedBenchOrder   []HubBenchEntry      `json:"suggested_bench_order"`  // bench re-ordered by projected_points; never alters Squad
+	ProjectedPointsBasis  string               `json:"projected_points_basis"` // what projected_points measures; see projection_next.go
 	SquadHealth           HubSquadHealth       `json:"squad_health"`
 	CaptainRecommendation []CaptainPick        `json:"captain_recommendation"`
-	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and ep_next disagree
+	CaptainSignalNote     string               `json:"captain_signal_note,omitempty"` // set only when captain_score and projected_points disagree
 	CaptainChoice         *HubCaptainChoice    `json:"captain_choice"`                // one captain from the starters, combining both signals
 	TransferSuggestions   []TransferSuggestion `json:"transfer_suggestions"`
 	DifferentialTargets   []Differential       `json:"differential_targets"`
@@ -46,15 +47,33 @@ type ManagerHubResult struct {
 	PoweredBy             string               `json:"powered_by"`
 }
 
+// HubSeasonSummary is the manager's season so far.
+//
+// TotalPoints and AvgPointsPerGW are net of transfer hits, so they agree with
+// manager_status.total_points and FPL's own table. Until issue #44 both were
+// gross, so a manager with three -4 hits read 12 points better here than in
+// manager_status. GrossPoints and TransferCostTotal show the difference,
+// and GameweekBreakdown shows where it came from.
 type HubSeasonSummary struct {
-	TotalPoints     int           `json:"total_points"`
-	GameweeksPlayed int           `json:"gameweeks_played"`
-	AvgPointsPerGW  float64       `json:"avg_points_per_gw"`
-	BestGameweek    *HubGWResult  `json:"best_gameweek"`
-	WorstGameweek   *HubGWResult  `json:"worst_gameweek"`
-	ChipsUsed       []HubChipUsed `json:"chips_used"`
-	ChipsRemaining  []string      `json:"chips_remaining"`
-	HalfSeason      string        `json:"half_season"`
+	TotalPoints       int           `json:"total_points"` // net of hits, matches manager_status.total_points
+	GameweeksPlayed   int           `json:"gameweeks_played"`
+	GrossPoints       int           `json:"gross_points"`        // before hits: the sum of each gameweek's score
+	TransferCostTotal int           `json:"transfer_cost_total"` // gross_points minus total_points
+	GameweekBreakdown []HubGWPoints `json:"gameweek_breakdown"`
+	AvgPointsPerGW    float64       `json:"avg_points_per_gw"` // net, total_points / gameweeks_played
+	BestGameweek      *HubGWResult  `json:"best_gameweek"`
+	WorstGameweek     *HubGWResult  `json:"worst_gameweek"`
+	ChipsUsed         []HubChipUsed `json:"chips_used"`
+	ChipsRemaining    []string      `json:"chips_remaining"`
+	HalfSeason        string        `json:"half_season"`
+}
+
+// HubGWPoints is one gameweek of the season summary's breakdown.
+type HubGWPoints struct {
+	GW           int `json:"gw"`
+	Points       int `json:"points"`
+	TransferCost int `json:"transfer_cost"`
+	NetPoints    int `json:"net_points"`
 }
 
 type HubGWResult struct {
@@ -69,30 +88,34 @@ type HubChipUsed struct {
 }
 
 type HubSquadEntry struct {
-	Slot          int      `json:"slot"`
-	Starter       bool     `json:"starter"`
-	ElementID     int      `json:"element_id"`
-	Name          string   `json:"name"`
-	Team          string   `json:"team"`
-	TeamFullName  string   `json:"team_full_name"`
-	Position      string   `json:"position"`
-	Cost          float64  `json:"cost"`                     // market price
-	PurchasePrice float64  `json:"purchase_price,omitempty"` // set when the transfer history is available
-	SellingPrice  float64  `json:"selling_price,omitempty"`  // set when the transfer history is available
-	Form          float64  `json:"form"`
-	PointsPerGame float64  `json:"points_per_game"`
-	EPNext        float64  `json:"ep_next"`
-	TotalPoints   int      `json:"total_points"`
-	ICTIndex      float64  `json:"ict_index"`
-	IsCaptain     bool     `json:"is_captain"`
-	IsViceCaptain bool     `json:"is_vice_captain"`
-	Opponent      string   `json:"opponent"`
-	Venue         string   `json:"venue"`
-	FDR           *float64 `json:"fdr"`
-	CaptainScore  float64  `json:"captain_score"`
-	Status        string   `json:"status"`
-	Minutes       int      `json:"minutes"`
-	SelectedByPct float64  `json:"selected_by_pct"`
+	Slot          int     `json:"slot"`
+	Starter       bool    `json:"starter"`
+	ElementID     int     `json:"element_id"`
+	Name          string  `json:"name"`
+	Team          string  `json:"team"`
+	TeamFullName  string  `json:"team_full_name"`
+	Position      string  `json:"position"`
+	Cost          float64 `json:"cost"`                     // market price
+	PurchasePrice float64 `json:"purchase_price,omitempty"` // set when the transfer history is available
+	SellingPrice  float64 `json:"selling_price,omitempty"`  // set when the transfer history is available
+	Form          float64 `json:"form"`
+	PointsPerGame float64 `json:"points_per_game"`
+	// EPNext is FPL's raw ep_next. Deprecated: in 2026-27 FPL sets it equal
+	// to form, so it is not a projection. Kept for one release; use
+	// ProjectedPoints.
+	EPNext          float64  `json:"ep_next"`
+	ProjectedPoints float64  `json:"projected_points"` // next-gameweek projection; see nextGameweekProjectionBasis
+	TotalPoints     int      `json:"total_points"`
+	ICTIndex        float64  `json:"ict_index"`
+	IsCaptain       bool     `json:"is_captain"`
+	IsViceCaptain   bool     `json:"is_vice_captain"`
+	Opponent        string   `json:"opponent"`
+	Venue           string   `json:"venue"`
+	FDR             *float64 `json:"fdr"`
+	CaptainScore    float64  `json:"captain_score"`
+	Status          string   `json:"status"`
+	Minutes         int      `json:"minutes"`
+	SelectedByPct   float64  `json:"selected_by_pct"`
 }
 
 // HubBenchEntry is one player in the suggested bench order.
@@ -100,20 +123,24 @@ type HubBenchEntry struct {
 	// Slot is the suggested position, 12-15.
 	Slot int `json:"slot"`
 	// CurrentSlot is where the manager has this player now.
-	CurrentSlot int     `json:"current_slot"`
-	ElementID   int     `json:"element_id"`
-	Name        string  `json:"name"`
-	Position    string  `json:"position"`
-	EPNext      float64 `json:"ep_next"`
+	CurrentSlot     int     `json:"current_slot"`
+	ElementID       int     `json:"element_id"`
+	Name            string  `json:"name"`
+	Position        string  `json:"position"`
+	EPNext          float64 `json:"ep_next"` // deprecated, equals form in 2026-27; see HubSquadEntry.EPNext
+	ProjectedPoints float64 `json:"projected_points"`
 }
 
 // suggestBenchOrder recommends an auto-sub priority for the bench (slots
 // 12-15) by projected points.
 //
 // FPL requires the bench goalkeeper in slot 12, so it stays there whatever its
-// projection. Outfield players follow in descending ep_next, since the first
-// outfield bench player who played is the first one subbed on. Equal
-// projections keep the manager's own relative order.
+// projection. Outfield players follow in descending projected_points, since
+// the first outfield bench player who played is the first one subbed on.
+// Equal projections keep the manager's own relative order.
+//
+// This used to sort on ep_next, which FPL sets equal to form in 2026-27
+// (issue #42), so a regular starter on a cold run sank down the bench.
 func suggestBenchOrder(squad []HubSquadEntry) []HubBenchEntry {
 	var keepers, outfield []HubSquadEntry
 	for _, s := range squad {
@@ -131,9 +158,9 @@ func suggestBenchOrder(squad []HubSquadEntry) []HubBenchEntry {
 	slices.SortStableFunc(outfield, func(a, b HubSquadEntry) int { return a.Slot - b.Slot })
 	slices.SortStableFunc(outfield, func(a, b HubSquadEntry) int {
 		switch {
-		case a.EPNext > b.EPNext:
+		case a.ProjectedPoints > b.ProjectedPoints:
 			return -1
-		case a.EPNext < b.EPNext:
+		case a.ProjectedPoints < b.ProjectedPoints:
 			return 1
 		default:
 			return 0
@@ -146,6 +173,7 @@ func suggestBenchOrder(squad []HubSquadEntry) []HubBenchEntry {
 		out[i] = HubBenchEntry{
 			Slot: 12 + i, CurrentSlot: s.Slot, ElementID: s.ElementID,
 			Name: s.Name, Position: s.Position, EPNext: s.EPNext,
+			ProjectedPoints: s.ProjectedPoints,
 		}
 	}
 	return out
@@ -268,6 +296,10 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	}
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, nextGW, teams)
+	// The next gameweek's fixtures in the integer-FDR form the projection
+	// uses, and each club's games played for the starts share.
+	nextGWWindow := buildProjectionWindow(fixtures, nextGW, 1)
+	gamesPlayed := teamGamesPlayed(fixtures)
 
 	squadPlayers := make([]*fpl.Player, 0, len(picks.Picks))
 	for _, pick := range picks.Picks {
@@ -328,7 +360,8 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 			Name: p.WebName, Team: shortName(team), TeamFullName: fullName(team),
 			Position: Position(p.ElementType), Cost: float64(p.NowCost) / 10,
 			Form: p.Form.Float(), PointsPerGame: p.PointsPerGame.Float(), EPNext: p.EPNext.Float(),
-			TotalPoints: p.TotalPoints, ICTIndex: p.ICTIndex.Float(),
+			ProjectedPoints: projectNextGameweek(p, nextGWWindow[p.Team], gamesPlayed[p.Team]),
+			TotalPoints:     p.TotalPoints, ICTIndex: p.ICTIndex.Float(),
 			IsCaptain: pick.IsCaptain, IsViceCaptain: pick.IsViceCaptain,
 			Opponent: opponentStr, Venue: venue, FDR: fdr, CaptainScore: captainScore,
 			Status: status, Minutes: p.Minutes, SelectedByPct: p.SelectedByPercent.Float(),
@@ -364,10 +397,21 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		}
 	}
 
-	totalPoints := 0
+	// Net is the official total: gross scores minus each week's hit cost,
+	// the same figure as FPL's running total_points.
+	grossPoints, transferCostTotal := 0, 0
+	breakdown := make([]HubGWPoints, 0, len(season))
 	for _, gw := range season {
-		totalPoints += gw.Points
+		grossPoints += gw.Points
+		transferCostTotal += gw.EventTransfersCost
+		breakdown = append(breakdown, HubGWPoints{
+			GW: gw.Event, Points: gw.Points, TransferCost: gw.EventTransfersCost,
+			NetPoints: gw.Points - gw.EventTransfersCost,
+		})
 	}
+	totalPoints := grossPoints - transferCostTotal
+	// Best and worst use the gameweek score FPL shows, before hits, so a
+	// week's ranking doesn't depend on transfers made for later weeks.
 	var bestGW, worstGW *HubGWResult
 	if len(season) > 0 {
 		best, worst := season[0], season[0]
@@ -417,7 +461,9 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		transferSuggestions = []TransferSuggestion{}
 	}
 
-	diffTargets := diffResult.Differentials
+	// Differentials are found across the whole game, so flag those from a
+	// club this squad already holds three of, and rank them last (#43).
+	diffTargets := flagDifferentialClubLimits(diffResult.Differentials, squadPlayers, playersByID, teams)
 	if len(diffTargets) > 10 {
 		diffTargets = diffTargets[:10]
 	}
@@ -440,11 +486,12 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		SquadSellingValue: squadSellingValue, BudgetNote: budgetNote,
 		SeasonSummary: HubSeasonSummary{
 			TotalPoints: totalPoints, GameweeksPlayed: len(season), AvgPointsPerGW: avgPointsPerGW,
+			GrossPoints: grossPoints, TransferCostTotal: transferCostTotal, GameweekBreakdown: breakdown,
 			BestGameweek: bestGW, WorstGameweek: worstGW, ChipsUsed: chipsUsed,
 			ChipsRemaining: mgrStatus.ChipsRemaining, HalfSeason: halfSeason,
 		},
 		SquadSize: len(squad), SquadValid: numStarters == 11, NumStarters: numStarters, NumBench: len(squad) - numStarters,
-		Squad: squad, SuggestedBenchOrder: suggestBenchOrder(squad),
+		Squad: squad, SuggestedBenchOrder: suggestBenchOrder(squad), ProjectedPointsBasis: nextGameweekProjectionBasis,
 		SquadHealth: HubSquadHealth{
 			InjuredOrDoubtful: injured, PoorFormStarters: poorForm, ToughFixturesThisGW: toughFixtures,
 		},

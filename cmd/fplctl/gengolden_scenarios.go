@@ -132,7 +132,8 @@ func scenarioHistory(points []int, chips []fpl.ChipUsage) *fpl.TeamHistory {
 	h := &fpl.TeamHistory{Chips: chips}
 	for i, p := range points {
 		if i == 4 {
-			h.Current = append(h.Current, fpl.HistoryGameweek{Event: 1, Points: p})
+			// One gameweek with no hit, so the season total equals its points.
+			h.Current = append(h.Current, fpl.HistoryGameweek{Event: 1, Points: p, TotalPoints: p})
 		}
 	}
 	return h

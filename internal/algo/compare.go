@@ -136,6 +136,7 @@ type PlayerProfile struct {
 	News                       *PlayerNews       `json:"news"`
 	UpcomingFixtures           []UpcomingFixture `json:"upcoming_fixtures"`
 	BlankGameweeks             []int             `json:"blank_gameweeks"`
+	Legality                   *BuyLegality      `json:"legality,omitempty"`
 
 	// avgFDR and gameweeksAhead are internal: JSON renders avg_fdr under a
 	// key whose name embeds gameweeks_ahead (e.g. "avg_fdr_next_5_gws"), which

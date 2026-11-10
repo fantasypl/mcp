@@ -13,6 +13,9 @@ type LeagueInfo struct {
 }
 
 type StandingsPage struct {
+	// HasNext is true when the league has more managers than this page
+	// (FPL pages standings 50 at a time).
+	HasNext bool          `json:"has_next"`
 	Results []LeagueEntry `json:"results"`
 }
 
@@ -35,8 +38,24 @@ type TeamHistory struct {
 
 // HistoryGameweek is one gameweek's result within the current season.
 type HistoryGameweek struct {
-	Event  int `json:"event"`
-	Points int `json:"points"`
+	Event int `json:"event"`
+
+	// Points is the gameweek score before transfer hits, as FPL shows it
+	// on the points page. EventTransfersCost is the hit cost taken that
+	// gameweek (4 per extra transfer). TotalPoints is FPL's official
+	// season total after this gameweek, which is net of every hit: the sum
+	// of Points minus EventTransfersCost so far.
+	Points             int `json:"points"`
+	EventTransfersCost int `json:"event_transfers_cost"`
+	TotalPoints        int `json:"total_points"`
+
+	// PointsOnBench is what the bench scored that gameweek. Rank is the
+	// manager's rank for the gameweek alone; OverallRank is their season
+	// rank after it. omitempty only affects fplctl's scenario generator,
+	// which marshals these types; FPL always sends the fields.
+	PointsOnBench int `json:"points_on_bench,omitempty"`
+	Rank          int `json:"rank,omitempty"`
+	OverallRank   int `json:"overall_rank,omitempty"`
 
 	// Value is total team value in tenths (squad + bank, not squad alone —
 	// see ManagerHub's squad-value calculation) and Bank is the bank

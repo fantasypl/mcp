@@ -44,6 +44,8 @@ func main() {
 		err = runEloCapture(ctx, args)
 	case "congestion-capture":
 		err = runCongestionCapture(ctx, args)
+	case "calibrate":
+		err = runCalibrate(ctx, args)
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -74,6 +76,7 @@ Usage:
   fplctl odds-backtest [--seasons S1,S2,...] [--root DIR]
   fplctl elo-capture [--root DIR]
   fplctl congestion-capture [--root DIR]
+  fplctl calibrate [--season S] [--from N] [--to N] [--out FILE] [--root DIR]
 
 Run 'fplctl <subcommand> -h' for subcommand-specific flags.
 `)

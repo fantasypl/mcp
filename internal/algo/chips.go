@@ -398,7 +398,10 @@ type chipAssignment struct {
 // tie-breaking deterministic across runs. In practice this only matters when two full assignments tie
 // exactly on total score, which needs several independent float sums to
 // collide bit-for-bit — essentially never happens with real fixture data.
-func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gwStats map[int]*gwChipStats, benchPlayers, squadPlayers []*fpl.Player, allPlayers []fpl.Player, e *Engine) map[string]chipAssignment {
+//
+// It also returns each chip's score for every scanned gameweek, so the
+// recommendations can show the alternatives (#54).
+func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gwStats map[int]*gwChipStats, benchPlayers, squadPlayers []*fpl.Player, allPlayers []fpl.Player, e *Engine) (map[string]chipAssignment, map[string]map[int]chipAssignment) {
 	hasWildcard := chipsRemaining["wildcard"]
 
 	bbScores := map[int]float64{}
@@ -436,6 +439,24 @@ func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gw
 		}
 	}
 
+	tables := make(map[string]map[int]chipAssignment, len(chips))
+	for _, chip := range chips {
+		table := make(map[int]chipAssignment, len(scanGWs))
+		for _, gw := range scanGWs {
+			switch chip {
+			case "bboost":
+				table[gw] = chipAssignment{gw: gw, score: bbScores[gw]}
+			case "freehit":
+				table[gw] = chipAssignment{gw: gw, score: fhScores[gw]}
+			case "wildcard":
+				table[gw] = chipAssignment{gw: gw, score: wcScores[gw]}
+			case "3xc":
+				table[gw] = tcResults[gw]
+			}
+		}
+		tables[chip] = table
+	}
+
 	scoresFor := func(chip string) map[int]float64 {
 		switch chip {
 		case "bboost":
@@ -468,7 +489,7 @@ func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gw
 				result[chip] = chipAssignment{gw: *bestGW, score: scores[*bestGW]}
 			}
 		}
-		return result
+		return result, tables
 	}
 
 	// Multiple chips: cap the search space to each chip's top-5 candidate
@@ -535,7 +556,7 @@ func findOptimalChipAssignment(chipsRemaining map[string]bool, scanGWs []int, gw
 	}
 	search(0, 0.0)
 
-	return best
+	return best, tables
 }
 
 // ---------------------------------------------------------------------------
@@ -581,6 +602,16 @@ type ChipStrategyResult struct {
 	// object keys are always strings — the internal map has int keys and
 	// json.dumps stringifies them the same way on encode.
 	ChipPlaysByGW map[string]map[string]int `json:"chip_plays_by_gw,omitempty"`
+
+	// ConfidenceScale documents chip_score and confidence (#54).
+	ConfidenceScale string `json:"confidence_scale"`
+	// SeasonOutlook lists confirmed doubles and blanks after the scan
+	// window.
+	SeasonOutlook []SeasonOutlookGW `json:"season_outlook"`
+	// LeagueChips is set when a league_id is given: each rival's chips left
+	// this half of the season.
+	LeagueChips     []LeagueChipsRow `json:"league_chips,omitempty"`
+	LeagueChipsNote string           `json:"league_chips_note,omitempty"`
 }
 
 type BBoostGWDetails struct {
@@ -594,9 +625,10 @@ type BBoostRecommendation struct {
 	Chip                string          `json:"chip"`
 	ChipCode            string          `json:"chip_code"`
 	RecommendedGameweek int             `json:"recommended_gameweek"`
-	ConfidenceScore     float64         `json:"confidence_score"`
+	ConfidenceScore     float64         `json:"confidence_score"` // deprecated: the same number as chip_score
 	Reasoning           string          `json:"reasoning"`
 	GWDetails           BBoostGWDetails `json:"gw_details"`
+	ChipConfidence
 }
 
 type SuggestedCaptain struct {
@@ -610,10 +642,11 @@ type TCRecommendation struct {
 	Chip                string            `json:"chip"`
 	ChipCode            string            `json:"chip_code"`
 	RecommendedGameweek int               `json:"recommended_gameweek"`
-	ConfidenceScore     float64           `json:"confidence_score"`
+	ConfidenceScore     float64           `json:"confidence_score"` // deprecated: the same number as chip_score
 	Reasoning           string            `json:"reasoning"`
 	GWDetails           BBoostGWDetails   `json:"gw_details"`
 	SuggestedCaptain    *SuggestedCaptain `json:"suggested_captain,omitempty"`
+	ChipConfidence
 }
 
 type FreeHitGWDetails struct {
@@ -628,9 +661,10 @@ type FreeHitRecommendation struct {
 	Chip                string           `json:"chip"`
 	ChipCode            string           `json:"chip_code"`
 	RecommendedGameweek int              `json:"recommended_gameweek"`
-	ConfidenceScore     float64          `json:"confidence_score"`
+	ConfidenceScore     float64          `json:"confidence_score"` // deprecated: the same number as chip_score
 	Reasoning           string           `json:"reasoning"`
 	GWDetails           FreeHitGWDetails `json:"gw_details"`
+	ChipConfidence
 }
 
 type SquadIssues struct {
@@ -642,10 +676,11 @@ type WildcardRecommendation struct {
 	Chip                string          `json:"chip"`
 	ChipCode            string          `json:"chip_code"`
 	RecommendedGameweek int             `json:"recommended_gameweek"`
-	ConfidenceScore     float64         `json:"confidence_score"`
+	ConfidenceScore     float64         `json:"confidence_score"` // deprecated: the same number as chip_score
 	Reasoning           string          `json:"reasoning"`
 	SquadIssues         SquadIssues     `json:"squad_issues"`
 	GWDetails           BBoostGWDetails `json:"gw_details"`
+	ChipConfidence
 }
 
 type PendingDGWsSummary struct {
@@ -755,8 +790,14 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 		}
 	}
 
+	// The scan stops at GW19 while the first half's chips are in play: they
+	// expire after it, and GW20 brings a new set (#54).
+	lastScanGW := 38
+	if nextGW <= halfwayGW {
+		lastScanGW = halfwayGW
+	}
 	scanGWs := make([]int, 0, chipScanWindow)
-	for gw := nextGW; gw < nextGW+chipScanWindow && gw < 39; gw++ {
+	for gw := nextGW; gw < nextGW+chipScanWindow && gw <= lastScanGW; gw++ {
 		scanGWs = append(scanGWs, gw)
 	}
 
@@ -826,9 +867,10 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 		}
 	}
 
-	assignment := findOptimalChipAssignment(chipsRemaining, scanGWs, gwStats, benchPlayers, squadPlayers, bootstrap.Elements, e)
+	assignment, scoreTables := findOptimalChipAssignment(chipsRemaining, scanGWs, gwStats, benchPlayers, squadPlayers, bootstrap.Elements, e)
 
 	recommendations := buildChipRecommendations(assignment, gwStats, teams, squadPlayers)
+	addChipConfidence(recommendations, scoreTables, scanGWs, gwStats, benchPlayers)
 
 	var pendingSummary *PendingDGWsSummary
 	if len(teamsWithPending) > 0 {
@@ -892,10 +934,16 @@ func (e *Engine) ChipStrategy(ctx context.Context, teamID int) (any, error) {
 		}
 	}
 
+	lastScanned := nextGW - 1
+	if len(scanGWs) > 0 {
+		lastScanned = scanGWs[len(scanGWs)-1]
+	}
 	result := &ChipStrategyResult{
 		TeamID: teamID, Gameweek: currentGW, ScanWindow: scanWindow,
 		ChipsRemaining: chipsRemainingDisplay, ChipsUsed: chipsUsedDisplay,
 		Recommendations: recommendations, PendingDGWs: pendingSummary, CommunityIntel: intelSummary,
+		ConfidenceScale: chipConfidenceScale,
+		SeasonOutlook:   seasonOutlook(fixtures, lastScanned+1, allTeamIDs),
 	}
 
 	// Chip usage trends: both the scanned upcoming window and every finished
