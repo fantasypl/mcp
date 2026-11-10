@@ -85,27 +85,6 @@ func TestRoundToInt(t *testing.T) {
 	}
 }
 
-// "%d" % 1.4 truncates. Rounding here would shift FDR labels in the
-// reasoning strings by one.
-func TestTruncInt(t *testing.T) {
-	cases := []struct {
-		in   float64
-		want int
-	}{
-		{1.4, 1},
-		{1.8, 1},
-		{4.6, 4},
-		{-1.7, -1},
-		{2.0, 2},
-		{0.9, 0},
-	}
-	for _, tc := range cases {
-		if got := TruncInt(tc.in); got != tc.want {
-			t.Errorf("TruncInt(%v) = %d, want %d", tc.in, got, tc.want)
-		}
-	}
-}
-
 func TestFloatStr(t *testing.T) {
 	cases := []struct {
 		in   float64

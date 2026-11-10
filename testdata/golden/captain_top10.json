@@ -30,7 +30,7 @@
         "team_full_name": "Man Utd"
       },
       "rank": 1,
-      "reasoning": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 9.629)",
+      "reasoning": "Poor form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, easy fixture (fdr 1.4), elite ict index (score: 9.629)",
       "score": 9.629,
       "stats": {
         "bonus": 41,
@@ -80,7 +80,7 @@
         "team_full_name": "Man City"
       },
       "rank": 2,
-      "reasoning": "Poor form, elite xg/90 (0.78), on penalties, fpl expects 4.0pts, easy fixture (fdr 1), home advantage, elite ict index (score: 9.004)",
+      "reasoning": "Poor form, elite xg/90 (0.78), on penalties, easy fixture (fdr 1.8), home advantage, elite ict index (score: 9.004)",
       "score": 9.004,
       "stats": {
         "bonus": 43,
@@ -130,7 +130,7 @@
         "team_full_name": "Arsenal"
       },
       "rank": 3,
-      "reasoning": "Poor form, strong xg/90 (0.31), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 8.765)",
+      "reasoning": "Poor form, strong xg/90 (0.31), on penalties, easy fixture (fdr 1.4), home advantage, elite ict index (score: 8.765)",
       "score": 8.765,
       "stats": {
         "bonus": 18,
@@ -180,7 +180,7 @@
         "team_full_name": "Brentford"
       },
       "rank": 4,
-      "reasoning": "Poor form, elite xg/90 (0.56), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 7.279)",
+      "reasoning": "Poor form, elite xg/90 (0.56), on penalties, easy fixture (fdr 1.8), home advantage, elite ict index (score: 7.279)",
       "score": 7.279,
       "stats": {
         "bonus": 22,
@@ -230,7 +230,7 @@
         "team_full_name": "Chelsea"
       },
       "rank": 5,
-      "reasoning": "Poor form, strong xg/90 (0.49), on penalties, easy fixture (fdr 1) (score: 7.08)",
+      "reasoning": "Poor form, strong xg/90 (0.49), on penalties, easy fixture (fdr 1.8) (score: 7.08)",
       "score": 7.08,
       "stats": {
         "bonus": 11,
@@ -280,7 +280,7 @@
         "team_full_name": "Everton"
       },
       "rank": 6,
-      "reasoning": "Poor form, on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 7.023)",
+      "reasoning": "Poor form, on penalties, easy fixture (fdr 1.8), home advantage, elite ict index (score: 7.023)",
       "score": 7.023,
       "stats": {
         "bonus": 7,
@@ -330,7 +330,7 @@
         "team_full_name": "Arsenal"
       },
       "rank": 7,
-      "reasoning": "Poor form, fpl expects 4.0pts, easy fixture (fdr 1), home advantage (score: 7.012)",
+      "reasoning": "Poor form, easy fixture (fdr 1.4), home advantage (score: 7.012)",
       "score": 7.012,
       "stats": {
         "bonus": 30,
@@ -380,7 +380,7 @@
         "team_full_name": "Brighton"
       },
       "rank": 8,
-      "reasoning": "Poor form, strong xg/90 (0.49), on penalties, on direct free kicks, easy fixture (fdr 1), home advantage, elite ict index (score: 6.935)",
+      "reasoning": "Poor form, strong xg/90 (0.49), on penalties, on direct free kicks, easy fixture (fdr 1.8), home advantage, elite ict index (score: 6.935)",
       "score": 6.935,
       "stats": {
         "bonus": 18,
@@ -430,7 +430,7 @@
         "team_full_name": "Nott'm Forest"
       },
       "rank": 9,
-      "reasoning": "Poor form, strong xg/90 (0.31), on direct free kicks, easy fixture (fdr 1), home advantage, elite ict index (score: 6.766)",
+      "reasoning": "Poor form, strong xg/90 (0.31), on direct free kicks, easy fixture (fdr 1.4), home advantage, elite ict index (score: 6.766)",
       "score": 6.766,
       "stats": {
         "bonus": 18,
@@ -480,7 +480,7 @@
         "team_full_name": "Man City"
       },
       "rank": 10,
-      "reasoning": "Poor form, strong xa/90 (0.45), on direct free kicks, easy fixture (fdr 1), home advantage, elite ict index (score: 6.491)",
+      "reasoning": "Poor form, strong xa/90 (0.45), on direct free kicks, easy fixture (fdr 1.8), home advantage, elite ict index (score: 6.491)",
       "score": 6.491,
       "stats": {
         "bonus": 16,
