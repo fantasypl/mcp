@@ -16,6 +16,17 @@ type TeamPicks struct {
 	Picks        []Pick       `json:"picks"`
 	ActiveChip   *string      `json:"active_chip"`
 	EntryHistory EntryHistory `json:"entry_history"`
+	// AutomaticSubs are FPL's substitutions for starters who didn't play,
+	// filled in once the gameweek's matches are over.
+	AutomaticSubs []AutomaticSub `json:"automatic_subs,omitempty"`
+}
+
+// AutomaticSub is one automatic substitution: ElementIn came off the bench
+// for ElementOut.
+type AutomaticSub struct {
+	ElementIn  int `json:"element_in"`
+	ElementOut int `json:"element_out"`
+	Event      int `json:"event"`
 }
 
 // Pick is one squad slot. Position runs 1-15 (1-11 are the starting XI,

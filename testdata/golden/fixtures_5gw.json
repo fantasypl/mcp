@@ -105,6 +105,7 @@
     }
   ],
   "position_filter": null,
+  "start_gameweek": 1,
   "target_gameweeks": [
     1,
     2,

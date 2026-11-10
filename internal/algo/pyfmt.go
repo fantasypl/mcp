@@ -41,16 +41,6 @@ func RoundToInt(x float64) int {
 	return int(math.RoundToEven(x))
 }
 
-// TruncInt truncates toward zero rather than rounding
-// rather than rounding. The reasoning strings rely on this: an FDR of 1.4
-// renders as "FDR 1", and 4.6 renders as "FDR 4", not 5.
-func TruncInt(x float64) int {
-	if math.IsNaN(x) || math.IsInf(x, 0) {
-		return 0
-	}
-	return int(x)
-}
-
 // FloatStr formats floats for reasoning strings.
 //
 // Integral floats always include a decimal point — 4.0 is
