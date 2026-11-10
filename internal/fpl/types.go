@@ -166,6 +166,39 @@ type Player struct {
 	// and notes consumed by scout-risk handling rather than verified against
 	// a populated example.
 	ScoutRisks []ScoutRisk `json:"scout_risks"`
+
+	// raw is this element's JSON exactly as FPL sent it, kept so a caller
+	// can ask for a field the struct above does not model (issue #24). It
+	// is unexported, so it never reaches JSON output, and it is nil for a
+	// Player built in code rather than decoded.
+	raw json.RawMessage
+}
+
+// UnmarshalJSON decodes the modelled fields as usual and keeps a copy of
+// the element's raw JSON for RawField. The copy is required: a json.Decoder
+// may reuse the buffer b points into once this method returns.
+func (p *Player) UnmarshalJSON(b []byte) error {
+	type plain Player // drops this method, so the decode below cannot recurse
+	if err := json.Unmarshal(b, (*plain)(p)); err != nil {
+		return err
+	}
+	p.raw = bytes.Clone(b)
+	return nil
+}
+
+// RawFields returns every field of this element as FPL sent it, keyed by
+// field name, or nil when the Player was not decoded from JSON. The values
+// are untouched, so a string-encoded number such as "form": "6.2" stays a
+// string.
+func (p *Player) RawFields() (map[string]json.RawMessage, error) {
+	if p.raw == nil {
+		return nil, nil
+	}
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(p.raw, &m); err != nil {
+		return nil, fmt.Errorf("fpl: element %d: %w", p.ID, err)
+	}
+	return m, nil
 }
 
 // ScoutRisk is one entry of a player's scout_risks list. See Player.ScoutRisks

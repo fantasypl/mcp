@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fantasypl/mcp/internal/fpl"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -135,16 +136,23 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resources/list: %v", err)
 	}
-	if len(resources.Resources) != 3 {
-		t.Errorf("got %d resources, want 3", len(resources.Resources))
+	if len(resources.Resources) != 5 {
+		t.Errorf("got %d resources, want 5", len(resources.Resources))
 	}
 
 	prompts, err := clientSession.ListPrompts(ctx, nil)
 	if err != nil {
 		t.Fatalf("prompts/list: %v", err)
 	}
-	if len(prompts.Prompts) != 5 {
-		t.Errorf("got %d prompts, want 5", len(prompts.Prompts))
+	if len(prompts.Prompts) != 10 {
+		t.Errorf("got %d prompts, want 10", len(prompts.Prompts))
+	}
+
+	// go-sdk sends ttlMs 0, "immediately stale", unless told otherwise; the
+	// lists are static, so the server says so (#27).
+	want := int(listTTL / time.Millisecond)
+	if tools.TTLMs != want || prompts.TTLMs != want || resources.TTLMs != want {
+		t.Errorf("list ttlMs = tools %d, prompts %d, resources %d; want %d each", tools.TTLMs, prompts.TTLMs, resources.TTLMs, want)
 	}
 
 	// Clients show title in pickers and argument forms (#27).

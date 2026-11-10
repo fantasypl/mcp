@@ -94,9 +94,11 @@ type optimalTransfersIn struct {
 	Wildcard  *bool `json:"wildcard,omitempty"   jsonschema:"Plan a Wildcard: unlimited free transfers from your current squad, with a budget of bank plus the selling prices of your current 15. Cannot be combined with allow_hits. Default false."`
 }
 type compareIn struct {
-	PlayerNames    []string `json:"player_names"              jsonschema:"Two to four player names"`
-	GameweeksAhead int      `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
-	TeamID         *int     `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, each player gains legality: whether one transfer from that squad can bring him in within the 3-per-club limit and the budget. Players who cannot are left out of the verdict."`
+	PlayerNames      []string `json:"player_names"              jsonschema:"Two to four player names"`
+	GameweeksAhead   int      `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
+	TeamID           *int     `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, each player gains legality: whether one transfer from that squad can bring him in within the 3-per-club limit and the budget. Players who cannot are left out of the verdict."`
+	Fields           []string `json:"fields,omitempty"            jsonschema:"Optional bootstrap-static element field names to return per player as FPL sends them, e.g. [\"cost_change_start\", \"now_cost\", \"selected_by_percent\"]. An unknown name returns an error listing the valid ones."`
+	IncludeGameweeks int      `json:"include_gameweeks,omitempty" jsonschema:"Optional: add each player's last N finished gameweeks (1-38) with points, minutes, goals, assists, xG and xA, plus a consistency measure that separates steady scorers from one-haul players."`
 }
 type teamIn struct {
 	TeamID int `json:"team_id" jsonschema:"FPL team ID"`
@@ -389,7 +391,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
 		}, fmt.Sprintf("Failed to find optimal transfers for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict.\n\nPass team_id when the question is who to buy: each player then gains legality (in_squad, club_limit_ok, budget_ok, legal_buy and a note naming the sale that works), and the verdict only considers players that squad could have next gameweek, so it never recommends a fourth player from one club."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict.\n\nPass team_id when the question is who to buy: each player then gains legality (in_squad, club_limit_ok, budget_ok, legal_buy and a note naming the sale that works), and the verdict only considers players that squad could have next gameweek, so it never recommends a fourth player from one club.\n\nPass fields to get any other bootstrap-static element field per player, verbatim (for example cost_change_start for price movement since the season began).\n\nPass include_gameweeks (e.g. 6) when season totals could hide how a player scored: each player gains gameweek_history with one row per finished gameweek (doubles summed, blanks shown) and consistency (average, median, standard deviation, hauls of 10+ and their share of the total, low scores, a profile such as steady or haul-dependent, and a plain-words summary). gameweek_history_note explains the measure."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
 		if len(in.PlayerNames) < 2 {
 			return nil, errResult("Provide at least 2 player names to compare (max 4)."), nil
 		}
@@ -404,8 +406,15 @@ func newServer(client *fpl.Client) *mcp.Server {
 				return nil, errResult(e), nil
 			}
 		}
+		if in.IncludeGameweeks < 0 || in.IncludeGameweeks > algo.MaxIncludeGameweeks {
+			return nil, errResult(fmt.Sprintf("include_gameweeks must be between 1 and %d.", algo.MaxIncludeGameweeks)), nil
+		}
 		return nil, call(func() (any, error) {
-			return engine.ComparePlayersForTeam(ctx, in.PlayerNames, clamp(in.GameweeksAhead, 1, 10), in.TeamID)
+			return engine.ComparePlayersWithOptions(ctx, in.PlayerNames, clamp(in.GameweeksAhead, 1, 10), algo.CompareOptions{
+				TeamID:           in.TeamID,
+				Fields:           in.Fields,
+				IncludeGameweeks: in.IncludeGameweeks,
+			})
 		}, "Failed to compare players. Check the player names and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "live_points", Description: "Get live points for a specific FPL team during an active gameweek.\n\nUSE THIS WHEN the user asks: \"How's my team doing?\", \"Live score?\", \"Am I getting any bonus points?\", \"Any auto-subs?\". Only useful during an active gameweek when matches are being played or have just finished."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
@@ -509,8 +518,11 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}, fmt.Sprintf("Failed to analyze team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	addResources(s, client, time.Now)
+	addBrowsingResources(s, client)
 	addCalibrationResource(s, calibrationPath())
 	addPrompts(s)
+	addPlanningPrompts(s)
+	s.AddReceivingMiddleware(listCacheMiddleware)
 	return s
 }
 

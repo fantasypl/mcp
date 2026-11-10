@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -319,5 +320,44 @@ func TestNoSilentlyUnmappedFields(t *testing.T) {
 	}
 	if bad := unmapped(typoed{}, loose.Elements[0]); len(bad) != 1 || bad[0] != "fomr" {
 		t.Errorf("guard is vacuous: expected it to flag \"fomr\", got %v", bad)
+	}
+}
+
+// TestPlayerRawFields checks that every element field survives decoding,
+// modelled or not, exactly as FPL sent it (issue #24), and that decoding
+// through a json.Decoder, whose buffer is reused, still leaves each player
+// with its own copy.
+func TestPlayerRawFields(t *testing.T) {
+	in := `{"elements": [
+		{"id": 1, "web_name": "A", "now_cost": 55, "form": "6.2", "unmodelled_field": [1, 2]},
+		{"id": 2, "web_name": "B", "now_cost": 80, "form": "1.0", "unmodelled_field": null}
+	]}`
+	var b Bootstrap
+	if err := json.NewDecoder(strings.NewReader(in)).Decode(&b); err != nil {
+		t.Fatal(err)
+	}
+	if b.Elements[0].NowCost != 55 || b.Elements[0].Form != 6.2 {
+		t.Fatalf("modelled fields lost: %+v", b.Elements[0])
+	}
+
+	got, err := b.Elements[0].RawFields()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"id": `1`, "now_cost": `55`, "form": `"6.2"`, "unmodelled_field": `[1, 2]`}
+	for k, v := range want {
+		if string(got[k]) != v {
+			t.Errorf("RawFields()[%q] = %s, want %s", k, got[k], v)
+		}
+	}
+
+	second, _ := b.Elements[1].RawFields()
+	if string(second["now_cost"]) != `80` {
+		t.Errorf("second player's raw JSON was overwritten: now_cost = %s", second["now_cost"])
+	}
+
+	var built Player
+	if m, err := built.RawFields(); m != nil || err != nil {
+		t.Errorf("a Player built in code should have no raw fields, got %v, %v", m, err)
 	}
 }

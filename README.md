@@ -51,7 +51,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `transfer_suggestions` | Transfer recommendations for a team. Every option keeps the 3-per-club limit, and `club_limit_ok` flags options that break it together with earlier suggestions |
 | `optimal_squad` | The highest-projected-points 15-man squad achievable under a budget, via an exact combinatorial optimizer |
 | `optimal_transfers` | Combinatorially optimal transfers for a team's current squad, weighed against hit cost. Set `wildcard` for the best squad reachable on a Wildcard, budgeted at bank plus selling prices |
-| `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict |
+| `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict. `fields` passes through any bootstrap element field per player; `include_gameweeks` adds the last N finished gameweeks and a consistency measure (steady vs haul-dependent) |
 | `live_points` | Live points during an active gameweek |
 | `manager_history` | A manager's season gameweek by gameweek: points before and after hits, bench points, ranks, chips, captain and auto-subs, and the best captain in the XI with the points forgone |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
@@ -62,7 +62,17 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
 | `my_team` | Your team as it stands in the FPL app before the deadline: pending transfers applied, FPL's own purchase and selling prices, bank, free transfers and chip state. Needs the optional FPL login below |
 
-Plus three resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress), `fpl://teams` (all 20 Premier League teams) and `fpl://calibration` (how well each signal has ranked next-gameweek points this season; see below) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+Plus five resources:
+
+| Resource | Contents |
+|---|---|
+| `fpl://status` | Current and next gameweek state, the next deadline in UTC with time remaining, and season progress |
+| `fpl://teams` | All 20 Premier League teams |
+| `fpl://fixtures/upcoming` | Every fixture in the next 5 gameweeks, with kickoff time and FPL's FDR for each side |
+| `fpl://players/top` | The 50 players in the best FPL form, with team, position, price, ownership and availability |
+| `fpl://calibration` | How well each signal has ranked next-gameweek points this season; see below |
+
+And ten pre-built prompts for Claude Desktop's prompt selector: `analyze_my_fpl_team`, `who_should_i_captain`, `find_differential_picks`, `plan_my_transfers`, `price_change_alert`, `plan_my_chips`, `beat_my_rivals`, `fixture_swings`, `find_optimal_transfers` and `compare_players`.
 
 ### Optional FPL login
 
