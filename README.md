@@ -48,10 +48,10 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `differential_finder` | Underowned players outperforming their ownership |
 | `fixture_outlook` | Teams ranked by upcoming fixture difficulty |
 | `price_predictions` | Likely price rises and falls tonight |
-| `transfer_suggestions` | Transfer recommendations for a team |
+| `transfer_suggestions` | Transfer recommendations for a team. Every option keeps the 3-per-club limit, and `club_limit_ok` flags options that break it together with earlier suggestions |
 | `optimal_squad` | The highest-projected-points 15-man squad achievable under a budget, via an exact combinatorial optimizer |
 | `optimal_transfers` | Combinatorially optimal transfers for a team's current squad, weighed against hit cost. Set `wildcard` for the best squad reachable on a Wildcard, budgeted at bank plus selling prices |
-| `player_comparison` | Head-to-head comparison of 2-4 players |
+| `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict |
 | `live_points` | Live points during an active gameweek |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
 | `chip_strategy` | When to use each remaining chip |

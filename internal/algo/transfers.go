@@ -64,17 +64,19 @@ type TransferOutPlayer struct {
 }
 
 type TransferInOption struct {
-	ID           int          `json:"id"`
-	Name         string       `json:"name"`
-	Team         string       `json:"team"`
-	TeamFullName string       `json:"team_full_name"`
-	Position     string       `json:"position"`
-	Cost         float64      `json:"cost"`
-	Form         float64      `json:"form"`
-	PPG          float64      `json:"ppg"`
-	ValueScore   float64      `json:"value_score"`
-	CaptainScore float64      `json:"captain_score"`
-	Fixture      *FixtureLite `json:"fixture"`
+	ID            int          `json:"id"`
+	Name          string       `json:"name"`
+	Team          string       `json:"team"`
+	TeamFullName  string       `json:"team_full_name"`
+	Position      string       `json:"position"`
+	Cost          float64      `json:"cost"`
+	Form          float64      `json:"form"`
+	PPG           float64      `json:"ppg"`
+	ValueScore    float64      `json:"value_score"`
+	CaptainScore  float64      `json:"captain_score"`
+	Fixture       *FixtureLite `json:"fixture"`
+	ClubLimitOK   *bool        `json:"club_limit_ok"`
+	ClubLimitNote string       `json:"club_limit_note,omitempty"`
 	// PriceRisk is set when price_predictions flags this player; see
 	// priceRiskByPlayer. Informational only: it does not affect ranking.
 	PriceRisk string `json:"price_risk,omitempty"`
@@ -315,6 +317,7 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 		squadPlayers = append(squadPlayers, se.player)
 	}
 	sellingPrices := e.squadSellingPrices(ctx, teamID, squadPlayers)
+	squadClubs := countClubs(squadPlayers)
 	budgetNote := marketPriceNote
 	if sellingPrices != nil {
 		budgetNote = sellingPriceNote
@@ -374,6 +377,11 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 			if squadIDs[p.ID] {
 				continue
 			}
+			// 3-per-club: drop an option that would make a fourth player
+			// from one club once the transfer_out player has gone (#43).
+			if !squadClubs.swapLegal(sell.player.Team, p.Team) {
+				continue
+			}
 			pf := fixtureMap[p.Team]
 			if len(pf) == 0 {
 				continue // blanking this gameweek
@@ -431,6 +439,10 @@ func (e *Engine) TransferSuggestionsIncluding(ctx context.Context, teamID, freeT
 			BudgetAvailable:   Round(budget, 1),
 		})
 	}
+
+	// Mark options that are legal alone but not alongside the earlier
+	// suggestions' top picks.
+	markResponseClubLimits(suggestions, squadClubs, byID, teams)
 
 	squadOverview := make([]SquadOverviewEntry, 0, len(squad))
 	for _, s := range squad {

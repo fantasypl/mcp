@@ -43,6 +43,8 @@ type Differential struct {
 	Streak              Streak               `json:"streak"`
 	FinishingRegression *FinishingRegression `json:"finishing_regression,omitempty"`
 	RoleChange          *RoleChange          `json:"role_change,omitempty"`
+	ClubLimitOK         *bool                `json:"club_limit_ok,omitempty"`
+	ClubLimitNote       string               `json:"club_limit_note,omitempty"`
 }
 
 // FinishingRegression is the shot-level buy/sell signal from
