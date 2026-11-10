@@ -122,8 +122,8 @@ type rivalIn struct {
 
 // validRivalSelection checks rival_tracker's optional rival lists.
 func validRivalSelection(in rivalIn) string {
-	if len(in.RivalTeamIDs) > 10 || len(in.TargetRanks) > 10 {
-		return "rival_team_ids and target_ranks take at most 10 entries each."
+	if len(in.RivalTeamIDs) > algo.MaxChosenRivals || len(in.TargetRanks) > algo.MaxChosenRivals {
+		return fmt.Sprintf("rival_team_ids and target_ranks take at most %d entries each.", algo.MaxChosenRivals)
 	}
 	for _, id := range in.RivalTeamIDs {
 		if e := validTeam(id); e != "" {

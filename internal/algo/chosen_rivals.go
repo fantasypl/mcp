@@ -16,10 +16,10 @@ import (
 // gameweek points and chips played, from their season history, so score
 // trends and chip timing can be compared.
 
-// maxChosenRivals caps each of rival_team_ids and target_ranks. Every chosen
-// rival costs two requests (picks and history), plus transfers for the two
-// closest.
-const maxChosenRivals = 10
+// MaxChosenRivals caps each of rival_team_ids and target_ranks; the tool's
+// input validation enforces it. Every chosen rival costs two requests (picks
+// and history), plus transfers for the two closest.
+const MaxChosenRivals = 10
 
 // RivalSelection chooses rival_tracker's rivals. Empty means the managers
 // ranked within three places of the caller.
