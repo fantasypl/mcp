@@ -44,7 +44,11 @@ type ManagerHubResult struct {
 	FixtureOutlook        HubFixtureOutlook    `json:"fixture_outlook"`
 	PriceDropRisks        []HubPriceRisk       `json:"price_drop_risks"`
 	PricePredictions      HubPricePredictions  `json:"price_predictions"`
-	PoweredBy             string               `json:"powered_by"`
+	// Leagues reports each saved league (FPL_MCP_LEAGUES); absent when none
+	// are saved. LeagueOwnershipBasis explains every league_ownership field.
+	Leagues              []HubLeague `json:"leagues,omitempty"`
+	LeagueOwnershipBasis string      `json:"league_ownership_basis,omitempty"`
+	PoweredBy            string      `json:"powered_by"`
 }
 
 // HubSeasonSummary is the manager's season so far.
@@ -116,6 +120,9 @@ type HubSquadEntry struct {
 	Status          string   `json:"status"`
 	Minutes         int      `json:"minutes"`
 	SelectedByPct   float64  `json:"selected_by_pct"`
+	// LeagueOwnership is how the manager's rivals in the saved leagues hold
+	// this player; set only when leagues are saved.
+	LeagueOwnership *LeagueOwnership `json:"league_ownership,omitempty"`
 }
 
 // HubBenchEntry is one player in the suggested bench order.
@@ -266,8 +273,10 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 	var diffResult *DifferentialResult
 	var fixtureResult *FixtureOutlookResult
 	var priceResult *PriceResult
+	var field *RivalField
 	{
 		g, gctx := errgroup.WithContext(ctx)
+		g.Go(func() error { field = e.LeagueField(gctx, teamID); return nil }) // best-effort, nil without saved leagues
 		g.Go(func() (err error) { captainResult, err = e.CaptainPicks(gctx, &nextGW, 5); return })
 		g.Go(func() (err error) { diffResult, err = e.Differentials(gctx, 10, &nextGW, 10); return })
 		g.Go(func() (err error) { fixtureResult, err = e.FixtureOutlook(gctx, gameweeksAhead, ""); return })
@@ -480,7 +489,20 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		likelyFallers = likelyFallers[:5]
 	}
 
+	choice := captainChoice(squad, playersByID)
+	captainPicks := captainResult.Picks
+	if basis := field.Basis(); basis != "" {
+		for i := range squad {
+			squad[i].LeagueOwnership = field.Ownership(squad[i].ElementID)
+		}
+		// Annotate a copy, so the slice CaptainPicks returned is left as is.
+		captainPicks = append([]CaptainPick(nil), captainPicks...)
+		field.annotateCaptainPicks(captainPicks)
+		field.annotateTransfers(transferSuggestions)
+	}
+
 	return &ManagerHubResult{
+		Leagues: e.hubLeagues(ctx, field, bootstrap, squad, choice), LeagueOwnershipBasis: field.Basis(),
 		TeamID: teamID, Gameweek: currentGW, PreppingFor: fmt.Sprintf("GW%d", nextGW), GameweekStatus: fpl.StatusAt(bootstrap, e.Now()),
 		ManagerStatus: mgrStatus, SquadValue: squadValue, Bank: bank, TotalBudget: totalBudget,
 		SquadSellingValue: squadSellingValue, BudgetNote: budgetNote,
@@ -495,9 +517,9 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		SquadHealth: HubSquadHealth{
 			InjuredOrDoubtful: injured, PoorFormStarters: poorForm, ToughFixturesThisGW: toughFixtures,
 		},
-		CaptainRecommendation: captainResult.Picks,
+		CaptainRecommendation: captainPicks,
 		CaptainSignalNote:     captainSignalNote(squad),
-		CaptainChoice:         captainChoice(squad, playersByID),
+		CaptainChoice:         choice,
 		TransferSuggestions:   transferSuggestions,
 		DifferentialTargets:   diffTargets,
 		FixtureOutlook:        HubFixtureOutlook{TeamsByDifficulty: teamsByDifficulty, PlayersToTarget: fixtureResult.PlayersToTarget},

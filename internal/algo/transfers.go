@@ -40,6 +40,9 @@ type TransferSuggestionsResult struct {
 	SquadSize           int                  `json:"squad_size"`
 	SquadOverview       []SquadOverviewEntry `json:"squad_overview"`
 	PriceRiskNote       string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a player carries one
+	// LeagueOwnershipBasis explains league_ownership; set only when leagues
+	// are saved.
+	LeagueOwnershipBasis string `json:"league_ownership_basis,omitempty"`
 }
 
 type TransferSuggestion struct {
@@ -61,6 +64,9 @@ type TransferOutPlayer struct {
 	// PriceRisk is set when price_predictions flags this player; see
 	// priceRiskByPlayer. Informational only: it does not affect ranking.
 	PriceRisk string `json:"price_risk,omitempty"`
+	// LeagueOwnership is how the team's rivals in the saved leagues hold
+	// this player. Informational only, like PriceRisk.
+	LeagueOwnership *LeagueOwnership `json:"league_ownership,omitempty"`
 }
 
 type TransferInOption struct {
@@ -80,6 +86,9 @@ type TransferInOption struct {
 	// PriceRisk is set when price_predictions flags this player; see
 	// priceRiskByPlayer. Informational only: it does not affect ranking.
 	PriceRisk string `json:"price_risk,omitempty"`
+	// LeagueOwnership is how the team's rivals in the saved leagues hold
+	// this player. Informational only, like PriceRisk.
+	LeagueOwnership *LeagueOwnership `json:"league_ownership,omitempty"`
 }
 
 // FixtureLite is a single fixture's raw fields, as opposed to FixtureInfo's

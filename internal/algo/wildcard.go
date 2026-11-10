@@ -45,6 +45,9 @@ type WildcardResult struct {
 	Confidence      string             `json:"confidence"`
 	ConfidenceNotes []string           `json:"confidence_notes"`
 	PriceRiskNote   string             `json:"price_risk_note,omitempty"`
+	// LeagueOwnershipBasis explains league_ownership on the transfer legs;
+	// set only when leagues are saved.
+	LeagueOwnershipBasis string `json:"league_ownership_basis,omitempty"`
 
 	// Squad is the full target squad. StartingXI, Formation, BenchOrder and
 	// the captains are for the target gameweek alone, as in optimal_squad.
