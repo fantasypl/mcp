@@ -1,0 +1,319 @@
+{
+  "elements": [
+    {
+      "id": 1,
+      "stats": {
+        "minutes": 90,
+        "total_points": 7,
+        "bps": 29,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 4,
+      "stats": {
+        "minutes": 90,
+        "total_points": 17,
+        "bps": 44,
+        "bonus": 3
+      }
+    },
+    {
+      "id": 12,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 13,
+      "stats": {
+        "minutes": 79,
+        "total_points": 3,
+        "bps": 23,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 31,
+      "stats": {
+        "minutes": 90,
+        "total_points": 14,
+        "bps": 43,
+        "bonus": 2
+      }
+    },
+    {
+      "id": 40,
+      "stats": {
+        "minutes": 90,
+        "total_points": 1,
+        "bps": 7,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 45,
+      "stats": {
+        "minutes": 65,
+        "total_points": 6,
+        "bps": 29,
+        "bonus": 1
+      }
+    },
+    {
+      "id": 53,
+      "stats": {
+        "minutes": 65,
+        "total_points": 1,
+        "bps": 8,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 55,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 68,
+      "stats": {
+        "minutes": 86,
+        "total_points": 10,
+        "bps": 40,
+        "bonus": 2
+      }
+    },
+    {
+      "id": 79,
+      "stats": {
+        "minutes": 86,
+        "total_points": 6,
+        "bps": 33,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 82,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 6,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 101,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 11,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 112,
+      "stats": {
+        "minutes": 90,
+        "total_points": 7,
+        "bps": 28,
+        "bonus": 1
+      }
+    },
+    {
+      "id": 115,
+      "stats": {
+        "minutes": 90,
+        "total_points": 1,
+        "bps": 6,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 124,
+      "stats": {
+        "minutes": 90,
+        "total_points": 0,
+        "bps": 15,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 138,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 15,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 156,
+      "stats": {
+        "minutes": 87,
+        "total_points": 3,
+        "bps": 10,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 165,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 166,
+      "stats": {
+        "minutes": 81,
+        "total_points": 13,
+        "bps": 66,
+        "bonus": 3
+      }
+    },
+    {
+      "id": 172,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 277,
+      "stats": {
+        "minutes": 90,
+        "total_points": 4,
+        "bps": 7,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 330,
+      "stats": {
+        "minutes": 90,
+        "total_points": 5,
+        "bps": 21,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 356,
+      "stats": {
+        "minutes": 90,
+        "total_points": 9,
+        "bps": 27,
+        "bonus": 1
+      }
+    },
+    {
+      "id": 379,
+      "stats": {
+        "minutes": 76,
+        "total_points": 9,
+        "bps": 33,
+        "bonus": 3
+      }
+    },
+    {
+      "id": 387,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 389,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 391,
+      "stats": {
+        "minutes": 90,
+        "total_points": 1,
+        "bps": 13,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 411,
+      "stats": {
+        "minutes": 90,
+        "total_points": 8,
+        "bps": 35,
+        "bonus": 2
+      }
+    },
+    {
+      "id": 480,
+      "stats": {
+        "minutes": 90,
+        "total_points": 2,
+        "bps": 15,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 498,
+      "stats": {
+        "minutes": 0,
+        "total_points": 0,
+        "bps": 0,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 504,
+      "stats": {
+        "minutes": 90,
+        "total_points": 1,
+        "bps": 6,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 526,
+      "stats": {
+        "minutes": 25,
+        "total_points": 1,
+        "bps": 7,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 536,
+      "stats": {
+        "minutes": 90,
+        "total_points": 5,
+        "bps": 20,
+        "bonus": 0
+      }
+    },
+    {
+      "id": 572,
+      "stats": {
+        "minutes": 90,
+        "total_points": 3,
+        "bps": 22,
+        "bonus": 0
+      }
+    }
+  ]
+}
