@@ -190,7 +190,7 @@ func (e *Engine) sellReason(se *squadEntry) string {
 		fdr = se.fixture.FDR
 	}
 	if fdr >= 4 {
-		reasons = append(reasons, fmt.Sprintf("tough upcoming fixture (FDR %d)", TruncInt(fdr)))
+		reasons = append(reasons, fmt.Sprintf("tough upcoming fixture (FDR %.1f)", fdr))
 	}
 	if se.player != nil {
 		news := FormatNewsForReasoning(se.player, e.Now())
