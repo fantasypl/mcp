@@ -271,11 +271,12 @@ func (e *Engine) buildReasoning(p *fpl.Player, fixtures []TeamFixture, score flo
 			parts = append(parts, fmt.Sprintf("double gameweek (%d fixtures)", len(fixtures)))
 		}
 		for _, f := range fixtures {
-			// Float formatting truncates toward zero: FDR 1.4 renders as 1.
+			// One decimal, matching the numeric fdr field. Truncating to an
+			// integer made a 1.8 fixture read "FDR 1", like a 1.4 (#46).
 			if f.FDR <= 2 {
-				parts = append(parts, fmt.Sprintf("easy fixture (FDR %d)", TruncInt(f.FDR)))
+				parts = append(parts, fmt.Sprintf("easy fixture (FDR %.1f)", f.FDR))
 			} else if f.FDR >= 4 {
-				parts = append(parts, fmt.Sprintf("tough fixture (FDR %d)", TruncInt(f.FDR)))
+				parts = append(parts, fmt.Sprintf("tough fixture (FDR %.1f)", f.FDR))
 			}
 			if f.IsHome {
 				parts = append(parts, "home advantage")
