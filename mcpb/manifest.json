@@ -26,7 +26,8 @@
         "FPL_MCP_WEIGHTS_URL": "${user_config.weights_url}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID": "${user_config.weights_access_client_id}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}",
-        "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}"
+        "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}",
+        "FPL_MCP_LOGIN": "${user_config.fpl_login}"
       }
     }
   },
@@ -48,7 +49,8 @@
     { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" },
     { "name": "optimal_squad", "description": "Highest-projected 15-man squad under a budget, from an exact optimizer" },
     { "name": "optimal_transfers", "description": "Optimal transfers for your current squad, from an exact optimizer, or the best Wildcard squad on your selling-price budget" },
-    { "name": "manager_transfer_history", "description": "A manager's transfers this season, with purchase, market and selling prices" }
+    { "name": "manager_transfer_history", "description": "A manager's transfers this season, with purchase, market and selling prices" },
+    { "name": "my_team", "description": "Your team as it stands in the FPL app before the deadline, with pending transfers, exact selling prices and chip state (needs the optional FPL login)" }
   ],
   "prompts": [
     {
@@ -110,6 +112,13 @@
       "type": "string",
       "title": "API-Football key (optional)",
       "description": "Your own key from api-football.com (a free plan works). Adds bookmaker-implied clean-sheet chance and expected goals to fixture_outlook. Leave blank to skip; nothing else changes.",
+      "sensitive": true,
+      "required": false
+    },
+    "fpl_login": {
+      "type": "string",
+      "title": "FPL login (optional)",
+      "description": "Off by default. Lets my_team read your team as it stands in the FPL app, with pending transfers, exact selling prices and chip state. Log in at fantasy.premierleague.com, run the console snippet from the README, and paste what it copies. Leave blank to use public data only; nothing else changes.",
       "sensitive": true,
       "required": false
     }

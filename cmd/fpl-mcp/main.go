@@ -15,6 +15,7 @@ import (
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/apifootball"
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fplauth"
 	"github.com/fantasypl/mcp/internal/insights"
 	"github.com/fantasypl/mcp/internal/remotecongestion"
 	"github.com/fantasypl/mcp/internal/remoteweights"
@@ -70,6 +71,7 @@ type fixtureIn struct {
 	Position       string `json:"position,omitempty"        jsonschema:"Filter by position: GKP, DEF, MID, or FWD. Optional."`
 }
 type priceIn struct{}
+type myTeamIn struct{}
 type chipIn struct {
 	TeamID   int  `json:"team_id"             jsonschema:"FPL team ID"`
 	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. When set, the result adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
@@ -188,6 +190,30 @@ func call(fn func() (any, error), message string) any {
 	return out
 }
 
+// wireLogin sets up the FPL login from FPL_MCP_LOGIN, if any. The rotated
+// refresh token is kept under the user cache directory; without one it
+// lives in memory for this run only. The returned error is safe to show:
+// it never contains a token.
+func wireLogin(client *fpl.Client, engine *algo.Engine) error {
+	if client.Auth == nil {
+		stateDir := ""
+		if cacheDir, err := os.UserCacheDir(); err == nil {
+			stateDir = filepath.Join(cacheDir, "fpl-mcp", "auth")
+		}
+		src, err := fplauth.FromEnv(stateDir)
+		if err != nil {
+			log.Printf("FPL login is set but cannot be used: %v", err)
+			return err
+		}
+		if src == nil {
+			return nil
+		}
+		client.Auth = src
+	}
+	engine.MyTeamSource = client
+	return nil
+}
+
 // version is set via -ldflags "-X main.version=..." by the release
 // workflow; "dev" identifies a locally built binary.
 var version = "dev"
@@ -246,6 +272,12 @@ func newServer(client *fpl.Client) *mcp.Server {
 			engine.MarketSource = af
 		}
 	}
+
+	// The optional FPL login (issue #26), only when the user sets
+	// FPL_MCP_LOGIN. Without it nothing below changes and my_team says how
+	// to turn it on. A malformed login is reported by my_team rather than
+	// stopping the server, since every other tool still works.
+	loginErr := wireLogin(client, engine)
 	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation.\n\nBy default it ranks every player, at most 2 per club. To rank one squad instead, pass team_id for a registered FPL team, or player_ids for any list of up to 15 players, such as a squad drafted with optimal_squad. Give one or the other, not both. Scoring and output are the same; the per-club cap does not apply to a given squad."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {
@@ -417,6 +449,12 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return nil, errResult(e), nil
 		}
 		return nil, call(func() (any, error) { return engine.TransferHistory(ctx, in.TeamID) }, fmt.Sprintf("Failed to get transfer history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "my_team", Description: "The logged-in manager's team exactly as it stands in the FPL app before the deadline: pending transfers already applied, captain and vice-captain, bench order, FPL's own purchase and selling price for each player, bank, squad value, free transfers left, the points cost of further transfers, and each chip's status, including one that is active but not yet confirmed by the deadline.\n\nUSE THIS WHEN the user asks to check a draft before confirming it: \"Review my Wildcard draft\", \"Did my transfers go through?\", \"What's my exact budget?\", \"Is my chip active?\".\n\nNeeds the optional FPL login (fpl_login in the extension settings, or FPL_MCP_LOGIN), which is off by default. Without it, or when the login has expired, it returns an error saying how to set one up; every other tool works without a login. It takes no team ID: it always reads the logged-in account's own team. With a login, every other tool also uses FPL's exact selling prices for that team instead of computing them from public data (purchase_source fpl_my_team)."}, func(ctx context.Context, _ *mcp.CallToolRequest, _ myTeamIn) (*mcp.CallToolResult, any, error) {
+		if loginErr != nil {
+			return nil, errResult(loginErr.Error()), nil
+		}
+		return nil, call(func() (any, error) { return engine.MyTeam(ctx) }, "Failed to get your team from FPL. The FPL API may be temporarily unavailable, so try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans up to the next 10 gameweeks, stopping at GW19 while first-half chips are in play, and scores each for every unused chip.\n\nEach recommendation has chip_score, in that chip's own units: compare it only between gameweeks for the same chip. confidence (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over the same chip's next-best gameweek (margin_over_next_pct), and says how clear-cut the choice is, not how likely the chip is to pay off. next_best_gameweek and gap_to_next show the runner-up, and candidates lists the top five gameweeks with their factors (fixture count, confirmed and predicted doubles, blanks, average FDR, and squad fit). confidence_score is deprecated and equals chip_score. season_outlook lists confirmed doubles and blanks after the scan window. Pass league_id to see each rival's remaining chips."}, func(ctx context.Context, _ *mcp.CallToolRequest, in chipIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {

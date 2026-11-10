@@ -60,8 +60,38 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `league_analyzer` | Win probabilities for every manager on a mini-league's first standings page, from a Monte Carlo of the rest of the season. Optional `team_id` adds the caller's gap to the leader and to every other manager, with the points per gameweek needed to close each |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
 | `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
+| `my_team` | Your team as it stands in the FPL app before the deadline: pending transfers applied, FPL's own purchase and selling prices, bank, free transfers and chip state. Needs the optional FPL login below |
 
 Plus three resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress), `fpl://teams` (all 20 Premier League teams) and `fpl://calibration` (how well each signal has ranked next-gameweek points this season; see below) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+
+### Optional FPL login
+
+Every tool works from FPL's public data, and the login is off by default. With it, `my_team` can show your team as it stands in the FPL app before you confirm it: pending transfers, a draft Wildcard, captain changes, exact selling prices and chip state. Other tools then also use FPL's exact selling prices for your own team, marked `purchase_source: fpl_my_team`.
+
+FPL signs you in through an OpenID Connect provider and keeps the session in your browser's local storage. To set it up:
+
+1. Log in at https://fantasy.premierleague.com.
+2. Open the browser console (F12, then Console) and run:
+
+   ```js
+   copy((k => JSON.stringify({authority: k.split(':').slice(1, -1).join(':'), client_id: k.split(':').pop(), refresh_token: JSON.parse(localStorage[k]).refresh_token}))(Object.keys(localStorage).find(k => k.startsWith('oidc.user:'))))
+   ```
+
+   Chrome may ask you to type `allow pasting` first. The snippet copies one line of JSON to your clipboard, shaped like this:
+
+   <!-- fpl-login-example -->
+   ```json
+   {"authority":"https://account.premierleague.com/as","client_id":"<client id>","refresh_token":"<refresh token>"}
+   ```
+
+3. Paste it into the extension's "FPL login" setting, or set it as `FPL_MCP_LOGIN` in your MCP client config.
+
+How the server handles it:
+
+- **Nothing is built in.** The authority and client ID come from your paste, and the token endpoint from the authority's OpenID discovery document. The authority, the issuer it reports and the token endpoint must all be https URLs on premierleague.com, so the token cannot be sent anywhere else.
+- **Your browser session ends.** The provider replaces the refresh token each time it is used, so the copy in your browser stops working and the site asks you to log in again. The server keeps the newest refresh token in `fpl-mcp/auth/session.json` under your user cache directory, readable only by you.
+- **No token is logged** or returned in tool output, and logged-in requests never follow a redirect.
+- **An expired or signed-out login** makes `my_team` return an error saying so. Copy a fresh login and paste it again; the server notices the new token and starts from it. Other tools fall back to selling prices computed from public data.
 
 ### Signal calibration
 
