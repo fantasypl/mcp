@@ -47,15 +47,33 @@ type ManagerHubResult struct {
 	PoweredBy             string               `json:"powered_by"`
 }
 
+// HubSeasonSummary is the manager's season so far.
+//
+// TotalPoints and AvgPointsPerGW are net of transfer hits, so they agree with
+// manager_status.total_points and FPL's own table. Until issue #44 both were
+// gross, so a manager with three -4 hits read 12 points better here than in
+// manager_status. GrossPoints and TransferCostTotal show the difference,
+// and GameweekBreakdown shows where it came from.
 type HubSeasonSummary struct {
-	TotalPoints     int           `json:"total_points"`
-	GameweeksPlayed int           `json:"gameweeks_played"`
-	AvgPointsPerGW  float64       `json:"avg_points_per_gw"`
-	BestGameweek    *HubGWResult  `json:"best_gameweek"`
-	WorstGameweek   *HubGWResult  `json:"worst_gameweek"`
-	ChipsUsed       []HubChipUsed `json:"chips_used"`
-	ChipsRemaining  []string      `json:"chips_remaining"`
-	HalfSeason      string        `json:"half_season"`
+	TotalPoints       int           `json:"total_points"` // net of hits, matches manager_status.total_points
+	GameweeksPlayed   int           `json:"gameweeks_played"`
+	GrossPoints       int           `json:"gross_points"`        // before hits: the sum of each gameweek's score
+	TransferCostTotal int           `json:"transfer_cost_total"` // gross_points minus total_points
+	GameweekBreakdown []HubGWPoints `json:"gameweek_breakdown"`
+	AvgPointsPerGW    float64       `json:"avg_points_per_gw"` // net, total_points / gameweeks_played
+	BestGameweek      *HubGWResult  `json:"best_gameweek"`
+	WorstGameweek     *HubGWResult  `json:"worst_gameweek"`
+	ChipsUsed         []HubChipUsed `json:"chips_used"`
+	ChipsRemaining    []string      `json:"chips_remaining"`
+	HalfSeason        string        `json:"half_season"`
+}
+
+// HubGWPoints is one gameweek of the season summary's breakdown.
+type HubGWPoints struct {
+	GW           int `json:"gw"`
+	Points       int `json:"points"`
+	TransferCost int `json:"transfer_cost"`
+	NetPoints    int `json:"net_points"`
 }
 
 type HubGWResult struct {
@@ -379,10 +397,21 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		}
 	}
 
-	totalPoints := 0
+	// Net is the official total: gross scores minus each week's hit cost,
+	// the same figure as FPL's running total_points.
+	grossPoints, transferCostTotal := 0, 0
+	breakdown := make([]HubGWPoints, 0, len(season))
 	for _, gw := range season {
-		totalPoints += gw.Points
+		grossPoints += gw.Points
+		transferCostTotal += gw.EventTransfersCost
+		breakdown = append(breakdown, HubGWPoints{
+			GW: gw.Event, Points: gw.Points, TransferCost: gw.EventTransfersCost,
+			NetPoints: gw.Points - gw.EventTransfersCost,
+		})
 	}
+	totalPoints := grossPoints - transferCostTotal
+	// Best and worst use the gameweek score FPL shows, before hits, so a
+	// week's ranking doesn't depend on transfers made for later weeks.
 	var bestGW, worstGW *HubGWResult
 	if len(season) > 0 {
 		best, worst := season[0], season[0]
@@ -457,6 +486,7 @@ func (e *Engine) ManagerHub(ctx context.Context, teamID int, gameweeksAhead int)
 		SquadSellingValue: squadSellingValue, BudgetNote: budgetNote,
 		SeasonSummary: HubSeasonSummary{
 			TotalPoints: totalPoints, GameweeksPlayed: len(season), AvgPointsPerGW: avgPointsPerGW,
+			GrossPoints: grossPoints, TransferCostTotal: transferCostTotal, GameweekBreakdown: breakdown,
 			BestGameweek: bestGW, WorstGameweek: worstGW, ChipsUsed: chipsUsed,
 			ChipsRemaining: mgrStatus.ChipsRemaining, HalfSeason: halfSeason,
 		},

@@ -42,7 +42,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 
 | Tool | Description |
 |---|---|
-| `fpl_manager_hub` | Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point. Each squad player has `projected_points`, a next-gameweek estimate that drives the suggested bench order and captain tiebreak |
+| `fpl_manager_hub` | Complete intelligence report for a manager's team, with the next deadline and time remaining — the best starting point. Each squad player has `projected_points`, a next-gameweek estimate that drives the suggested bench order and captain tiebreak. Season totals are net of hits, with the gross figure and hit cost alongside |
 | `captain_pick` | Top 5 captain recommendations for a gameweek, from every player or from one squad given by `team_id` or `player_ids` |
 | `pick_xi` | Starting XI, formation, bench order and captain for an existing 15, with each player's component scores, the two nearest alternative formations, and fixture exposure |
 | `differential_finder` | Underowned players outperforming their ownership |
