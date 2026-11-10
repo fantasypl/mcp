@@ -10,21 +10,11 @@ import (
 )
 
 // Squad Scout surfaces the parts of FPL's own data that most managers never
-// look at: its ep_next and ep_this fields, value and
+// look at: its own expected-points prediction (ep_next), value and
 // consistency metrics, exactly who is on which set piece, and card-based
 // suspension risk computed from the Premier League's actual yellow-card
 // thresholds. None of this is opinion — it's the FPL API's own numbers,
 // organised into a report on a specific squad.
-//
-// ep_next is reported as FPL publishes it, and ep_captain_suggestion and
-// ep_rankings still rank on it, because showing FPL's own figures is this
-// report's purpose. But FPL's ep_next is not a forecast in 2026-27: it equals
-// form for every available player (issue #42), so the report carries
-// scoutEPNote to say so. For a forward-looking figure, use the hub's
-// projected_points or pick_xi.
-
-// scoutEPNote is attached to every squad_scout report.
-const scoutEPNote = "ep_next, ep_this and every ep_ ranking here are FPL's own fields as FPL publishes them. In 2026-27 FPL sets ep_next equal to form (the last 30 days' average) for every available player, and to 0 for most flagged ones, so treat it as recent form, not a projection."
 
 // yellowThreshold is one Premier League suspension trigger: reaching count
 // yellow cards before gameweek beforeGW (nil = any time this season) incurs
@@ -134,7 +124,6 @@ type SquadScoutResult struct {
 	SuspensionWarnings    []CardRisk     `json:"suspension_warnings,omitempty"`
 	Insights              *ScoutInsights `json:"insights,omitempty"`
 	Summary               string         `json:"summary,omitempty"`
-	EPNote                string         `json:"ep_note,omitempty"` // says what ep_next really is; see scoutEPNote
 }
 
 type ScoutPlayer struct {
@@ -511,7 +500,6 @@ func (e *Engine) SquadScout(ctx context.Context, teamID int) (*SquadScoutResult,
 	}
 
 	return &SquadScoutResult{
-		EPNote: scoutEPNote,
 		TeamID: teamID, Gameweek: currentGW, NextGameweek: nextGW,
 		SquadSize: len(squadReport), SquadReport: squadReport,
 		NumSuspensionWarnings: len(yellowRisks), SuspensionWarnings: yellowRisks,

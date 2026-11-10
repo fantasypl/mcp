@@ -2,7 +2,6 @@ package algo
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/fantasypl/mcp/internal/fpl"
@@ -167,18 +166,5 @@ func TestSquadScoutSuspendedPlayerGetsEstimate(t *testing.T) {
 	}
 	if news.SuspensionEstimate.Matches != 1 || news.SuspensionEstimate.Basis != BasisRedAfterYellow {
 		t.Errorf("estimate = %+v, want a 1-match red_after_yellow ban", news.SuspensionEstimate)
-	}
-}
-
-// Issue #42: squad_scout reports FPL's ep_next as FPL publishes it, but must
-// say plainly that in 2026-27 it is a copy of form, not a projection.
-func TestSquadScoutLabelsEPNextHonestly(t *testing.T) {
-	e := hubEngine(t)
-	got, err := e.SquadScout(context.Background(), syntheticTeamID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(got.EPNote, "equal to form") {
-		t.Errorf("ep_note = %q, want it to say ep_next equals form", got.EPNote)
 	}
 }

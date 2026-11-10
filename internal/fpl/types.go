@@ -98,14 +98,10 @@ type Player struct {
 	EventPoints   int `json:"event_points"`
 	Form          Num `json:"form"`
 	PointsPerGame Num `json:"points_per_game"`
-	// EPNext is FPL's "expected points next round". It is not a forecast
-	// in 2026-27: FPL sets it equal to Form for every available player, and
-	// to 0 for most flagged ones (checked against the live API after GW10,
-	// issue #42). Rank on algo's projected_points instead.
-	EPNext      Num `json:"ep_next"`
-	EPThis      Num `json:"ep_this"`
-	ValueForm   Num `json:"value_form"`
-	ValueSeason Num `json:"value_season"`
+	EPNext        Num `json:"ep_next"`
+	EPThis        Num `json:"ep_this"`
+	ValueForm     Num `json:"value_form"`
+	ValueSeason   Num `json:"value_season"`
 
 	// Price and ownership.
 	NowCost           int `json:"now_cost"`

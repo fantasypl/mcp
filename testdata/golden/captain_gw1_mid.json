@@ -30,7 +30,7 @@
         "team_full_name": "Man Utd"
       },
       "rank": 1,
-      "reasoning": "Exceptional form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, easy fixture (fdr 1), elite ict index (score: 11.977)",
+      "reasoning": "Exceptional form, strong xg/90 (0.32), strong xa/90 (0.36), on penalties, on direct free kicks, fpl expects 4.0pts, easy fixture (fdr 1), elite ict index (score: 11.977)",
       "score": 11.977,
       "stats": {
         "bonus": 41,
@@ -80,7 +80,7 @@
         "team_full_name": "Man City"
       },
       "rank": 2,
-      "reasoning": "Strong form, elite xg/90 (0.78), on penalties, easy fixture (fdr 1), home advantage, elite ict index (score: 10.705)",
+      "reasoning": "Strong form, elite xg/90 (0.78), on penalties, fpl expects 4.0pts, easy fixture (fdr 1), home advantage, elite ict index (score: 10.705)",
       "score": 10.705,
       "stats": {
         "bonus": 43,
@@ -180,7 +180,7 @@
         "team_full_name": "Arsenal"
       },
       "rank": 4,
-      "reasoning": "Strong form, easy fixture (fdr 1), home advantage (score: 9.047)",
+      "reasoning": "Strong form, fpl expects 4.0pts, easy fixture (fdr 1), home advantage (score: 9.047)",
       "score": 9.047,
       "stats": {
         "bonus": 30,

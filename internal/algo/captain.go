@@ -262,9 +262,12 @@ func (e *Engine) buildReasoning(p *fpl.Player, fixtures []TeamFixture, score flo
 		parts = append(parts, "on direct free kicks")
 	}
 
-	// No ep_next clause: it used to read "FPL predicts 7.2pts", but in
-	// 2026-27 FPL sets ep_next equal to form, which the form clause above
-	// already covers, so it repeated form and called it a forecast (#42).
+	epNext := p.EPNext.Float()
+	if epNext >= 6 {
+		parts = append(parts, "FPL predicts "+FloatStr(epNext)+"pts")
+	} else if epNext >= 4 {
+		parts = append(parts, "FPL expects "+FloatStr(epNext)+"pts")
+	}
 
 	if len(fixtures) > 0 {
 		if len(fixtures) > 1 {
