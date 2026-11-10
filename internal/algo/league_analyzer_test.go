@@ -103,8 +103,15 @@ func TestAnalyzeLeaguePartialFetchFailure(t *testing.T) {
 	if failed == nil {
 		t.Fatal("expected one ManagerFetchError entry")
 	}
-	if failed.TeamName != "Fetch Failure" || failed.WinProbability != 0.0 {
+	if failed.TeamName != "Fetch Failure" {
 		t.Errorf("got %+v", failed)
+	}
+	// Since #47 a manager whose data can't be fetched is still simulated, at
+	// the league average, and the table says so.
+	for _, row := range result.WinProbabilities {
+		if row.TeamID == failed.TeamID && row.Basis != "league average (history unavailable)" {
+			t.Errorf("failed manager's basis = %q, want the league average", row.Basis)
+		}
 	}
 	if succeeded != 3 {
 		t.Errorf("got %d successful analyses, want 3", succeeded)
@@ -112,7 +119,8 @@ func TestAnalyzeLeaguePartialFetchFailure(t *testing.T) {
 }
 
 // Win probabilities across all managers with a valid analysis should sum to
-// roughly 100% — the softmax-like normalisation's whole point.
+// roughly 100%. The failed manager (rank 4, 250 points behind) holds the
+// small remainder.
 func TestWinProbabilitiesSumToHundred(t *testing.T) {
 	e := newLeagueEngine(t)
 	got, err := e.AnalyzeLeague(context.Background(), leagueScenarioID)
@@ -127,7 +135,7 @@ func TestWinProbabilitiesSumToHundred(t *testing.T) {
 			sum += a.WinProbability
 		}
 	}
-	if sum < 99.0 || sum > 101.0 {
+	if sum < 99.0 || sum > 100.5 {
 		t.Errorf("win probabilities sum to %.1f, want ~100", sum)
 	}
 }

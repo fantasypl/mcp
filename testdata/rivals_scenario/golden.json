@@ -825,5 +825,6 @@
     "Your differential Tarkowski (form 5.2) isn't in Jo Hoarder's squad — a haul here widens the gap.",
     "Alex Chaser's vulnerability: Injured/doubtful: J.Timber. They may need to use a transfer on this.",
     "Jo Hoarder's vulnerability: Injured/doubtful: Raya, Meslier, White. They may need to use a transfer on this."
-  ]
+  ],
+  "rival_selection": "neighbours"
 }
