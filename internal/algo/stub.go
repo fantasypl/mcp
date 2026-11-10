@@ -34,7 +34,12 @@ func (s *StubClient) SetTeamPicks(teamID, gw int, v *fpl.TeamPicks) {
 }
 func (s *StubClient) SetLive(gw int, v *fpl.LiveResponse)       { s.live[gw] = v }
 func (s *StubClient) SetEventStatus(v *fpl.EventStatusResponse) { s.eventStatus = v }
-func (s *StubClient) SetHistory(teamID int, v *fpl.TeamHistory) { s.history[teamID] = v }
+func (s *StubClient) SetHistory(teamID int, v *fpl.TeamHistory) {
+	if s.history == nil {
+		s.history = make(map[int]*fpl.TeamHistory)
+	}
+	s.history[teamID] = v
+}
 func (s *StubClient) SetLeague(leagueID int, v *fpl.LeagueStandings) {
 	if s.leagues == nil {
 		s.leagues = make(map[int]*fpl.LeagueStandings)

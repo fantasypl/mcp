@@ -119,6 +119,7 @@
       "transfer_in_options": [
         {
           "captain_score": 2.3,
+          "club_limit_ok": true,
           "cost": 4.5,
           "fixture": {
             "fdr": 1.4,
@@ -136,6 +137,7 @@
         },
         {
           "captain_score": 4.3,
+          "club_limit_ok": true,
           "cost": 4.5,
           "fixture": {
             "fdr": 2.6,
@@ -153,6 +155,7 @@
         },
         {
           "captain_score": 4.6,
+          "club_limit_ok": true,
           "cost": 4.5,
           "fixture": {
             "fdr": 2.2,
@@ -170,6 +173,7 @@
         },
         {
           "captain_score": 4.7,
+          "club_limit_ok": true,
           "cost": 4.5,
           "fixture": {
             "fdr": 1.8,
@@ -187,6 +191,7 @@
         },
         {
           "captain_score": 3.9,
+          "club_limit_ok": true,
           "cost": 4.5,
           "fixture": {
             "fdr": 1.8,

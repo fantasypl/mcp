@@ -121,12 +121,14 @@ func TestServerStartsAndListsEverything(t *testing.T) {
 	if err != nil {
 		t.Fatalf("tools/list: %v", err)
 	}
-	if len(tools.Tools) != 16 {
+	// At least the 16 tools v0.2 shipped. TestManifestMatchesServer pins the
+	// exact set, so a new tool changes the manifest, not this number.
+	if len(tools.Tools) < 16 {
 		names := make([]string, len(tools.Tools))
 		for i, tl := range tools.Tools {
 			names[i] = tl.Name
 		}
-		t.Errorf("got %d tools, want 16: %v", len(tools.Tools), names)
+		t.Errorf("got %d tools, want at least 16: %v", len(tools.Tools), names)
 	}
 
 	resources, err := clientSession.ListResources(ctx, nil)
