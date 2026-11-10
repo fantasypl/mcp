@@ -66,6 +66,7 @@ type TargetPlayer struct {
 
 type FixtureOutlookResult struct {
 	CurrentGameweek    int            `json:"current_gameweek"`
+	StartGameweek      int            `json:"start_gameweek"` // first gameweek in the window: the next one, never a finished one
 	GameweeksAhead     int            `json:"gameweeks_ahead"`
 	TargetGameweeks    []int          `json:"target_gameweeks"`
 	PositionFilter     *string        `json:"position_filter"`
@@ -95,17 +96,23 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		return nil, err
 	}
 
+	// The window starts at the next gameweek, the one whose deadline is
+	// still ahead. Starting at the current gameweek (issue #45) included
+	// fixtures already played once it had finished, and fixtures nobody can
+	// still pick players for while it was in progress. Before the season
+	// and in GW38, NextGameweek falls back to the current gameweek.
 	currentGW := bootstrap.CurrentGameweek()
+	startGW := bootstrap.NextGameweek()
 	targetGWs := make([]int, 0, gameweeksAhead)
 	inTarget := make(map[int]bool, gameweeksAhead)
-	for gw := currentGW; gw < currentGW+gameweeksAhead; gw++ {
+	for gw := startGW; gw < startGW+gameweeksAhead && gw <= 38; gw++ {
 		targetGWs = append(targetGWs, gw)
 		inTarget[gw] = true
 	}
 
 	teams := teamsByID(bootstrap)
 	teamFixtures := make(map[int][]OutlookFixture, len(bootstrap.Teams))
-	calendar := e.congestionCalendar(ctx, currentGW, currentGW+gameweeksAhead-1)
+	calendar := e.congestionCalendar(ctx, startGW, startGW+gameweeksAhead-1)
 	market := e.marketModels(ctx)
 	codeByTeamID := make(map[int]int, len(bootstrap.Teams))
 	for i := range bootstrap.Teams {
@@ -241,10 +248,11 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 		easiest[scores[i].TeamID] = true
 	}
 
-	// Teams with a fixture in the immediate gameweek; anyone else is blanking.
+	// Teams with a fixture in the first gameweek of the window; anyone else
+	// is blanking.
 	withNextFixture := make(map[int]bool)
 	for i := range fixtures {
-		if fixtures[i].InGameweek(currentGW) {
+		if fixtures[i].InGameweek(startGW) {
 			withNextFixture[fixtures[i].TeamH] = true
 			withNextFixture[fixtures[i].TeamA] = true
 		}
@@ -296,6 +304,7 @@ func (e *Engine) FixtureOutlook(ctx context.Context, gameweeksAhead int, positio
 
 	return &FixtureOutlookResult{
 		CurrentGameweek:    currentGW,
+		StartGameweek:      startGW,
 		GameweeksAhead:     gameweeksAhead,
 		TargetGameweeks:    targetGWs,
 		PositionFilter:     positionOut,

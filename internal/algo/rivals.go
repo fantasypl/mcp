@@ -44,13 +44,18 @@ type RivalAnalysisResult struct {
 	YourPosition    YourPosition     `json:"your_position"`
 	Rivals          []*RivalAnalysis `json:"rivals"`
 	Strategy        []string         `json:"strategy"`
+	// RivalSelection is "neighbours" (ranked within three places) or
+	// "chosen" (rival_team_ids and target_ranks).
+	RivalSelection string `json:"rival_selection"`
 }
 
 type YourPosition struct {
-	Rank        int    `json:"rank"`
-	TotalPoints int    `json:"total_points"`
-	GWPoints    int    `json:"gw_points"`
-	TeamName    string `json:"team_name"`
+	Rank           int             `json:"rank"`
+	TotalPoints    int             `json:"total_points"`
+	GWPoints       int             `json:"gw_points"`
+	TeamName       string          `json:"team_name"`
+	GameweekPoints []GameweekScore `json:"gameweek_points,omitempty"`
+	ChipsUsed      []fpl.ChipUsed  `json:"chips_used,omitempty"`
 }
 
 type RivalAnalysis struct {
@@ -77,6 +82,10 @@ type RivalAnalysis struct {
 	// cases apart — both a nil and an empty slice are "empty" to it.
 	RecentTransfers    *[]FormattedTransfer `json:"recent_transfers,omitempty"`
 	TransferPrediction *TransferPrediction  `json:"transfer_prediction,omitempty"`
+
+	// From the season history; omitted when it can't be fetched.
+	GameweekPoints []GameweekScore `json:"gameweek_points,omitempty"`
+	ChipsUsed      []fpl.ChipUsed  `json:"chips_used,omitempty"`
 }
 
 type CaptainComparison struct {
@@ -458,6 +467,11 @@ func topTransfersIn(bootstrap *fpl.Bootstrap, rivalIDs map[int]bool, fixtureMap 
 // RivalAnalysis computes a rival manager's point gap, gap direction, and
 // recent-transfer summary relative to the requesting team.
 func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, error) {
+	return e.RivalAnalysisWith(ctx, leagueID, teamID, RivalSelection{})
+}
+
+// RivalAnalysisWith is RivalAnalysis with a choice of rivals (issue #53).
+func (e *Engine) RivalAnalysisWith(ctx context.Context, leagueID, teamID int, sel RivalSelection) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
 		return nil, err
@@ -500,12 +514,22 @@ func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, 
 	}
 	userStanding := standings[userIdx]
 
-	start := max(0, userIdx-rivalWindow)
-	end := min(len(standings), userIdx+rivalWindow+1)
 	var rivalStandings []fpl.LeagueEntry
-	for _, s := range standings[start:end] {
-		if s.Entry != teamID {
-			rivalStandings = append(rivalStandings, s)
+	selection := "neighbours"
+	if sel.chosen() {
+		selection = "chosen"
+		var msg string
+		rivalStandings, msg = selectRivals(standings, teamID, sel)
+		if msg != "" {
+			return &RivalLeagueError{LeagueID: leagueID, Error: msg}, nil
+		}
+	} else {
+		start := max(0, userIdx-rivalWindow)
+		end := min(len(standings), userIdx+rivalWindow+1)
+		for _, s := range standings[start:end] {
+			if s.Entry != teamID {
+				rivalStandings = append(rivalStandings, s)
+			}
 		}
 	}
 
@@ -617,6 +641,19 @@ func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, 
 
 	strategy := buildRivalStrategy(rivalAnalyses)
 
+	// Per-gameweek points and chips, best-effort: a failed history fetch
+	// just leaves the fields out.
+	for _, r := range rivalAnalyses {
+		if h, err := e.client.TeamHistory(ctx, r.TeamID); err == nil {
+			r.GameweekPoints, r.ChipsUsed = gameweekScores(h), chipsPlayed(h)
+		}
+	}
+	var yourPoints []GameweekScore
+	var yourChips []fpl.ChipUsed
+	if h, err := e.client.TeamHistory(ctx, teamID); err == nil {
+		yourPoints, yourChips = gameweekScores(h), chipsPlayed(h)
+	}
+
 	currentFinished := false
 	for i := range bootstrap.Events {
 		if bootstrap.Events[i].ID == currentGW {
@@ -635,8 +672,9 @@ func (e *Engine) RivalAnalysis(ctx context.Context, leagueID, teamID int) (any, 
 		YourPosition: YourPosition{
 			Rank: userStanding.Rank, TotalPoints: userStanding.Total,
 			GWPoints: userStanding.EventTotal, TeamName: userStanding.EntryName,
+			GameweekPoints: yourPoints, ChipsUsed: yourChips,
 		},
-		Rivals: rivalAnalyses, Strategy: strategy,
+		Rivals: rivalAnalyses, Strategy: strategy, RivalSelection: selection,
 	}, nil
 }
 

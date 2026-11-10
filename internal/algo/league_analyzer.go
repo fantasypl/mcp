@@ -3,29 +3,32 @@ package algo
 import (
 	"context"
 	"fmt"
-	"math"
 	"slices"
 	"sort"
 	"strings"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/fantasypl/mcp/internal/fpl"
 )
 
 // League analysis answers "who's going to win this mini-league?" without
 // needing the asking manager's own team ID — it works from the public
-// standings table. For each of the top managers it fetches their live squad
-// and season history, then blends five signals into a single win
-// probability: points gap (weighted more heavily as the season winds down),
-// squad quality, chips still in hand, recent form, and injury risk in the
-// starting XI.
+// standings table.
+//
+// Win probabilities come from a Monte Carlo over the remaining gameweeks for
+// every manager on the first standings page (up to 50); see
+// league_simulation.go for the model. The top 10 also get a detailed row:
+// live squad quality, chips, momentum, team value and injured starters.
+// Those are information only and do not feed the probabilities.
 //
 // A manager whose squad or history can't be fetched doesn't abort the whole
-// analysis — they're returned with an error and excluded from the
-// probability model, while everyone else's analysis proceeds normally.
+// analysis. A failed squad fetch gives an error row; a failed history fetch
+// means the manager is simulated at the league average.
 
-// maxAnalyzedManagers caps how many managers get the expensive squad+history
-// fetch — fine for a title race, but fetching all 20 million entries in a
-// giant public league would not be.
+// maxAnalyzedManagers caps how many managers get a detailed row, which needs
+// their squad as well as their history.
 const maxAnalyzedManagers = 10
 
 // halfwayGW is when chips reset for the second half of the season.
@@ -55,6 +58,19 @@ type LeagueAnalysisResult struct {
 	// in a real success entry.
 	Managers []any    `json:"managers"`
 	Insights []string `json:"insights"`
+
+	// WinProbabilityMethod states the model behind every win_probability.
+	WinProbabilityMethod string `json:"win_probability_method"`
+	// ManagersModelled is how many managers the simulation covers: every
+	// manager on the first standings page.
+	ManagersModelled int `json:"managers_modelled"`
+	// WinProbabilities has one row per modelled manager, in standings order.
+	WinProbabilities []LeagueWinChance `json:"win_probabilities"`
+	// StandingsNote is set when the league is bigger than one page, to say
+	// the managers below it are not modelled.
+	StandingsNote string `json:"standings_note,omitempty"`
+	// Caller is set when a team_id is given.
+	Caller *LeagueCallerRow `json:"caller,omitempty"`
 }
 
 // ManagerFetchError is one manager whose squad or history couldn't be
@@ -72,25 +88,22 @@ type ManagerFetchError struct {
 }
 
 type ManagerAnalysis struct {
-	ManagerName      string   `json:"manager_name"`
-	TeamName         string   `json:"team_name"`
-	TeamID           int      `json:"team_id"`
-	Rank             int      `json:"rank"`
-	TotalPoints      int      `json:"total_points"`
-	GWPoints         int      `json:"gw_points"`
-	PointsFromLeader int      `json:"points_from_leader"`
-	SquadQuality     float64  `json:"squad_quality"`
-	ChipsRemaining   []string `json:"chips_remaining"`
-	MomentumLast5GW  float64  `json:"momentum_last_5gw"`
-	Bank             float64  `json:"bank"`
-	TeamValue        float64  `json:"team_value"`
-	InjuredStarters  int      `json:"injured_starters"`
-	WinProbability   float64  `json:"win_probability"`
-
-	// rawScore is the pre-normalisation composite score. Not part of the
-	// The returned result omits rawScore (it is removed before serialization) — kept
-	// here only to compute WinProbability, and never marshalled.
-	rawScore float64 `json:"-"`
+	ManagerName      string          `json:"manager_name"`
+	TeamName         string          `json:"team_name"`
+	TeamID           int             `json:"team_id"`
+	Rank             int             `json:"rank"`
+	TotalPoints      int             `json:"total_points"`
+	GWPoints         int             `json:"gw_points"`
+	PointsFromLeader int             `json:"points_from_leader"`
+	SquadQuality     float64         `json:"squad_quality"`
+	ChipsRemaining   []string        `json:"chips_remaining"`
+	MomentumLast5GW  float64         `json:"momentum_last_5gw"`
+	Bank             float64         `json:"bank"`
+	TeamValue        float64         `json:"team_value"`
+	InjuredStarters  int             `json:"injured_starters"`
+	WinProbability   float64         `json:"win_probability"` // from the simulation; see LeagueAnalysisResult.WinProbabilityMethod
+	GameweekPoints   []GameweekScore `json:"gameweek_points"` // from the season history (#53)
+	ChipsUsed        []fpl.ChipUsed  `json:"chips_used"`
 }
 
 // calculateSquadQuality scores the starting XI's recent output plus how easy
@@ -176,9 +189,15 @@ func teamValue(picks []fpl.Pick, playersByID map[int]*fpl.Player) float64 {
 	return float64(total) / 10
 }
 
-// AnalyzeLeague computes per-manager standings, form, and chip-usage
-// analysis across a classic mini-league.
+// AnalyzeLeague is AnalyzeLeagueForTeam without a caller.
 func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
+	return e.AnalyzeLeagueForTeam(ctx, leagueID, nil)
+}
+
+// AnalyzeLeagueForTeam computes win probabilities for every manager on the
+// first standings page, detailed rows for the top 10, and, given a team ID,
+// the caller's own row.
+func (e *Engine) AnalyzeLeagueForTeam(ctx context.Context, leagueID int, callerID *int) (any, error) {
 	bootstrap, err := e.client.Bootstrap(ctx)
 	if err != nil {
 		return nil, err
@@ -224,7 +243,11 @@ func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 		return &LeagueNotFound{LeagueID: leagueID, Error: "League not found or has no standings."}, nil
 	}
 
-	topManagers := standings
+	modelled := standings
+	if len(modelled) > maxModelledManagers {
+		modelled = modelled[:maxModelledManagers]
+	}
+	topManagers := modelled
 	if len(topManagers) > maxAnalyzedManagers {
 		topManagers = topManagers[:maxAnalyzedManagers]
 	}
@@ -232,6 +255,10 @@ func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 	if len(topManagers) > 0 {
 		leaderPoints = topManagers[0].Total
 	}
+
+	// Every modelled manager's history, for the simulation. The client
+	// caches responses, so the detailed rows below reuse these fetches.
+	histories := e.leagueHistories(ctx, modelled)
 
 	teams := teamsByID(bootstrap)
 	fixtureMap := buildFixtureMap(fixtures, planningGW, teams)
@@ -244,9 +271,9 @@ func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 
 	for _, m := range topManagers {
 		picks, picksErr := e.client.TeamPicks(ctx, m.Entry, currentGW)
-		history, histErr := e.client.TeamHistory(ctx, m.Entry)
+		history := histories[m.Entry]
 
-		if picksErr != nil || histErr != nil {
+		if picksErr != nil || history == nil {
 			managers = append(managers, &ManagerFetchError{
 				ManagerName: m.PlayerName, TeamName: m.EntryName, TeamID: m.Entry,
 				Rank: m.Rank, TotalPoints: m.Total, PointsFromLeader: m.Total - leaderPoints,
@@ -264,6 +291,8 @@ func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 			MomentumLast5GW:  Round(momentum(history.Current, currentGW), 1),
 			Bank:             Round(float64(picks.EntryHistory.Bank)/10, 1),
 			TeamValue:        Round(teamValue(picks.Picks, playersByID), 1),
+			GameweekPoints:   gameweekScores(history),
+			ChipsUsed:        chipsPlayed(history),
 		}
 		injured := 0
 		for _, pick := range picks.Picks {
@@ -280,89 +309,104 @@ func (e *Engine) AnalyzeLeague(ctx context.Context, leagueID int) (any, error) {
 		analyses = append(analyses, analysis)
 	}
 
-	calculateWinProbabilities(analyses, gwsRemaining)
+	// The simulation, over every modelled manager in standings order.
+	entries := make([]leagueSimEntry, len(modelled))
+	for i, m := range modelled {
+		entries[i] = leagueSimEntry{TotalPoints: m.Total}
+		if h := histories[m.Entry]; h != nil {
+			entries[i].NetScores = scoringWeeks(h)
+			entries[i].Chips = chipsRemaining(h.Chips, currentGW)
+			entries[i].HasHistory = true
+		}
+	}
+	probs := simulateLeagueWinners(entries, gwsRemaining, uint64(leagueID)<<8|uint64(currentGW))
+	probByTeam := make(map[int]float64, len(modelled))
+	table := make([]LeagueWinChance, len(modelled))
+	for i, m := range modelled {
+		probByTeam[m.Entry] = probs[i]
+		basis := "league average (history unavailable)"
+		if entries[i].HasHistory {
+			basis = fmt.Sprintf("own history (%d gameweeks)", len(entries[i].NetScores))
+		}
+		table[i] = LeagueWinChance{
+			Rank: m.Rank, ManagerName: m.PlayerName, TeamName: m.EntryName, TeamID: m.Entry,
+			TotalPoints: m.Total, PointsFromLeader: m.Total - leaderPoints,
+			WinProbability: probs[i], Basis: basis,
+		}
+	}
+	for _, m := range managers {
+		switch v := m.(type) {
+		case *ManagerAnalysis:
+			v.WinProbability = probByTeam[v.TeamID]
+		case *ManagerFetchError:
+			v.WinProbability = probByTeam[v.TeamID]
+		}
+	}
+
 	insights := buildLeagueInsights(analyses, gwsRemaining)
+
+	standingsNote := ""
+	if standingsData.Standings.HasNext || len(standings) > len(modelled) {
+		standingsNote = fmt.Sprintf("This league has more managers than the first standings page. Only the top %d are modelled, and probabilities are shared among them; managers below them are not counted.", len(modelled))
+	}
 
 	return &LeagueAnalysisResult{
 		LeagueID: leagueID, LeagueName: standingsData.League.Name,
 		TotalManagers: len(standings), Gameweek: planningGW, GameweeksRemaining: gwsRemaining,
 		AnalyzedTop: len(managers), Managers: managers, Insights: insights,
+		WinProbabilityMethod: leagueWinProbabilityMethod, ManagersModelled: len(modelled),
+		WinProbabilities: table, StandingsNote: standingsNote,
+		Caller: leagueCallerRow(callerID, table, gwsRemaining),
 	}, nil
 }
 
-// calculateWinProbabilities converts each manager's raw factors into a
-// composite score and normalises those scores into probabilities that sum to
-// (approximately) 100%.
-func calculateWinProbabilities(managers []*ManagerAnalysis, gwsRemaining int) {
-	if len(managers) == 0 {
-		return
-	}
-
-	// Late-season factor: the points gap matters more as fewer gameweeks
-	// remain to close it. 0.3 early season, up to 0.9 in the run-in.
-	seasonProgress := math.Max(0, math.Min(1, float64(38-gwsRemaining)/38))
-	gapWeight := 0.3 + 0.6*seasonProgress
-
-	leaderPoints := managers[0].TotalPoints
+// leagueHistories fetches every modelled manager's season history, eight
+// at a time. A failed fetch is left out of the map, and that manager is
+// simulated at the league average.
+func (e *Engine) leagueHistories(ctx context.Context, managers []fpl.LeagueEntry) map[int]*fpl.TeamHistory {
+	var mu sync.Mutex
+	out := make(map[int]*fpl.TeamHistory, len(managers))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(8)
 	for _, m := range managers {
-		if m.TotalPoints > leaderPoints {
-			leaderPoints = m.TotalPoints
-		}
-	}
-
-	minMax := func(get func(*ManagerAnalysis) float64) (lo, hi, rng float64) {
-		lo, hi = get(managers[0]), get(managers[0])
-		for _, m := range managers {
-			v := get(m)
-			if v < lo {
-				lo = v
+		g.Go(func() error {
+			h, err := e.client.TeamHistory(gctx, m.Entry)
+			if err != nil {
+				return nil // best-effort, see above
 			}
-			if v > hi {
-				hi = v
-			}
-		}
-		rng = hi - lo
-		if rng == 0 {
-			rng = 1
-		}
-		return lo, hi, rng
+			mu.Lock()
+			out[m.Entry] = h
+			mu.Unlock()
+			return nil
+		})
 	}
-	minSQ, _, sqRange := minMax(func(m *ManagerAnalysis) float64 { return m.SquadQuality })
-	minMom, _, momRange := minMax(func(m *ManagerAnalysis) float64 { return m.MomentumLast5GW })
+	_ = g.Wait() // every goroutine returns nil
+	return out
+}
 
-	for _, m := range managers {
-		gap := leaderPoints - m.TotalPoints
-		gapScore := 0.0
+// leagueCallerRow finds the caller in the probability table.
+func leagueCallerRow(callerID *int, table []LeagueWinChance, gwsRemaining int) *LeagueCallerRow {
+	if callerID == nil {
+		return nil
+	}
+	for _, row := range table {
+		if row.TeamID != *callerID {
+			continue
+		}
+		gap := -row.PointsFromLeader
+		required := 0.0
 		if gwsRemaining > 0 {
-			gapPerGW := float64(gap) / float64(gwsRemaining)
-			gapScore = math.Max(0, 100-gapPerGW*8)
-		} else if gap == 0 {
-			gapScore = 100
+			required = Round(float64(gap)/float64(gwsRemaining), 2)
 		}
-
-		squadScore := (m.SquadQuality - minSQ) / sqRange * 100
-		chipScore := math.Min(100, float64(len(m.ChipsRemaining))*25)
-		momentumScore := (m.MomentumLast5GW - minMom) / momRange * 100
-		injuryPenalty := float64(m.InjuredStarters) * 10
-
-		raw := gapScore*gapWeight +
-			squadScore*(0.25*(1-seasonProgress)) +
-			chipScore*0.15 +
-			momentumScore*0.15 -
-			injuryPenalty
-		m.rawScore = math.Max(0, raw)
-	}
-
-	totalRaw := 0.0
-	for _, m := range managers {
-		totalRaw += m.rawScore
-	}
-	for _, m := range managers {
-		if totalRaw > 0 {
-			m.WinProbability = Round(m.rawScore/totalRaw*100, 1)
-		} else {
-			m.WinProbability = Round(100/float64(len(managers)), 1)
+		return &LeagueCallerRow{
+			TeamID: row.TeamID, Rank: row.Rank, TotalPoints: row.TotalPoints,
+			PointsGapToLeader: gap, RequiredPPGOverLeader: required, WinProbability: row.WinProbability,
+			Gaps: leagueGaps(row.TeamID, table, gwsRemaining),
 		}
+	}
+	return &LeagueCallerRow{
+		TeamID: *callerID,
+		Note:   "This team is not on the first page of this league's standings, so it is not modelled.",
 	}
 }
 

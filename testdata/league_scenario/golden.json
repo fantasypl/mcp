@@ -24,7 +24,20 @@
       "bank": 0.5,
       "team_value": 93,
       "injured_starters": 1,
-      "win_probability": 44.7
+      "win_probability": 68.5,
+      "gameweek_points": [
+        {
+          "gameweek": 1,
+          "points": 68,
+          "net_points": 68
+        }
+      ],
+      "chips_used": [
+        {
+          "name": "wildcard",
+          "gameweek": 3
+        }
+      ]
     },
     {
       "manager_name": "Sam Rival",
@@ -43,7 +56,24 @@
       "bank": 1.2,
       "team_value": 103.5,
       "injured_starters": 0,
-      "win_probability": 51.7
+      "win_probability": 30.7,
+      "gameweek_points": [
+        {
+          "gameweek": 1,
+          "points": 55,
+          "net_points": 55
+        }
+      ],
+      "chips_used": [
+        {
+          "name": "wildcard",
+          "gameweek": 2
+        },
+        {
+          "name": "bboost",
+          "gameweek": 4
+        }
+      ]
     },
     {
       "manager_name": "Jo Hoarder",
@@ -64,7 +94,15 @@
       "bank": 0.3,
       "team_value": 80,
       "injured_starters": 3,
-      "win_probability": 3.6
+      "win_probability": 0.7,
+      "gameweek_points": [
+        {
+          "gameweek": 1,
+          "points": 40,
+          "net_points": 40
+        }
+      ],
+      "chips_used": []
     },
     {
       "manager_name": "Kim Failure",
@@ -73,16 +111,59 @@
       "rank": 4,
       "total_points": 1600,
       "points_from_leader": -250,
-      "win_probability": 0,
+      "win_probability": 0.1,
       "error": "Could not fetch squad data"
     }
   ],
   "insights": [
-    "Sam Rival (Close Rival) is the favourite at 51.7% win probability — 1842pts, rank 2.",
-    "Tight race — only -8pts separate Sam Rival and Alex Chaser. With 38 GWs left, anything can happen.",
+    "Alex Chaser (Title Chaser) is the favourite at 68.5% win probability — 1850pts, rank 1.",
+    "Tight race — only 8pts separate Alex Chaser and Sam Rival. With 38 GWs left, anything can happen.",
     "Alex Chaser still has 3 chips (Triple Captain, Bench Boost, Free Hit) — significant upside potential in the final stretch.",
     "Jo Hoarder still has 4 chips (Triple Captain, Bench Boost, Free Hit, wildcard) — significant upside potential in the final stretch.",
-    "Alex Chaser is on a hot streak — averaging 68.0pts over the last 5 GWs. Watch out.",
     "Jo Hoarder has 3 injured starters — may need to burn transfers or take hits."
+  ],
+  "win_probability_method": "Monte Carlo, 20,000 simulated seasons. Each manager's remaining gameweeks are drawn from a normal distribution with the mean and spread of their own net gameweek scores this season (points minus hits, leaving out Bench Boost, Triple Captain and Free Hit weeks), blended with the league average as if each manager had 10 extra average gameweeks. Each unused chip from the current half of the season adds a fixed allowance (Bench Boost 8, Triple Captain 7, Free Hit 6, Wildcard 4). The win probability is the share of simulations a manager finishes top, with ties shared. Squad quality, fixtures and injuries are not in the model. A manager with no history is drawn at the league average.",
+  "managers_modelled": 4,
+  "win_probabilities": [
+    {
+      "rank": 1,
+      "manager_name": "Alex Chaser",
+      "team_name": "Title Chaser",
+      "team_id": 999001,
+      "total_points": 1850,
+      "points_from_leader": 0,
+      "win_probability": 68.5,
+      "basis": "own history (1 gameweeks)"
+    },
+    {
+      "rank": 2,
+      "manager_name": "Sam Rival",
+      "team_name": "Close Rival",
+      "team_id": 999002,
+      "total_points": 1842,
+      "points_from_leader": -8,
+      "win_probability": 30.7,
+      "basis": "own history (1 gameweeks)"
+    },
+    {
+      "rank": 3,
+      "manager_name": "Jo Hoarder",
+      "team_name": "Chip Hoarder",
+      "team_id": 999003,
+      "total_points": 1690,
+      "points_from_leader": -160,
+      "win_probability": 0.7,
+      "basis": "own history (1 gameweeks)"
+    },
+    {
+      "rank": 4,
+      "manager_name": "Kim Failure",
+      "team_name": "Fetch Failure",
+      "team_id": 999004,
+      "total_points": 1600,
+      "points_from_leader": -250,
+      "win_probability": 0.1,
+      "basis": "league average (history unavailable)"
+    }
   ]
 }
