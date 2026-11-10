@@ -78,6 +78,36 @@
       "name": "who_should_i_captain",
       "description": "Get captain pick recommendations with detailed reasoning for this gameweek.",
       "text": "Use the captain_pick tool to get the top 5 captain recommendations for this gameweek. Then explain the results to me in plain English:\n- Who is the #1 pick and why?\n- What makes them stand out (xG, fixtures, form, penalties)?\n- Is there a high-risk high-reward differential captain option?\n- Any injury flags or rotation risks I should be aware of?\nGive me a clear final recommendation with your confidence level."
+    },
+    {
+      "name": "beat_my_rivals",
+      "description": "Compare your squad with the managers around you in a mini-league and find where to gain ground.",
+      "arguments": ["team_id", "league_id"],
+      "text": "Use the rival_tracker tool with team_id ${arguments.team_id} and league_id ${arguments.league_id} to compare my squad with my closest rivals. Then tell me:\n1. The points gap to each rival and how it has moved recently\n2. The players they own that I don't (their threats) and the ones I own that they don't (my differentials)\n3. The chips each rival has left compared with mine\n4. Whether I should cover a big threat or back a differential this gameweek\nFinish with the single move most likely to gain me ground this gameweek."
+    },
+    {
+      "name": "compare_players",
+      "description": "Head-to-head comparison of 2-4 players, including how consistently each one scores.",
+      "arguments": ["players"],
+      "text": "Use the player_comparison tool to compare these players: ${arguments.players}. Pass each name as a separate entry in player_names, and set include_gameweeks to 6. Then tell me:\n1. Who is the better pick for the next few gameweeks, and why\n2. How each one has scored: steady returns or a few big hauls\n3. Whether their underlying numbers (xG, xA, minutes) back up their points\n4. Fixtures, price and any injury or rotation risk\nFinish with a clear verdict and when the other player would be the better choice."
+    },
+    {
+      "name": "find_optimal_transfers",
+      "description": "Run the exact optimizer on your squad and weigh each transfer plan against its hit cost.",
+      "arguments": ["team_id"],
+      "text": "Use the optimal_transfers tool with team_id ${arguments.team_id} and allow_hits true to find the best transfers for my squad. Then tell me:\n1. The best plan on free transfers alone, with the projected gain\n2. Whether any plan with a hit beats it once the -4 per extra transfer is counted\n3. The confidence of each plan and which players make it riskier\n4. Any price-change risk on the players going out or coming in\nFinish with exactly which transfers to make, or to roll the transfer if nothing is worth it."
+    },
+    {
+      "name": "fixture_swings",
+      "description": "Rank the teams by upcoming fixture difficulty and find the ones to target or avoid.",
+      "arguments": ["gameweeks_ahead"],
+      "text": "Use the fixture_outlook tool with gameweeks_ahead ${arguments.gameweeks_ahead} to rank every team by upcoming fixture difficulty. Then tell me:\n1. The three teams with the best run, and which of their players are worth owning\n2. The three teams with the worst run, and which popular players to consider selling\n3. Any doubles or blanks in the window\n4. Where the fixtures swing, so I know when to move in or out\nKeep it practical: name players, not just teams."
+    },
+    {
+      "name": "plan_my_chips",
+      "description": "Find the best gameweek for each chip you have left, with how confident the call is.",
+      "arguments": ["team_id"],
+      "text": "Use the chip_strategy tool with team_id ${arguments.team_id} to plan my remaining chips. Then tell me:\n1. For each chip I still have, the recommended gameweek and why (doubles, blanks, fixtures, my squad's fit)\n2. How confident each call is, and the next-best gameweek if it's close\n3. Any chip I should hold back because a better window is likely later in the season\n4. What I should do with my squad in the run-up so each chip pays off\nFinish with a simple chip calendar for the rest of this half of the season."
     }
   ],
   "keywords": ["fantasy-premier-league", "fpl", "football", "soccer", "fantasy-sports"],

@@ -61,7 +61,17 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
 | `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
 
-Plus three resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress), `fpl://teams` (all 20 Premier League teams) and `fpl://calibration` (how well each signal has ranked next-gameweek points this season; see below) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
+Plus five resources:
+
+| Resource | Contents |
+|---|---|
+| `fpl://status` | Current and next gameweek state, the next deadline in UTC with time remaining, and season progress |
+| `fpl://teams` | All 20 Premier League teams |
+| `fpl://fixtures/upcoming` | Every fixture in the next 5 gameweeks, with kickoff time and FPL's FDR for each side |
+| `fpl://players/top` | The 50 players in the best FPL form, with team, position, price, ownership and availability |
+| `fpl://calibration` | How well each signal has ranked next-gameweek points this season; see below |
+
+And ten pre-built prompts for Claude Desktop's prompt selector: `analyze_my_fpl_team`, `who_should_i_captain`, `find_differential_picks`, `plan_my_transfers`, `price_change_alert`, `plan_my_chips`, `beat_my_rivals`, `fixture_swings`, `find_optimal_transfers` and `compare_players`.
 
 ### Signal calibration
 

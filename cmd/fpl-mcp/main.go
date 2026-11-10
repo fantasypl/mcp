@@ -480,8 +480,11 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}, fmt.Sprintf("Failed to analyze team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	addResources(s, client, time.Now)
+	addBrowsingResources(s, client)
 	addCalibrationResource(s, calibrationPath())
 	addPrompts(s)
+	addPlanningPrompts(s)
+	s.AddReceivingMiddleware(listCacheMiddleware)
 	return s
 }
 
