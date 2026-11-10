@@ -56,7 +56,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
 | `chip_strategy` | When to use each remaining chip |
 | `rival_tracker` | Mini-league rival analysis and counter-strategies |
-| `league_analyzer` | Win probability predictions for a mini-league |
+| `league_analyzer` | Win probabilities for every manager on a mini-league's first standings page, from a Monte Carlo of the rest of the season. Optional `team_id` adds the caller's gap to the leader and the points per gameweek needed to close it |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
 | `manager_transfer_history` | A manager's transfers this season, and the purchase, market and selling price of each current squad player |
 

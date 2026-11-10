@@ -1,0 +1,1596 @@
+{
+  "910001": {
+    "current": [
+      {
+        "event": 1,
+        "points": 67,
+        "total_points": 67,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 120,
+        "total_points": 187,
+        "event_transfers_cost": 0,
+        "points_on_bench": 16,
+        "value": 1002,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 50,
+        "total_points": 237,
+        "event_transfers_cost": 0,
+        "points_on_bench": 12,
+        "value": 1004,
+        "bank": 1
+      },
+      {
+        "event": 4,
+        "points": 93,
+        "total_points": 330,
+        "event_transfers_cost": 0,
+        "points_on_bench": 19,
+        "value": 1008,
+        "bank": 25
+      },
+      {
+        "event": 5,
+        "points": 61,
+        "total_points": 391,
+        "event_transfers_cost": 0,
+        "points_on_bench": 16,
+        "value": 1013,
+        "bank": 15
+      },
+      {
+        "event": 6,
+        "points": 72,
+        "total_points": 463,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1011,
+        "bank": 0
+      },
+      {
+        "event": 7,
+        "points": 70,
+        "total_points": 533,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1018,
+        "bank": 0
+      },
+      {
+        "event": 8,
+        "points": 52,
+        "total_points": 585,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1023,
+        "bank": 3
+      },
+      {
+        "event": 9,
+        "points": 76,
+        "total_points": 661,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1025,
+        "bank": 0
+      },
+      {
+        "event": 10,
+        "points": 67,
+        "total_points": 728,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1028,
+        "bank": 0
+      }
+    ],
+    "chips": [
+      {
+        "name": "bboost",
+        "event": 1
+      },
+      {
+        "name": "3xc",
+        "event": 3
+      },
+      {
+        "name": "wildcard",
+        "event": 6
+      }
+    ]
+  },
+  "910002": {
+    "current": [
+      {
+        "event": 1,
+        "points": 74,
+        "total_points": 74,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 108,
+        "total_points": 182,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1002,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 53,
+        "total_points": 235,
+        "event_transfers_cost": 0,
+        "points_on_bench": 14,
+        "value": 1004,
+        "bank": 0
+      },
+      {
+        "event": 4,
+        "points": 75,
+        "total_points": 310,
+        "event_transfers_cost": 0,
+        "points_on_bench": 12,
+        "value": 1001,
+        "bank": 7
+      },
+      {
+        "event": 5,
+        "points": 30,
+        "total_points": 340,
+        "event_transfers_cost": 0,
+        "points_on_bench": 18,
+        "value": 1004,
+        "bank": 2
+      },
+      {
+        "event": 6,
+        "points": 72,
+        "total_points": 412,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1005,
+        "bank": 0
+      },
+      {
+        "event": 7,
+        "points": 70,
+        "total_points": 482,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1012,
+        "bank": 0
+      },
+      {
+        "event": 8,
+        "points": 39,
+        "total_points": 521,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1014,
+        "bank": 10
+      },
+      {
+        "event": 9,
+        "points": 58,
+        "total_points": 579,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1015,
+        "bank": 7
+      },
+      {
+        "event": 10,
+        "points": 60,
+        "total_points": 639,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1016,
+        "bank": 19
+      }
+    ],
+    "chips": [
+      {
+        "name": "bboost",
+        "event": 1
+      },
+      {
+        "name": "3xc",
+        "event": 3
+      },
+      {
+        "name": "wildcard",
+        "event": 6
+      }
+    ]
+  },
+  "910003": {
+    "current": [
+      {
+        "event": 1,
+        "points": 55,
+        "total_points": 55,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1000,
+        "bank": 5
+      },
+      {
+        "event": 2,
+        "points": 105,
+        "total_points": 160,
+        "event_transfers_cost": 0,
+        "points_on_bench": 15,
+        "value": 1001,
+        "bank": 3
+      },
+      {
+        "event": 3,
+        "points": 35,
+        "total_points": 195,
+        "event_transfers_cost": 0,
+        "points_on_bench": 17,
+        "value": 1004,
+        "bank": 6
+      },
+      {
+        "event": 4,
+        "points": 72,
+        "total_points": 263,
+        "event_transfers_cost": 4,
+        "points_on_bench": 16,
+        "value": 1009,
+        "bank": 6
+      },
+      {
+        "event": 5,
+        "points": 48,
+        "total_points": 311,
+        "event_transfers_cost": 0,
+        "points_on_bench": 15,
+        "value": 1012,
+        "bank": 6
+      },
+      {
+        "event": 6,
+        "points": 71,
+        "total_points": 382,
+        "event_transfers_cost": 0,
+        "points_on_bench": 18,
+        "value": 1012,
+        "bank": 6
+      },
+      {
+        "event": 7,
+        "points": 80,
+        "total_points": 462,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1018,
+        "bank": 39
+      },
+      {
+        "event": 8,
+        "points": 45,
+        "total_points": 507,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1025,
+        "bank": 39
+      },
+      {
+        "event": 9,
+        "points": 54,
+        "total_points": 561,
+        "event_transfers_cost": 0,
+        "points_on_bench": 19,
+        "value": 1025,
+        "bank": 24
+      },
+      {
+        "event": 10,
+        "points": 64,
+        "total_points": 625,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1028,
+        "bank": 24
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 2
+      }
+    ]
+  },
+  "910004": {
+    "current": [
+      {
+        "event": 1,
+        "points": 59,
+        "total_points": 59,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1000,
+        "bank": 15
+      },
+      {
+        "event": 2,
+        "points": 87,
+        "total_points": 146,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1002,
+        "bank": 15
+      },
+      {
+        "event": 3,
+        "points": 60,
+        "total_points": 206,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1004,
+        "bank": 15
+      },
+      {
+        "event": 4,
+        "points": 94,
+        "total_points": 300,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 999,
+        "bank": 3
+      },
+      {
+        "event": 5,
+        "points": 43,
+        "total_points": 339,
+        "event_transfers_cost": 4,
+        "points_on_bench": 6,
+        "value": 1002,
+        "bank": 21
+      },
+      {
+        "event": 6,
+        "points": 68,
+        "total_points": 403,
+        "event_transfers_cost": 4,
+        "points_on_bench": 6,
+        "value": 1004,
+        "bank": 13
+      },
+      {
+        "event": 7,
+        "points": 77,
+        "total_points": 476,
+        "event_transfers_cost": 4,
+        "points_on_bench": 2,
+        "value": 1007,
+        "bank": 4
+      },
+      {
+        "event": 8,
+        "points": 44,
+        "total_points": 520,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1014,
+        "bank": 27
+      },
+      {
+        "event": 9,
+        "points": 53,
+        "total_points": 573,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1018,
+        "bank": 42
+      },
+      {
+        "event": 10,
+        "points": 52,
+        "total_points": 625,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1022,
+        "bank": 42
+      }
+    ],
+    "chips": []
+  },
+  "910005": {
+    "current": [
+      {
+        "event": 1,
+        "points": 67,
+        "total_points": 67,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 71,
+        "total_points": 138,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1001,
+        "bank": 5
+      },
+      {
+        "event": 3,
+        "points": 44,
+        "total_points": 182,
+        "event_transfers_cost": 0,
+        "points_on_bench": 15,
+        "value": 1003,
+        "bank": 0
+      },
+      {
+        "event": 4,
+        "points": 78,
+        "total_points": 260,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1002,
+        "bank": 1
+      },
+      {
+        "event": 5,
+        "points": 42,
+        "total_points": 302,
+        "event_transfers_cost": 0,
+        "points_on_bench": 14,
+        "value": 1002,
+        "bank": 18
+      },
+      {
+        "event": 6,
+        "points": 85,
+        "total_points": 387,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 998,
+        "bank": 7
+      },
+      {
+        "event": 7,
+        "points": 40,
+        "total_points": 427,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1003,
+        "bank": 4
+      },
+      {
+        "event": 8,
+        "points": 45,
+        "total_points": 472,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1006,
+        "bank": 4
+      },
+      {
+        "event": 9,
+        "points": 65,
+        "total_points": 537,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1007,
+        "bank": 18
+      },
+      {
+        "event": 10,
+        "points": 87,
+        "total_points": 624,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1010,
+        "bank": 18
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 6
+      }
+    ]
+  },
+  "910006": {
+    "current": [
+      {
+        "event": 1,
+        "points": 62,
+        "total_points": 62,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 103,
+        "total_points": 165,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1002,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 59,
+        "total_points": 224,
+        "event_transfers_cost": 0,
+        "points_on_bench": 13,
+        "value": 1002,
+        "bank": 0
+      },
+      {
+        "event": 4,
+        "points": 76,
+        "total_points": 300,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 998,
+        "bank": 0
+      },
+      {
+        "event": 5,
+        "points": 43,
+        "total_points": 339,
+        "event_transfers_cost": 4,
+        "points_on_bench": 18,
+        "value": 998,
+        "bank": 9
+      },
+      {
+        "event": 6,
+        "points": 57,
+        "total_points": 396,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1002,
+        "bank": 6
+      },
+      {
+        "event": 7,
+        "points": 71,
+        "total_points": 467,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 998,
+        "bank": 0
+      },
+      {
+        "event": 8,
+        "points": 42,
+        "total_points": 509,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1003,
+        "bank": 17
+      },
+      {
+        "event": 9,
+        "points": 61,
+        "total_points": 566,
+        "event_transfers_cost": 4,
+        "points_on_bench": 15,
+        "value": 1005,
+        "bank": 43
+      },
+      {
+        "event": 10,
+        "points": 57,
+        "total_points": 623,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1009,
+        "bank": 9
+      }
+    ],
+    "chips": [
+      {
+        "name": "bboost",
+        "event": 2
+      },
+      {
+        "name": "3xc",
+        "event": 3
+      },
+      {
+        "name": "freehit",
+        "event": 4
+      },
+      {
+        "name": "wildcard",
+        "event": 7
+      }
+    ]
+  },
+  "910007": {
+    "current": [
+      {
+        "event": 1,
+        "points": 61,
+        "total_points": 61,
+        "event_transfers_cost": 0,
+        "points_on_bench": 20,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 118,
+        "total_points": 179,
+        "event_transfers_cost": 0,
+        "points_on_bench": 19,
+        "value": 1002,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 48,
+        "total_points": 227,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1003,
+        "bank": 0
+      },
+      {
+        "event": 4,
+        "points": 71,
+        "total_points": 298,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1000,
+        "bank": 5
+      },
+      {
+        "event": 5,
+        "points": 29,
+        "total_points": 327,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1001,
+        "bank": 4
+      },
+      {
+        "event": 6,
+        "points": 71,
+        "total_points": 398,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 997,
+        "bank": 9
+      },
+      {
+        "event": 7,
+        "points": 65,
+        "total_points": 463,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1004,
+        "bank": 9
+      },
+      {
+        "event": 8,
+        "points": 34,
+        "total_points": 497,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1009,
+        "bank": 7
+      },
+      {
+        "event": 9,
+        "points": 53,
+        "total_points": 550,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1010,
+        "bank": 7
+      },
+      {
+        "event": 10,
+        "points": 63,
+        "total_points": 613,
+        "event_transfers_cost": 0,
+        "points_on_bench": 14,
+        "value": 1009,
+        "bank": 4
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 6
+      }
+    ]
+  },
+  "910008": {
+    "current": [
+      {
+        "event": 1,
+        "points": 55,
+        "total_points": 55,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 89,
+        "total_points": 144,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1001,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 56,
+        "total_points": 196,
+        "event_transfers_cost": 4,
+        "points_on_bench": 11,
+        "value": 1002,
+        "bank": 2
+      },
+      {
+        "event": 4,
+        "points": 83,
+        "total_points": 279,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1004,
+        "bank": 2
+      },
+      {
+        "event": 5,
+        "points": 48,
+        "total_points": 327,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1007,
+        "bank": 2
+      },
+      {
+        "event": 6,
+        "points": 53,
+        "total_points": 380,
+        "event_transfers_cost": 0,
+        "points_on_bench": 12,
+        "value": 1009,
+        "bank": 2
+      },
+      {
+        "event": 7,
+        "points": 69,
+        "total_points": 449,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1010,
+        "bank": 2
+      },
+      {
+        "event": 8,
+        "points": 44,
+        "total_points": 493,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1010,
+        "bank": 2
+      },
+      {
+        "event": 9,
+        "points": 51,
+        "total_points": 544,
+        "event_transfers_cost": 0,
+        "points_on_bench": 13,
+        "value": 1011,
+        "bank": 2
+      },
+      {
+        "event": 10,
+        "points": 57,
+        "total_points": 601,
+        "event_transfers_cost": 0,
+        "points_on_bench": 20,
+        "value": 1012,
+        "bank": 9
+      }
+    ],
+    "chips": []
+  },
+  "910009": {
+    "current": [
+      {
+        "event": 1,
+        "points": 55,
+        "total_points": 55,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1000,
+        "bank": 5
+      },
+      {
+        "event": 2,
+        "points": 93,
+        "total_points": 148,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1002,
+        "bank": 4
+      },
+      {
+        "event": 3,
+        "points": 42,
+        "total_points": 190,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1003,
+        "bank": 2
+      },
+      {
+        "event": 4,
+        "points": 76,
+        "total_points": 266,
+        "event_transfers_cost": 0,
+        "points_on_bench": 13,
+        "value": 1003,
+        "bank": 0
+      },
+      {
+        "event": 5,
+        "points": 54,
+        "total_points": 320,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1010,
+        "bank": 0
+      },
+      {
+        "event": 6,
+        "points": 73,
+        "total_points": 393,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1013,
+        "bank": 0
+      },
+      {
+        "event": 7,
+        "points": 55,
+        "total_points": 448,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1020,
+        "bank": 0
+      },
+      {
+        "event": 8,
+        "points": 49,
+        "total_points": 497,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1023,
+        "bank": 0
+      },
+      {
+        "event": 9,
+        "points": 46,
+        "total_points": 543,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1024,
+        "bank": 7
+      },
+      {
+        "event": 10,
+        "points": 52,
+        "total_points": 595,
+        "event_transfers_cost": 0,
+        "points_on_bench": 18,
+        "value": 1027,
+        "bank": 10
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 4
+      }
+    ]
+  },
+  "910010": {
+    "current": [
+      {
+        "event": 1,
+        "points": 60,
+        "total_points": 60,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1000,
+        "bank": 5
+      },
+      {
+        "event": 2,
+        "points": 102,
+        "total_points": 162,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1003,
+        "bank": 25
+      },
+      {
+        "event": 3,
+        "points": 42,
+        "total_points": 204,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1007,
+        "bank": 8
+      },
+      {
+        "event": 4,
+        "points": 83,
+        "total_points": 287,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1006,
+        "bank": 8
+      },
+      {
+        "event": 5,
+        "points": 37,
+        "total_points": 324,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 1008,
+        "bank": 1
+      },
+      {
+        "event": 6,
+        "points": 77,
+        "total_points": 401,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1007,
+        "bank": 0
+      },
+      {
+        "event": 7,
+        "points": 61,
+        "total_points": 462,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1015,
+        "bank": 18
+      },
+      {
+        "event": 8,
+        "points": 35,
+        "total_points": 497,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1020,
+        "bank": 18
+      },
+      {
+        "event": 9,
+        "points": 44,
+        "total_points": 541,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1019,
+        "bank": 18
+      },
+      {
+        "event": 10,
+        "points": 51,
+        "total_points": 592,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1018,
+        "bank": 16
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 6
+      }
+    ]
+  },
+  "910011": {
+    "current": [
+      {
+        "event": 1,
+        "points": 71,
+        "total_points": 71,
+        "event_transfers_cost": 0,
+        "points_on_bench": 9,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 76,
+        "total_points": 143,
+        "event_transfers_cost": 4,
+        "points_on_bench": 9,
+        "value": 1002,
+        "bank": 10
+      },
+      {
+        "event": 3,
+        "points": 67,
+        "total_points": 210,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1002,
+        "bank": 10
+      },
+      {
+        "event": 4,
+        "points": 62,
+        "total_points": 268,
+        "event_transfers_cost": 4,
+        "points_on_bench": 5,
+        "value": 1005,
+        "bank": 10
+      },
+      {
+        "event": 5,
+        "points": 40,
+        "total_points": 308,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1009,
+        "bank": 10
+      },
+      {
+        "event": 6,
+        "points": 62,
+        "total_points": 370,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1009,
+        "bank": 10
+      },
+      {
+        "event": 7,
+        "points": 64,
+        "total_points": 434,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1011,
+        "bank": 10
+      },
+      {
+        "event": 8,
+        "points": 56,
+        "total_points": 490,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1014,
+        "bank": 10
+      },
+      {
+        "event": 9,
+        "points": 45,
+        "total_points": 535,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1015,
+        "bank": 10
+      },
+      {
+        "event": 10,
+        "points": 51,
+        "total_points": 586,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1014,
+        "bank": 10
+      }
+    ],
+    "chips": []
+  },
+  "910012": {
+    "current": [
+      {
+        "event": 1,
+        "points": 63,
+        "total_points": 63,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 80,
+        "total_points": 139,
+        "event_transfers_cost": 4,
+        "points_on_bench": 2,
+        "value": 1003,
+        "bank": 70
+      },
+      {
+        "event": 3,
+        "points": 45,
+        "total_points": 184,
+        "event_transfers_cost": 0,
+        "points_on_bench": 3,
+        "value": 1005,
+        "bank": 53
+      },
+      {
+        "event": 4,
+        "points": 62,
+        "total_points": 246,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1006,
+        "bank": 56
+      },
+      {
+        "event": 5,
+        "points": 44,
+        "total_points": 286,
+        "event_transfers_cost": 4,
+        "points_on_bench": 0,
+        "value": 1009,
+        "bank": 29
+      },
+      {
+        "event": 6,
+        "points": 61,
+        "total_points": 347,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1009,
+        "bank": 49
+      },
+      {
+        "event": 7,
+        "points": 78,
+        "total_points": 425,
+        "event_transfers_cost": 0,
+        "points_on_bench": 1,
+        "value": 1010,
+        "bank": 43
+      },
+      {
+        "event": 8,
+        "points": 36,
+        "total_points": 461,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1014,
+        "bank": 43
+      },
+      {
+        "event": 9,
+        "points": 43,
+        "total_points": 504,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1017,
+        "bank": 69
+      },
+      {
+        "event": 10,
+        "points": 51,
+        "total_points": 555,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1019,
+        "bank": 69
+      }
+    ],
+    "chips": []
+  },
+  "910013": {
+    "current": [
+      {
+        "event": 1,
+        "points": 71,
+        "total_points": 71,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 58,
+        "total_points": 129,
+        "event_transfers_cost": 0,
+        "points_on_bench": 15,
+        "value": 1000,
+        "bank": 14
+      },
+      {
+        "event": 3,
+        "points": 74,
+        "total_points": 203,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 999,
+        "bank": 14
+      },
+      {
+        "event": 4,
+        "points": 66,
+        "total_points": 237,
+        "event_transfers_cost": 32,
+        "points_on_bench": 4,
+        "value": 997,
+        "bank": 3
+      },
+      {
+        "event": 5,
+        "points": 57,
+        "total_points": 290,
+        "event_transfers_cost": 4,
+        "points_on_bench": 6,
+        "value": 999,
+        "bank": 33
+      },
+      {
+        "event": 6,
+        "points": 48,
+        "total_points": 338,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 998,
+        "bank": 33
+      },
+      {
+        "event": 7,
+        "points": 50,
+        "total_points": 388,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 997,
+        "bank": 33
+      },
+      {
+        "event": 8,
+        "points": 52,
+        "total_points": 440,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 999,
+        "bank": 33
+      },
+      {
+        "event": 9,
+        "points": 74,
+        "total_points": 514,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 999,
+        "bank": 10
+      },
+      {
+        "event": 10,
+        "points": 33,
+        "total_points": 547,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1001,
+        "bank": 10
+      }
+    ],
+    "chips": [
+      {
+        "name": "3xc",
+        "event": 4
+      }
+    ]
+  },
+  "910014": {
+    "current": [
+      {
+        "event": 1,
+        "points": 44,
+        "total_points": 44,
+        "event_transfers_cost": 0,
+        "points_on_bench": 24,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 90,
+        "total_points": 130,
+        "event_transfers_cost": 4,
+        "points_on_bench": 17,
+        "value": 1002,
+        "bank": 14
+      },
+      {
+        "event": 3,
+        "points": 46,
+        "total_points": 176,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1005,
+        "bank": 13
+      },
+      {
+        "event": 4,
+        "points": 68,
+        "total_points": 244,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1004,
+        "bank": 13
+      },
+      {
+        "event": 5,
+        "points": 31,
+        "total_points": 271,
+        "event_transfers_cost": 4,
+        "points_on_bench": 17,
+        "value": 1006,
+        "bank": 7
+      },
+      {
+        "event": 6,
+        "points": 63,
+        "total_points": 334,
+        "event_transfers_cost": 0,
+        "points_on_bench": 11,
+        "value": 1003,
+        "bank": 11
+      },
+      {
+        "event": 7,
+        "points": 52,
+        "total_points": 386,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1007,
+        "bank": 11
+      },
+      {
+        "event": 8,
+        "points": 52,
+        "total_points": 438,
+        "event_transfers_cost": 0,
+        "points_on_bench": 10,
+        "value": 1011,
+        "bank": 19
+      },
+      {
+        "event": 9,
+        "points": 44,
+        "total_points": 482,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1009,
+        "bank": 19
+      },
+      {
+        "event": 10,
+        "points": 60,
+        "total_points": 542,
+        "event_transfers_cost": 0,
+        "points_on_bench": 7,
+        "value": 1008,
+        "bank": 19
+      }
+    ],
+    "chips": []
+  },
+  "910015": {
+    "current": [
+      {
+        "event": 1,
+        "points": 42,
+        "total_points": 42,
+        "event_transfers_cost": 0,
+        "points_on_bench": 2,
+        "value": 1000,
+        "bank": 0
+      },
+      {
+        "event": 2,
+        "points": 63,
+        "total_points": 105,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 999,
+        "bank": 0
+      },
+      {
+        "event": 3,
+        "points": 56,
+        "total_points": 161,
+        "event_transfers_cost": 0,
+        "points_on_bench": 0,
+        "value": 993,
+        "bank": 0
+      },
+      {
+        "event": 4,
+        "points": 69,
+        "total_points": 226,
+        "event_transfers_cost": 4,
+        "points_on_bench": 19,
+        "value": 993,
+        "bank": 8
+      },
+      {
+        "event": 5,
+        "points": 43,
+        "total_points": 265,
+        "event_transfers_cost": 4,
+        "points_on_bench": 14,
+        "value": 996,
+        "bank": 15
+      },
+      {
+        "event": 6,
+        "points": 52,
+        "total_points": 313,
+        "event_transfers_cost": 4,
+        "points_on_bench": 20,
+        "value": 998,
+        "bank": 64
+      },
+      {
+        "event": 7,
+        "points": 50,
+        "total_points": 363,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1005,
+        "bank": 64
+      },
+      {
+        "event": 8,
+        "points": 45,
+        "total_points": 408,
+        "event_transfers_cost": 0,
+        "points_on_bench": 5,
+        "value": 1005,
+        "bank": 11
+      },
+      {
+        "event": 9,
+        "points": 66,
+        "total_points": 474,
+        "event_transfers_cost": 0,
+        "points_on_bench": 16,
+        "value": 1001,
+        "bank": 25
+      },
+      {
+        "event": 10,
+        "points": 62,
+        "total_points": 536,
+        "event_transfers_cost": 0,
+        "points_on_bench": 30,
+        "value": 1008,
+        "bank": 18
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 9
+      }
+    ]
+  },
+  "910016": {
+    "current": [
+      {
+        "event": 2,
+        "points": 73,
+        "total_points": 73,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1001,
+        "bank": 10
+      },
+      {
+        "event": 3,
+        "points": 53,
+        "total_points": 126,
+        "event_transfers_cost": 0,
+        "points_on_bench": 14,
+        "value": 1002,
+        "bank": 25
+      },
+      {
+        "event": 4,
+        "points": 48,
+        "total_points": 174,
+        "event_transfers_cost": 0,
+        "points_on_bench": 8,
+        "value": 1003,
+        "bank": 90
+      },
+      {
+        "event": 5,
+        "points": 57,
+        "total_points": 231,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1004,
+        "bank": 13
+      },
+      {
+        "event": 6,
+        "points": 66,
+        "total_points": 297,
+        "event_transfers_cost": 0,
+        "points_on_bench": 4,
+        "value": 1004,
+        "bank": 26
+      },
+      {
+        "event": 7,
+        "points": 56,
+        "total_points": 349,
+        "event_transfers_cost": 4,
+        "points_on_bench": 12,
+        "value": 1012,
+        "bank": 28
+      },
+      {
+        "event": 8,
+        "points": 39,
+        "total_points": 388,
+        "event_transfers_cost": 0,
+        "points_on_bench": 14,
+        "value": 1016,
+        "bank": 16
+      },
+      {
+        "event": 9,
+        "points": 39,
+        "total_points": 423,
+        "event_transfers_cost": 4,
+        "points_on_bench": 6,
+        "value": 1018,
+        "bank": 8
+      },
+      {
+        "event": 10,
+        "points": 51,
+        "total_points": 474,
+        "event_transfers_cost": 0,
+        "points_on_bench": 6,
+        "value": 1021,
+        "bank": 8
+      }
+    ],
+    "chips": [
+      {
+        "name": "wildcard",
+        "event": 5
+      }
+    ]
+  }
+}

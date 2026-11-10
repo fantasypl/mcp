@@ -13,6 +13,9 @@ type LeagueInfo struct {
 }
 
 type StandingsPage struct {
+	// HasNext is true when the league has more managers than this page
+	// (FPL pages standings 50 at a time).
+	HasNext bool          `json:"has_next"`
 	Results []LeagueEntry `json:"results"`
 }
 
