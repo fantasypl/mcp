@@ -60,6 +60,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `league_analyzer` | Win probabilities for every manager on a mini-league's first standings page, from a Monte Carlo of the rest of the season. Optional `team_id` adds the caller's gap to the leader and to every other manager, with the points per gameweek needed to close each |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
 | `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
+| `my_team` | Your team as it stands in the FPL app before the deadline: pending transfers applied, FPL's own purchase and selling prices, bank, free transfers and chip state. Needs the optional FPL login below |
 
 Plus five resources:
 
@@ -72,6 +73,55 @@ Plus five resources:
 | `fpl://calibration` | How well each signal has ranked next-gameweek points this season; see below |
 
 And ten pre-built prompts for Claude Desktop's prompt selector: `analyze_my_fpl_team`, `who_should_i_captain`, `find_differential_picks`, `plan_my_transfers`, `price_change_alert`, `plan_my_chips`, `beat_my_rivals`, `fixture_swings`, `find_optimal_transfers` and `compare_players`.
+
+### Your team and mini-leagues
+
+Save your own team ID and the mini-leagues you compete in, and the server stops asking for them and weighs advice against the managers you're actually playing.
+
+- **Your FPL team ID** (`my_team_id` in the extension settings, or `FPL_MCP_TEAM_ID`) is the number after `/entry/` in your FPL points page URL. Every tool that takes `team_id` uses it when a call leaves `team_id` out. With the FPL login on and no team ID saved, the logged-in team is used.
+- **Your mini-leagues** (`my_leagues`, or `FPL_MCP_LEAGUES`) are up to five league IDs, the number after `/leagues/` in each standings URL, separated by commas. A pasted standings URL works too. Add a colon and a name to label one:
+
+  <!-- fpl-leagues-example -->
+  ```text
+  314159, 271828:Work
+  ```
+
+With leagues saved:
+
+- `fpl_manager_hub` gains `leagues`, one entry per league with your rank, the points to the leader and to the places above and below, your win probability (the same simulation as `league_analyzer`), your captain's ownership among that league's rivals with a note when most of them captained someone else, `threats` (players at least half your rivals own and you don't) and `differentials` (your starters 15% or fewer of them own). Each squad player gains `league_ownership`.
+- `captain_pick`, `transfer_suggestions` and `optimal_transfers` (including Wildcard mode) add `league_ownership` to each player: how many of your rivals own and captained him, effective ownership, and a `stance` of shield, template, differential or mixed. `league_ownership_basis` in each result defines these. It is information and changes no ranking.
+- `rival_tracker`, `league_analyzer` and `chip_strategy` use the first saved league when `league_id` is left out.
+
+Rivals are every manager in a league of 20 or fewer, or the 10 places either side of you in a bigger one, at most 60 across all leagues and each counted once. Their squads are the latest public picks, so transfers made since the last deadline don't show until the next one passes. Each saved league adds a standings request and up to 20 squad requests to the tools above, all cached for two minutes.
+
+### Optional FPL login
+
+Every tool works from FPL's public data, and the login is off by default. With it, `my_team` can show your team as it stands in the FPL app before you confirm it: pending transfers, a draft Wildcard, captain changes, exact selling prices and chip state. Other tools then also use FPL's exact selling prices for your own team, marked `purchase_source: fpl_my_team`.
+
+FPL signs you in through an OpenID Connect provider and keeps the session in your browser's local storage. To set it up:
+
+1. Log in at https://fantasy.premierleague.com.
+2. Open the browser console (F12, then Console) and run:
+
+   ```js
+   copy((k => JSON.stringify({authority: k.split(':').slice(1, -1).join(':'), client_id: k.split(':').pop(), refresh_token: JSON.parse(localStorage[k]).refresh_token}))(Object.keys(localStorage).find(k => k.startsWith('oidc.user:'))))
+   ```
+
+   Chrome may ask you to type `allow pasting` first. The snippet copies one line of JSON to your clipboard, shaped like this:
+
+   <!-- fpl-login-example -->
+   ```json
+   {"authority":"https://account.premierleague.com/as","client_id":"<client id>","refresh_token":"<refresh token>"}
+   ```
+
+3. Paste it into the extension's "FPL login" setting, or set it as `FPL_MCP_LOGIN` in your MCP client config.
+
+How the server handles it:
+
+- **Nothing is built in.** The authority and client ID come from your paste, and the token endpoint from the authority's OpenID discovery document. The authority, the issuer it reports and the token endpoint must all be https URLs on premierleague.com, so the token cannot be sent anywhere else.
+- **Your browser session ends.** The provider replaces the refresh token each time it is used, so the copy in your browser stops working and the site asks you to log in again. The server keeps the newest refresh token in `fpl-mcp/auth/session.json` under your user cache directory, readable only by you.
+- **No token is logged** or returned in tool output, and logged-in requests never follow a redirect.
+- **An expired or signed-out login** makes `my_team` return an error saying so. Copy a fresh login and paste it again; the server notices the new token and starts from it. Other tools fall back to selling prices computed from public data.
 
 ### Signal calibration
 

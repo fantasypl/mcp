@@ -92,14 +92,15 @@ func squadSellingPrices(squad []*fpl.Player, transfers []fpl.ManagerTransfer) ma
 }
 
 // squadSellingPrices fetches the manager's transfer history and returns each
-// squad player's prices. It returns nil when the history cannot be fetched,
-// and callers then fall back to market prices with marketPriceNote.
+// squad player's prices. With an FPL login for this team, FPL's own prices
+// replace the computed ones. It returns nil when neither is available, and
+// callers then fall back to market prices with marketPriceNote.
 func (e *Engine) squadSellingPrices(ctx context.Context, teamID int, squad []*fpl.Player) map[int]SquadPrice {
-	transfers, err := e.client.ManagerTransfers(ctx, teamID)
-	if err != nil {
-		return nil
+	var computed map[int]SquadPrice
+	if transfers, err := e.client.ManagerTransfers(ctx, teamID); err == nil {
+		computed = squadSellingPrices(squad, transfers)
 	}
-	return squadSellingPrices(squad, transfers)
+	return e.overlayMyTeamPrices(ctx, teamID, squad, computed)
 }
 
 // sellingValueTenths sums the selling prices of the squad.

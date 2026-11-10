@@ -185,6 +185,9 @@ type OptimalSquadSlot struct {
 	// PriceRisk is set only on optimal_transfers legs, when price_predictions
 	// flags the player. It is informational and never affects selection.
 	PriceRisk string `json:"price_risk,omitempty"`
+	// LeagueOwnership is set only on transfer legs when leagues are saved:
+	// how the team's rivals hold the player. It never affects selection.
+	LeagueOwnership *LeagueOwnership `json:"league_ownership,omitempty"`
 }
 
 // SquadRequestError is a caller mistake in an optimal_squad request, such

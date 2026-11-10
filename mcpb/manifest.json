@@ -26,7 +26,10 @@
         "FPL_MCP_WEIGHTS_URL": "${user_config.weights_url}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID": "${user_config.weights_access_client_id}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}",
-        "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}"
+        "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}",
+        "FPL_MCP_LOGIN": "${user_config.fpl_login}",
+        "FPL_MCP_TEAM_ID": "${user_config.my_team_id}",
+        "FPL_MCP_LEAGUES": "${user_config.my_leagues}"
       }
     }
   },
@@ -48,7 +51,8 @@
     { "name": "squad_scout", "description": "Deep scout report using FPL's less-visible data fields" },
     { "name": "optimal_squad", "description": "Highest-projected 15-man squad under a budget, from an exact optimizer" },
     { "name": "optimal_transfers", "description": "Optimal transfers for your current squad, from an exact optimizer, or the best Wildcard squad on your selling-price budget" },
-    { "name": "manager_transfer_history", "description": "A manager's transfers this season, with purchase, market and selling prices" }
+    { "name": "manager_transfer_history", "description": "A manager's transfers this season, with purchase, market and selling prices" },
+    { "name": "my_team", "description": "Your team as it stands in the FPL app before the deadline, with pending transfers, exact selling prices and chip state (needs the optional FPL login)" }
   ],
   "prompts": [
     {
@@ -116,6 +120,18 @@
     "platforms": ["darwin", "win32", "linux"]
   },
   "user_config": {
+    "my_team_id": {
+      "type": "string",
+      "title": "Your FPL team ID (optional)",
+      "description": "The number after /entry/ in your FPL points page URL. Tools use it when you don't name a team, so you don't have to repeat it. Leave blank to give it each time; with the FPL login on, your logged-in team is used instead.",
+      "required": false
+    },
+    "my_leagues": {
+      "type": "string",
+      "title": "Your mini-leagues (optional)",
+      "description": "The mini-leagues you compete in, separated by commas: the number after /leagues/ in each standings URL, or the URL itself, optionally followed by a colon and a name, such as 314159, 271828:Work. Up to 5. The manager hub then reports your position, gaps and win chance in each, and captain and transfer advice shows how your rivals own each player. rival_tracker, league_analyzer and chip_strategy use the first league when you don't name one.",
+      "required": false
+    },
     "weights_url": {
       "type": "string",
       "title": "Optimized weights URL (advanced)",
@@ -140,6 +156,13 @@
       "type": "string",
       "title": "API-Football key (optional)",
       "description": "Your own key from api-football.com (a free plan works). Adds bookmaker-implied clean-sheet chance and expected goals to fixture_outlook. Leave blank to skip; nothing else changes.",
+      "sensitive": true,
+      "required": false
+    },
+    "fpl_login": {
+      "type": "string",
+      "title": "FPL login (optional)",
+      "description": "Off by default. Lets my_team read your team as it stands in the FPL app, with pending transfers, exact selling prices and chip state. Log in at fantasy.premierleague.com, run the console snippet from the README, and paste what it copies. Leave blank to use public data only; nothing else changes.",
       "sensitive": true,
       "required": false
     }

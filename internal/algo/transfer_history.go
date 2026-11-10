@@ -70,7 +70,7 @@ type SquadPriceEntry struct {
 	Name           string  `json:"name"`
 	Position       string  `json:"position"`
 	PurchasePriceM float64 `json:"purchase_price_m"`
-	PurchaseSource string  `json:"purchase_source"` // transfer or season_start
+	PurchaseSource string  `json:"purchase_source"` // transfer, season_start or fpl_my_team
 	CostM          float64 `json:"cost_m"`          // market price
 	SellingPriceM  float64 `json:"selling_price_m"`
 }
@@ -157,7 +157,7 @@ func (e *Engine) TransferHistory(ctx context.Context, teamID int) (any, error) {
 			squad = append(squad, p)
 		}
 	}
-	prices := squadSellingPrices(squad, transfers)
+	prices := e.overlayMyTeamPrices(ctx, teamID, squad, squadSellingPrices(squad, transfers))
 	for _, p := range squad {
 		sp := prices[p.ID]
 		result.CurrentSquad = append(result.CurrentSquad, SquadPriceEntry{

@@ -15,6 +15,7 @@ import (
 	"github.com/fantasypl/mcp/internal/algo"
 	"github.com/fantasypl/mcp/internal/apifootball"
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fplauth"
 	"github.com/fantasypl/mcp/internal/insights"
 	"github.com/fantasypl/mcp/internal/remotecongestion"
 	"github.com/fantasypl/mcp/internal/remoteweights"
@@ -26,7 +27,7 @@ const instructions = "You are an expert Fantasy Premier League analyst. Use thes
 
 type captainIn struct {
 	Gameweek  *int  `json:"gameweek,omitempty"   jsonschema:"Gameweek number (1-38). Defaults to next gameweek if not specified."`
-	TeamID    *int  `json:"team_id,omitempty"    jsonschema:"FPL team ID. Ranks only the players in that manager's squad. Give team_id or player_ids, not both; omit both to rank every player."`
+	TeamID    *int  `json:"team_id,omitempty"    jsonschema:"FPL team ID. Ranks only the players in that manager's squad. Give team_id or player_ids, not both; omit both to rank every player. With saved leagues, each pick adds league_ownership among this team's rivals, or the saved team's when team_id is omitted."`
 	PlayerIDs []int `json:"player_ids,omitempty" jsonschema:"1 to 15 player element IDs, such as a squad from optimal_squad that isn't a registered FPL team yet. Ranks only these players. Give team_id or player_ids, not both; omit both to rank every player."`
 }
 
@@ -70,12 +71,13 @@ type fixtureIn struct {
 	Position       string `json:"position,omitempty"        jsonschema:"Filter by position: GKP, DEF, MID, or FWD. Optional."`
 }
 type priceIn struct{}
+type myTeamIn struct{}
 type chipIn struct {
-	TeamID   int  `json:"team_id"             jsonschema:"FPL team ID"`
-	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. When set, the result adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
+	TeamID   int  `json:"team_id,omitempty"   jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
+	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. Defaults to the first saved league, if any. The result then adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
 }
 type transferIn struct {
-	TeamID        int     `json:"team_id"                  jsonschema:"FPL team ID"`
+	TeamID        int     `json:"team_id,omitempty"        jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 	FreeTransfers int     `json:"free_transfers,omitempty" jsonschema:"Available free transfers. Default 1."`
 	Bank          float64 `json:"bank,omitempty"            jsonschema:"Money in the bank in millions. Default 0."`
 }
@@ -86,7 +88,7 @@ type optimalSquadIn struct {
 	IncludePlayerIDs []int    `json:"include_player_ids,omitempty" jsonschema:"Player element IDs that must be in the squad. The rest of the squad is filled optimally, and the result's include field shows the points cost of forcing them in."`
 }
 type optimalTransfersIn struct {
-	TeamID    int   `json:"team_id"              jsonschema:"FPL team ID"`
+	TeamID    int   `json:"team_id,omitempty"    jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 	Gameweek  *int  `json:"gameweek,omitempty"   jsonschema:"Gameweek the 5-gameweek projection window starts from. Defaults to the next gameweek."`
 	AllowHits *bool `json:"allow_hits,omitempty" jsonschema:"Also consider paid transfers beyond your free allowance, showing the points-vs-hit-cost tradeoff for each. Default false (free transfers only)."`
 	Wildcard  *bool `json:"wildcard,omitempty"   jsonschema:"Plan a Wildcard: unlimited free transfers from your current squad, with a budget of bank plus the selling prices of your current 15. Cannot be combined with allow_hits. Default false."`
@@ -99,10 +101,10 @@ type compareIn struct {
 	IncludeGameweeks int      `json:"include_gameweeks,omitempty" jsonschema:"Optional: add each player's last N finished gameweeks (1-38) with points, minutes, goals, assists, xG and xA, plus a consistency measure that separates steady scorers from one-haul players."`
 }
 type teamIn struct {
-	TeamID int `json:"team_id" jsonschema:"FPL team ID"`
+	TeamID int `json:"team_id,omitempty" jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 }
 type hubIn struct {
-	TeamID         int `json:"team_id"                   jsonschema:"FPL team ID"`
+	TeamID         int `json:"team_id,omitempty"         jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 	GameweeksAhead int `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
 }
 type hitIn struct {
@@ -112,12 +114,12 @@ type hitIn struct {
 	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
 }
 type pickXIIn struct {
-	TeamID   int  `json:"team_id"            jsonschema:"FPL team ID"`
+	TeamID   int  `json:"team_id,omitempty"  jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 	Gameweek *int `json:"gameweek,omitempty" jsonschema:"Gameweek to pick for (1-38). Defaults to the next gameweek."`
 }
 type rivalIn struct {
-	LeagueID     int   `json:"league_id"                jsonschema:"Mini-league ID"`
-	TeamID       int   `json:"team_id"                  jsonschema:"FPL team ID"`
+	LeagueID     int   `json:"league_id,omitempty"      jsonschema:"Mini-league ID. Defaults to the first saved league."`
+	TeamID       int   `json:"team_id,omitempty"        jsonschema:"FPL team ID. Optional when the user saved one in the settings."`
 	RivalTeamIDs []int `json:"rival_team_ids,omitempty" jsonschema:"Optional: up to 10 FPL team IDs to compare with. With target_ranks, the rivals are the union of both. Omit both to compare with the managers ranked within three places of you."`
 	TargetRanks  []int `json:"target_ranks,omitempty"   jsonschema:"Optional: up to 10 league ranks to compare with, for example [1, 2, 3] for the leaders."`
 }
@@ -141,8 +143,8 @@ func validRivalSelection(in rivalIn) string {
 }
 
 type leagueIn struct {
-	LeagueID int  `json:"league_id"         jsonschema:"Mini-league ID"`
-	TeamID   *int `json:"team_id,omitempty" jsonschema:"Optional FPL team ID. When set, the result adds caller: that manager's rank, points_gap_to_leader, required_ppg_over_leader and win_probability."`
+	LeagueID int  `json:"league_id,omitempty" jsonschema:"Mini-league ID. Defaults to the first saved league."`
+	TeamID   *int `json:"team_id,omitempty"   jsonschema:"Optional FPL team ID. Defaults to the saved team ID, if any. When known, the result adds caller: that manager's rank, points_gap_to_leader, required_ppg_over_leader and win_probability."`
 }
 
 func errResult(message string) map[string]any {
@@ -188,6 +190,30 @@ func call(fn func() (any, error), message string) any {
 		return errResult(message)
 	}
 	return out
+}
+
+// wireLogin sets up the FPL login from FPL_MCP_LOGIN, if any. The rotated
+// refresh token is kept under the user cache directory; without one it
+// lives in memory for this run only. The returned error is safe to show:
+// it never contains a token.
+func wireLogin(client *fpl.Client, engine *algo.Engine) error {
+	if client.Auth == nil {
+		stateDir := ""
+		if cacheDir, err := os.UserCacheDir(); err == nil {
+			stateDir = filepath.Join(cacheDir, "fpl-mcp", "auth")
+		}
+		src, err := fplauth.FromEnv(stateDir)
+		if err != nil {
+			log.Printf("FPL login is set but cannot be used: %v", err)
+			return err
+		}
+		if src == nil {
+			return nil
+		}
+		client.Auth = src
+	}
+	engine.MyTeamSource = client
+	return nil
 }
 
 // version is set via -ldflags "-X main.version=..." by the release
@@ -248,7 +274,17 @@ func newServer(client *fpl.Client) *mcp.Server {
 			engine.MarketSource = af
 		}
 	}
-	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions})
+
+	// The optional FPL login (issue #26), only when the user sets
+	// FPL_MCP_LOGIN. Without it nothing below changes and my_team says how
+	// to turn it on. A malformed login is reported by my_team rather than
+	// stopping the server, since every other tool still works.
+	loginErr := wireLogin(client, engine)
+
+	// The user's own team and the mini-leagues they compete in, if saved.
+	// A malformed setting is logged and left out; the server still starts.
+	d := loadDefaults(engine)
+	s := mcp.NewServer(&mcp.Implementation{Name: "fpl-intelligence", Title: "FPL Intelligence", Version: version}, &mcp.ServerOptions{Instructions: instructions + d.instructions()})
 	mcp.AddTool(s, &mcp.Tool{Name: "captain_pick", Description: "Get top 5 captain recommendations for a given FPL gameweek.\n\nUSE THIS WHEN the user asks: \"Who should I captain?\", \"Best captain this week?\", \"Captain Salah or Haaland?\", or any captain-related question.\n\nEach pick is scored by xG/90, xA/90, form, points per game, home advantage, fixture difficulty, ICT index, bonus rate, penalty duties, and minutes certainty. Includes human-readable reasoning for each recommendation.\n\nBy default it ranks every player, at most 2 per club. To rank one squad instead, pass team_id for a registered FPL team, or player_ids for any list of up to 15 players, such as a squad drafted with optimal_squad. Give one or the other, not both. Scoring and output are the same; the per-club cap does not apply to a given squad."}, func(ctx context.Context, _ *mcp.CallToolRequest, in captainIn) (*mcp.CallToolResult, any, error) {
 		if e := validGW(in.Gameweek); e != "" {
 			return nil, errResult(e), nil
@@ -256,9 +292,23 @@ func newServer(client *fpl.Client) *mcp.Server {
 		if e := validCaptainScope(in); e != "" {
 			return nil, errResult(e), nil
 		}
+		// League ownership is measured against this team's rivals: the
+		// one asked about, else the saved team.
+		owner := 0
+		if in.TeamID != nil {
+			owner = *in.TeamID
+		} else if engine.Leagues != nil {
+			owner = d.quietTeam(ctx)
+		}
+		withLeagues := func(out any, err error) (any, error) {
+			if err != nil {
+				return out, err
+			}
+			return engine.WithLeagueOwnership(ctx, owner, out), nil
+		}
 		switch {
 		case in.TeamID != nil:
-			return nil, call(func() (any, error) { return engine.CaptainPicksForTeam(ctx, *in.TeamID, in.Gameweek, 5) },
+			return nil, call(func() (any, error) { return withLeagues(engine.CaptainPicksForTeam(ctx, *in.TeamID, in.Gameweek, 5)) },
 				fmt.Sprintf("Failed to get captain picks for team %d. Check that the team ID is correct and try again.", *in.TeamID)), nil
 		case in.PlayerIDs != nil:
 			out, err := engine.CaptainPicksAmong(ctx, in.Gameweek, 5, in.PlayerIDs)
@@ -266,12 +316,13 @@ func newServer(client *fpl.Client) *mcp.Server {
 			if errors.As(err, &unknown) {
 				return nil, errResult(unknown.Error()), nil
 			}
-			return nil, call(func() (any, error) { return out, err }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
+			return nil, call(func() (any, error) { return withLeagues(out, err) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 		}
-		return nil, call(func() (any, error) { return engine.CaptainPicks(ctx, in.Gameweek, 5) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
+		return nil, call(func() (any, error) { return withLeagues(engine.CaptainPicks(ctx, in.Gameweek, 5)) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "pick_xi", Description: "Choose the starting XI, formation, bench order, captain and vice-captain for a manager's existing 15.\n\nUSE THIS WHEN the user asks: \"Who should I start?\", \"Pick my team for this week\", \"What's my best XI?\", \"Bench order?\", or wants a line-up for a squad they already own. Prefer optimal_squad for a squad built from scratch.\n\nEach player has a pick_score: projected_points (season points per game, scaled by starts share, fixture difficulty, home or away, and chance of playing; 0 for a blank, doubled for a double) plus a small set-piece bonus for first-choice penalties, corners and free kicks. Form only breaks exact ties. components shows every input so the ranking can be challenged. The result also gives the two nearest alternative formations with their points difference and swaps, fixture_exposure grouping the squad by match (benching two or more players from one match is flagged as a bet against it), and changes_from_your_xi. The captain is the starter with the highest captain_score, with projected_points breaking a tie within 5% for a player with attacking threat."}, func(ctx context.Context, _ *mcp.CallToolRequest, in pickXIIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if e := validGW(in.Gameweek); e != "" {
@@ -311,14 +362,19 @@ func newServer(client *fpl.Client) *mcp.Server {
 		return nil, call(func() (any, error) { return engine.PricePredictions(ctx, 0) }, "Failed to get price predictions. The FPL API may be temporarily unavailable — try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "transfer_suggestions", Description: "Get transfer recommendations for a specific FPL team.\n\nUSE THIS WHEN the user asks: \"Who should I transfer in/out?\", \"Best transfers this week?\", \"How to improve my team?\". Prefer fpl_manager_hub for a full analysis instead.\n\nEach player to sell gets its own list of replacements, ranked independently, so the same player can top several lists but can only be bought once. Check for repeats before recommending more than one transfer.\n\nEvery option keeps the 3-per-club limit after its own transfer; options that would not are left out. club_limit_ok is false for an option that is legal alone but would make four from one club together with the top picks of the suggestions listed before it, and club_limit_note says which."}, func(ctx context.Context, _ *mcp.CallToolRequest, in transferIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if in.FreeTransfers == 0 {
 			in.FreeTransfers = 1
 		}
 		return nil, call(func() (any, error) {
-			return engine.TransferSuggestions(ctx, in.TeamID, clamp(in.FreeTransfers, 1, 5), maxf(in.Bank, 0))
+			out, err := engine.TransferSuggestions(ctx, in.TeamID, clamp(in.FreeTransfers, 1, 5), maxf(in.Bank, 0))
+			if err != nil {
+				return nil, err
+			}
+			return engine.WithLeagueOwnership(ctx, in.TeamID, out), nil
 		}, "Failed to get transfer suggestions. Check that the team ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "optimal_squad", Description: "Build the highest-scoring 15-man FPL squad achievable under a budget, using an exact combinatorial optimizer (branch-and-bound), not a heuristic.\n\nUSE THIS WHEN the user asks: \"Build me the best possible squad\", \"Optimal team for £100m?\", \"What's the mathematically best squad?\", or wants a from-scratch squad rather than advice on their existing one.\n\nSelects the 15-man squad (2 GKP/5 DEF/5 MID/3 FWD, max 3 per club) that maximizes projected_points: over the next 5 gameweeks, the best starting XI in a valid formation counts in full and the four bench players count at 0.1 of their projected points, since the bench only scores when a starter misses out. projected_points_basis states this in the output. It then suggests a starting XI for the target gameweek alone (starting_xi_gameweek_points), with its formation, a bench order, and a captain and vice-captain from that XI, so a player who blanks that week is benched. That XI can differ from the 5-gameweek XI behind projected_points. The captain uses captain_pick's scoring for the target gameweek. Set include_player_ids to force players into the squad (for example, to see the best squad around a player you want); the include field then gives projected_points without them and the points_cost of the constraint. An impossible set (too many in one position, more than 3 from one club, over budget, or an id also in exclude_player_ids) returns an error saying why. Considers a large but bounded candidate pool per position, so the result is near-optimal rather than certified optimal against every player in the game."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalSquadIn) (*mcp.CallToolResult, any, error) {
@@ -340,7 +396,8 @@ func newServer(client *fpl.Client) *mcp.Server {
 		return nil, call(func() (any, error) { return out, err }, "Failed to build an optimal squad. Please try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "optimal_transfers", Description: "Find the combinatorially optimal transfers for your current FPL squad — an exact optimizer, not a heuristic single-swap suggester.\n\nUSE THIS WHEN the user asks: \"What's the best possible transfer(s) this week?\", \"Prove my transfer is optimal\", \"Should I make multiple transfers?\", or wants the mathematically best move rather than a quick suggestion. Prefer transfer_suggestions for a faster, single-swap recommendation with detailed reasoning.\n\nAuto-detects your bank, free transfers, and current squad from your team ID. Set allow_hits to also weigh paid transfers (-4 each beyond your free allowance) against their projected points gain — every option considered is returned, not just the best one, so the tradeoff is visible. Each option's projected_points is the resulting squad's best starting XI over the next 5 gameweeks plus 0.1 of the bench's projected points, as in optimal_squad (projected_points_basis states this). \"best\" means the highest net projected points, not the lowest risk: each option also has a confidence rating (high/medium/low, from the minutes and goal-involvement record of its incoming players) and one option is marked \"safest\". This may take longer than transfer_suggestions: each option is a search capped at 8 seconds, and with allow_hits set the up to 4 searches run in parallel. If a search hits its cap, that option has optimal: false and the result has partial: true, meaning a better plan may exist.\n\nSet wildcard to plan a Wildcard instead (\"Should I wildcard?\", \"Best squad for my Wildcard?\"): one search with unlimited free transfers and no hit cost, on a budget of bank plus the selling prices of your current 15, which is what FPL offers on a Wildcard. Kept players count at their selling price and incoming players at their market price. Selling prices are computed from your public transfer history. The result lists transfers_out and transfers_in, projected_gain over keeping the current squad (projected_points minus current_projected_points, on the same basis), the full squad with a starting XI, formation, bench order and captain for the target gameweek, budget_used_m and budget_left_m, and partial: true if the search hit its 8-second cap. wildcard and allow_hits cannot both be set."}, func(ctx context.Context, _ *mcp.CallToolRequest, in optimalTransfersIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if e := validGW(in.Gameweek); e != "" {
@@ -352,11 +409,19 @@ func newServer(client *fpl.Client) *mcp.Server {
 				return nil, errResult("wildcard and allow_hits cannot both be set: a Wildcard makes every transfer free, so there are no hits to weigh."), nil
 			}
 			return nil, call(func() (any, error) {
-				return engine.OptimalWildcard(ctx, in.TeamID, in.Gameweek)
+				out, err := engine.OptimalWildcard(ctx, in.TeamID, in.Gameweek)
+				if err != nil {
+					return nil, err
+				}
+				return engine.WithLeagueOwnership(ctx, in.TeamID, out), nil
 			}, fmt.Sprintf("Failed to plan a Wildcard for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 		}
 		return nil, call(func() (any, error) {
-			return engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
+			out, err := engine.OptimalTransfers(ctx, in.TeamID, in.Gameweek, allowHits)
+			if err != nil {
+				return nil, err
+			}
+			return engine.WithLeagueOwnership(ctx, in.TeamID, out), nil
 		}, fmt.Sprintf("Failed to find optimal transfers for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "player_comparison", Description: "Compare 2-4 FPL players head-to-head across all key metrics.\n\nUSE THIS WHEN the user asks: \"Salah vs Palmer?\", \"Compare Haaland and Watkins\", \"Which midfielder should I pick?\", or any player comparison question.\n\nNames are fuzzy-matched — partial names like \"Salah\" or \"Palmer\" work fine. Returns form, xG/90, xA/90, ICT, PPG, cost, ownership, captain score, upcoming fixtures, transfer momentum, and a verdict.\n\nPass team_id when the question is who to buy: each player then gains legality (in_squad, club_limit_ok, budget_ok, legal_buy and a note naming the sale that works), and the verdict only considers players that squad could have next gameweek, so it never recommends a fourth player from one club.\n\nPass fields to get any other bootstrap-static element field per player, verbatim (for example cost_change_start for price movement since the season began).\n\nPass include_gameweeks (e.g. 6) when season totals could hide how a player scored: each player gains gameweek_history with one row per finished gameweek (doubles summed, blanks shown) and consistency (average, median, standard deviation, hauls of 10+ and their share of the total, low scores, a profile such as steady or haul-dependent, and a plain-words summary). gameweek_history_note explains the measure."}, func(ctx context.Context, _ *mcp.CallToolRequest, in compareIn) (*mcp.CallToolResult, any, error) {
@@ -386,13 +451,15 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}, "Failed to compare players. Check the player names and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "live_points", Description: "Get live points for a specific FPL team during an active gameweek.\n\nUSE THIS WHEN the user asks: \"How's my team doing?\", \"Live score?\", \"Am I getting any bonus points?\", \"Any auto-subs?\". Only useful during an active gameweek when matches are being played or have just finished."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		return nil, call(func() (any, error) { return engine.LivePoints(ctx, in.TeamID) }, "Failed to get live points. Check that the team ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "manager_history", Description: "A manager's season gameweek by gameweek: points before and after hits, bench points, overall and gameweek rank, the gameweek average and highest score, chip played, captain and vice-captain, automatic substitutions, and the best captain choice in the XI with the points forgone.\n\nUSE THIS WHEN the user asks: \"How has my season gone?\", \"How many points have I left on my bench?\", \"Have my captain picks been good?\", \"When did I play my chips?\", \"How has my rank moved?\", or wants to review decision quality over the season. Run it for league rivals to compare.\n\nsummary totals hits, bench points per gameweek, captain return against the best available in the XI, chips played and rank movement. The captain return is the vice-captain's points when the captain didn't play. points_forgone counts the multiplier, so a Triple Captain week doubles it."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		return nil, call(func() (any, error) { return engine.ManagerHistory(ctx, in.TeamID) },
@@ -422,27 +489,38 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}, "Failed to analyze hit. Check that both player IDs are valid and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "manager_transfer_history", Description: "List every transfer a manager has made this season, with gameweek, players in and out, and prices, plus the purchase, market and selling price of each player in their current squad.\n\nUSE THIS WHEN the user asks: \"What transfers have I made?\", \"Did my Watkins hit pay off?\", \"What did I pay for Salah?\", \"What's my real budget?\", or wants to review past transfer decisions.\n\nSelling price is what FPL pays you for a player: the purchase price plus half of any rise since purchase, rounded down to 0.1m. Market price is what the player costs to buy now.\n\nEach transfer also shows whether it paid off: points_since_in and points_since_out over the gameweeks the incoming player was held, hit_cost, net_gain, held_gameweeks, and sold_by_wildcard. A gameweek's hit is charged to its last transfers by time, since FPL uses free transfers first. roi totals the hits, the net gain, the hits reversed within 5 gameweeks, and each gameweek's transfers together (by_gameweek), which doesn't depend on which transfer took the hit."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		return nil, call(func() (any, error) { return engine.TransferHistory(ctx, in.TeamID) }, fmt.Sprintf("Failed to get transfer history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
+	mcp.AddTool(s, &mcp.Tool{Name: "my_team", Description: "The logged-in manager's team exactly as it stands in the FPL app before the deadline: pending transfers already applied, captain and vice-captain, bench order, FPL's own purchase and selling price for each player, bank, squad value, free transfers left, the points cost of further transfers, and each chip's status, including one that is active but not yet confirmed by the deadline.\n\nUSE THIS WHEN the user asks to check a draft before confirming it: \"Review my Wildcard draft\", \"Did my transfers go through?\", \"What's my exact budget?\", \"Is my chip active?\".\n\nNeeds the optional FPL login (fpl_login in the extension settings, or FPL_MCP_LOGIN), which is off by default. Without it, or when the login has expired, it returns an error saying how to set one up; every other tool works without a login. It takes no team ID: it always reads the logged-in account's own team. With a login, every other tool also uses FPL's exact selling prices for that team instead of computing them from public data (purchase_source fpl_my_team)."}, func(ctx context.Context, _ *mcp.CallToolRequest, _ myTeamIn) (*mcp.CallToolResult, any, error) {
+		if loginErr != nil {
+			return nil, errResult(loginErr.Error()), nil
+		}
+		return nil, call(func() (any, error) { return engine.MyTeam(ctx) }, "Failed to get your team from FPL. The FPL API may be temporarily unavailable, so try again."), nil
+	})
 	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans up to the next 10 gameweeks, stopping at GW19 while first-half chips are in play, and scores each for every unused chip.\n\nEach recommendation has chip_score, in that chip's own units: compare it only between gameweeks for the same chip. confidence (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over the same chip's next-best gameweek (margin_over_next_pct), and says how clear-cut the choice is, not how likely the chip is to pay off. next_best_gameweek and gap_to_next show the runner-up, and candidates lists the top five gameweeks with their factors (fixture count, confirmed and predicted doubles, blanks, average FDR, and squad fit). confidence_score is deprecated and equals chip_score. season_outlook lists confirmed doubles and blanks after the scan window. Pass league_id to see each rival's remaining chips."}, func(ctx context.Context, _ *mcp.CallToolRequest, in chipIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if in.LeagueID != nil {
 			if e := validLeague(*in.LeagueID); e != "" {
 				return nil, errResult(e), nil
 			}
+		} else if id, e := d.league(0); e == "" {
+			in.LeagueID = &id
 		}
 		return nil, call(func() (any, error) { return engine.ChipStrategyWith(ctx, in.TeamID, in.LeagueID) }, "Failed to get chip strategy. Check that the team ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "rival_tracker", Description: "Analyze your mini-league rivals and get strategies to beat them.\n\nUSE THIS WHEN the user asks: \"How do I beat my rivals?\", \"What's my mini-league looking like?\", \"What players do my rivals have?\", \"Show me my league standings\", or any rival/league question.\n\nCompares your squad against nearby rivals (ranked within three places), or against the rivals you choose with rival_team_ids or target_ranks (for example [1, 2, 3] to chase the leaders), finds differentials (players you have that they don't), identifies rival weaknesses, predicts their likely next transfers, and suggests counter-strategies. You and every rival also get gameweek_points (each gameweek before and after hits) and chips_used with gameweeks, so score trends and chip timing can be compared.\n\nThe user needs their league ID (from the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c) and their team ID."}, func(ctx context.Context, _ *mcp.CallToolRequest, in rivalIn) (*mcp.CallToolResult, any, error) {
-		if e := validLeague(in.LeagueID); e != "" {
+		var e string
+		if in.LeagueID, e = d.league(in.LeagueID); e != "" {
 			return nil, errResult(e), nil
 		}
-		if e := validTeam(in.TeamID); e != "" {
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if e := validRivalSelection(in); e != "" {
@@ -452,24 +530,29 @@ func newServer(client *fpl.Client) *mcp.Server {
 		return nil, call(func() (any, error) { return engine.RivalAnalysisWith(ctx, in.LeagueID, in.TeamID, sel) }, "Failed to analyze rivals. Check that the league ID and team ID are correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "league_analyzer", Description: "Predict who will win a mini-league based on current form, squad quality, and chips remaining.\n\nUSE THIS WHEN the user asks: \"Who's going to win my league?\", \"League predictions\", \"Who's the favourite?\", \"Analyze league standings\", \"Win probability\", or any question about league-wide chances WITHOUT needing a specific team ID.\n\nDoes NOT require the user's team ID — just the league ID. Pass team_id to add the caller's own row: rank, points_gap_to_leader, required_ppg_over_leader, win_probability, and gaps to every other manager with the points per gameweek needed to catch each one ahead.\n\nwin_probabilities has a row for every manager on the first standings page (up to 50). They come from a Monte Carlo of the rest of the season: each manager's remaining gameweeks are drawn from the mean and spread of their own net scores this season (leaving out Bench Boost, Triple Captain and Free Hit weeks), blended with the league average, plus a fixed allowance per unused chip. win_probability_method states the model in full. A league bigger than one page is flagged in standings_note. The top 10 also get a detailed row with squad quality, chips, momentum, team value and injured starters; those are information and do not enter the probabilities.\n\nThe league ID is in the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c"}, func(ctx context.Context, _ *mcp.CallToolRequest, in leagueIn) (*mcp.CallToolResult, any, error) {
-		if e := validLeague(in.LeagueID); e != "" {
+		var e string
+		if in.LeagueID, e = d.league(in.LeagueID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if in.TeamID != nil {
 			if e := validTeam(*in.TeamID); e != "" {
 				return nil, errResult(e), nil
 			}
+		} else if id := d.quietTeam(ctx); id != 0 {
+			in.TeamID = &id
 		}
 		return nil, call(func() (any, error) { return engine.AnalyzeLeagueForTeam(ctx, in.LeagueID, in.TeamID) }, "Failed to analyze league. Check that the league ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "squad_scout", Description: "Deep scout report using FPL's hidden data fields most managers don't know about.\n\nUSE THIS WHEN the user asks: \"Any hidden insights?\", \"Set piece takers?\", \"Suspension risks?\", \"What does FPL's own data say?\", or for a deeper dive beyond what fpl_manager_hub provides.\n\nSurfaces: blank GW warnings, FPL's ep_next field (which in 2026-27 FPL sets equal to form, so it is recent form and not a projection; the report's ep_note says so), set piece duties, yellow card suspension risks, ICT breakdown, points per million rankings."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		return nil, call(func() (any, error) { return engine.SquadScout(ctx, in.TeamID) }, "Failed to scout squad. Check that the team ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "fpl_manager_hub", Description: "Complete FPL intelligence report for a manager's team. THIS IS THE BEST STARTING POINT.\n\nUSE THIS FIRST when the user provides their team ID or asks for a full analysis. It auto-detects bank balance, free transfers, chips, and squad — then runs ALL analyses in parallel: captain pick, transfers, fixtures, differentials, price risks, and squad health. season_summary.total_points and avg_points_per_gw are net of transfer hits, matching manager_status.total_points and FPL's table; gross_points, transfer_cost_total and gameweek_breakdown show the hits. It also reports the next deadline (UTC) with time remaining and whether the current and next gameweeks are upcoming, in progress or finished.\n\nEach squad player has projected_points, this server's next-gameweek estimate (season points per game scaled by starts share, fixture difficulty, venue and chance of playing; projected_points_basis states it). The suggested bench order and the captain_choice tiebreak use it. ep_next is FPL's raw field and is deprecated here: in 2026-27 FPL sets it equal to form, so do not read it as a projection.\n\nThe user only needs to provide their team ID (the number in their FPL URL: fantasy.premierleague.com/entry/TEAM_ID/event/...)."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hubIn) (*mcp.CallToolResult, any, error) {
-		if e := validTeam(in.TeamID); e != "" {
+		var e string
+		if in.TeamID, e = d.team(ctx, in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
 		if in.GameweeksAhead == 0 {

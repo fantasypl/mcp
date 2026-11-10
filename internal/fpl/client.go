@@ -51,6 +51,11 @@ type Client struct {
 	BaseURL string
 	HTTP    *http.Client
 
+	// Auth is the optional FPL login. Nil, the default, means only public
+	// endpoints are used and every logged-in call returns
+	// fplauth.ErrNotConfigured.
+	Auth TokenSource
+
 	mu    sync.RWMutex
 	cache map[string]entry
 	sf    singleflight.Group
@@ -120,6 +125,11 @@ func (e *HTTPError) Error() string {
 // It is a package-level function rather than a method because Go methods
 // cannot carry their own type parameters.
 func fetch[T any](ctx context.Context, c *Client, path string, ttl time.Duration) (T, error) {
+	return fetchWith[T](ctx, c, path, ttl, nil)
+}
+
+// fetchWith is fetch with extra request headers, such as a login token.
+func fetchWith[T any](ctx context.Context, c *Client, path string, ttl time.Duration, hdr http.Header) (T, error) {
 	var zero T
 	url := c.BaseURL + path
 
@@ -143,7 +153,7 @@ func fetch[T any](ctx context.Context, c *Client, path string, ttl time.Duration
 				return v, nil
 			}
 		}
-		out, err := do[T](ctx, c, url)
+		out, err := do[T](ctx, c, url, hdr)
 		if err != nil {
 			return nil, err
 		}
@@ -165,12 +175,12 @@ func fetch[T any](ctx context.Context, c *Client, path string, ttl time.Duration
 // do performs the request with the retry policy: up to 3 attempts with
 // a linear 1s, 2s backoff. Transport errors, 5xx, 408 and 429 are retried;
 // other 4xx responses and malformed JSON fail at once.
-func do[T any](ctx context.Context, c *Client, url string) (T, error) {
+func do[T any](ctx context.Context, c *Client, url string, hdr http.Header) (T, error) {
 	var zero T
 	var lastErr error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		out, err := attemptOnce[T](ctx, c, url)
+		out, err := attemptOnce[T](ctx, c, url, hdr)
 		if err == nil {
 			return out, nil
 		}
@@ -202,7 +212,7 @@ func do[T any](ctx context.Context, c *Client, url string) (T, error) {
 	return zero, fmt.Errorf("fpl: %s failed after %d attempts: %w", url, maxRetries+1, lastErr)
 }
 
-func attemptOnce[T any](ctx context.Context, c *Client, url string) (T, error) {
+func attemptOnce[T any](ctx context.Context, c *Client, url string, hdr http.Header) (T, error) {
 	var zero T
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -210,8 +220,19 @@ func attemptOnce[T any](ctx context.Context, c *Client, url string) (T, error) {
 		return zero, err
 	}
 	req.Header.Set("User-Agent", userAgent)
+	for k, v := range hdr {
+		req.Header[k] = v
+	}
 
-	resp, err := c.HTTP.Do(req)
+	hc := c.HTTP
+	if len(hdr) > 0 {
+		// Go forwards custom headers across a redirect, so a login token
+		// would follow one to any host. Logged-in requests never redirect.
+		cp := *c.HTTP
+		cp.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+		hc = &cp
+	}
+	resp, err := hc.Do(req)
 	if err != nil {
 		return zero, err
 	}
