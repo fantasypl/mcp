@@ -464,7 +464,6 @@ func fixtureExposure(xi, bench []PickXIPlayer) []FixtureExposure {
 		label         string
 		players       []string
 		inXI, benched int
-		firstSeen     int
 	}
 	groups := map[string]*group{}
 	var order []string
