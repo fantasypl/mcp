@@ -216,11 +216,13 @@ func pooledScoreStats(entries []leagueSimEntry) (mean, variance float64) {
 func shrunkScoreStats(scores []int, leagueMean, leagueVar float64) (mean, variance float64) {
 	n := float64(len(scores))
 	k := float64(leagueShrinkGameweeks)
-	ownMean, ownVar := leagueMean, leagueVar
+	// One gameweek gives a mean but no spread, so its variance is the
+	// league's.
+	var ownMean, ownVar float64
 	if len(scores) >= 2 {
 		ownMean, ownVar = meanVariance(scores)
 	} else {
-		ownMean = float64(scores[0])
+		ownMean, ownVar = float64(scores[0]), leagueVar
 	}
 	mean = (n*ownMean + k*leagueMean) / (n + k)
 	variance = (n*ownVar + k*leagueVar) / (n + k)
