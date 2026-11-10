@@ -1,0 +1,140 @@
+{
+  "league": {
+    "id": 1092839,
+    "name": "Recorded mini-league"
+  },
+  "standings": {
+    "has_next": false,
+    "page": 1,
+    "results": [
+      {
+        "entry": 910001,
+        "entry_name": "Team 1",
+        "player_name": "Manager 1",
+        "rank": 1,
+        "total": 728,
+        "event_total": 67
+      },
+      {
+        "entry": 910002,
+        "entry_name": "Team 2",
+        "player_name": "Manager 2",
+        "rank": 2,
+        "total": 639,
+        "event_total": 60
+      },
+      {
+        "entry": 910003,
+        "entry_name": "Team 3",
+        "player_name": "Manager 3",
+        "rank": 3,
+        "total": 625,
+        "event_total": 64
+      },
+      {
+        "entry": 910004,
+        "entry_name": "Team 4",
+        "player_name": "Manager 4",
+        "rank": 4,
+        "total": 625,
+        "event_total": 52
+      },
+      {
+        "entry": 910005,
+        "entry_name": "Team 5",
+        "player_name": "Manager 5",
+        "rank": 5,
+        "total": 624,
+        "event_total": 87
+      },
+      {
+        "entry": 910006,
+        "entry_name": "Team 6",
+        "player_name": "Manager 6",
+        "rank": 6,
+        "total": 623,
+        "event_total": 57
+      },
+      {
+        "entry": 910007,
+        "entry_name": "Team 7",
+        "player_name": "Manager 7",
+        "rank": 7,
+        "total": 613,
+        "event_total": 63
+      },
+      {
+        "entry": 910008,
+        "entry_name": "Team 8",
+        "player_name": "Manager 8",
+        "rank": 8,
+        "total": 601,
+        "event_total": 57
+      },
+      {
+        "entry": 910009,
+        "entry_name": "Team 9",
+        "player_name": "Manager 9",
+        "rank": 9,
+        "total": 595,
+        "event_total": 52
+      },
+      {
+        "entry": 910010,
+        "entry_name": "Team 10",
+        "player_name": "Manager 10",
+        "rank": 10,
+        "total": 592,
+        "event_total": 51
+      },
+      {
+        "entry": 910011,
+        "entry_name": "Team 11",
+        "player_name": "Manager 11",
+        "rank": 11,
+        "total": 586,
+        "event_total": 51
+      },
+      {
+        "entry": 910012,
+        "entry_name": "Team 12",
+        "player_name": "Manager 12",
+        "rank": 12,
+        "total": 555,
+        "event_total": 51
+      },
+      {
+        "entry": 910013,
+        "entry_name": "Team 13",
+        "player_name": "Manager 13",
+        "rank": 13,
+        "total": 547,
+        "event_total": 33
+      },
+      {
+        "entry": 910014,
+        "entry_name": "Team 14",
+        "player_name": "Manager 14",
+        "rank": 14,
+        "total": 542,
+        "event_total": 60
+      },
+      {
+        "entry": 910015,
+        "entry_name": "Team 15",
+        "player_name": "Manager 15",
+        "rank": 15,
+        "total": 536,
+        "event_total": 62
+      },
+      {
+        "entry": 910016,
+        "entry_name": "Team 16",
+        "player_name": "Manager 16",
+        "rank": 16,
+        "total": 474,
+        "event_total": 51
+      }
+    ]
+  }
+}
