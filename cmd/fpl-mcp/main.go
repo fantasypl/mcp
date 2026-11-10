@@ -104,6 +104,10 @@ type hitIn struct {
 	GameweeksAhead int `json:"gameweeks_ahead,omitempty" jsonschema:"Gameweeks ahead (1-10). Default 5."`
 	TeamID         int `json:"team_id,omitempty"         jsonschema:"Optional FPL team ID. When set, also checks the transfer is affordable using the outgoing player's selling price and the team's bank."`
 }
+type pickXIIn struct {
+	TeamID   int  `json:"team_id"            jsonschema:"FPL team ID"`
+	Gameweek *int `json:"gameweek,omitempty" jsonschema:"Gameweek to pick for (1-38). Defaults to the next gameweek."`
+}
 type rivalIn struct {
 	LeagueID int `json:"league_id" jsonschema:"Mini-league ID"`
 	TeamID   int `json:"team_id"   jsonschema:"FPL team ID"`
@@ -236,6 +240,16 @@ func newServer(client *fpl.Client) *mcp.Server {
 			return nil, call(func() (any, error) { return out, err }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
 		}
 		return nil, call(func() (any, error) { return engine.CaptainPicks(ctx, in.Gameweek, 5) }, "Failed to get captain picks. The FPL API may be temporarily unavailable — try again."), nil
+	})
+	mcp.AddTool(s, &mcp.Tool{Name: "pick_xi", Description: "Choose the starting XI, formation, bench order, captain and vice-captain for a manager's existing 15.\n\nUSE THIS WHEN the user asks: \"Who should I start?\", \"Pick my team for this week\", \"What's my best XI?\", \"Bench order?\", or wants a line-up for a squad they already own. Prefer optimal_squad for a squad built from scratch.\n\nEach player has a pick_score: projected_points (season points per game, scaled by starts share, fixture difficulty, home or away, and chance of playing; 0 for a blank, doubled for a double) plus a small set-piece bonus for first-choice penalties, corners and free kicks. Form only breaks exact ties. components shows every input so the ranking can be challenged. The result also gives the two nearest alternative formations with their points difference and swaps, fixture_exposure grouping the squad by match (benching two or more players from one match is flagged as a bet against it), and changes_from_your_xi. The captain is the starter with the highest captain_score, with projected_points breaking a tie within 5% for a player with attacking threat."}, func(ctx context.Context, _ *mcp.CallToolRequest, in pickXIIn) (*mcp.CallToolResult, any, error) {
+		if e := validTeam(in.TeamID); e != "" {
+			return nil, errResult(e), nil
+		}
+		if e := validGW(in.Gameweek); e != "" {
+			return nil, errResult(e), nil
+		}
+		return nil, call(func() (any, error) { return engine.PickXI(ctx, in.TeamID, in.Gameweek) },
+			fmt.Sprintf("Failed to pick an XI for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "differential_finder", Description: "Find underowned FPL players who are outperforming their ownership percentage.\n\nUSE THIS WHEN the user asks: \"Find me a differential\", \"Who are the hidden gems?\", \"Low-owned players performing well?\", or wants to climb the rankings with unique picks."}, func(ctx context.Context, _ *mcp.CallToolRequest, in diffIn) (*mcp.CallToolResult, any, error) {
 		maxOwnershipPct := 10.0
