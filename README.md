@@ -59,7 +59,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `rival_tracker` | Mini-league rival analysis and counter-strategies, against your neighbours or rivals you choose (`rival_team_ids`, `target_ranks`), with each manager's gameweek points and chips played |
 | `league_analyzer` | Win probabilities for every manager on a mini-league's first standings page, from a Monte Carlo of the rest of the season. Optional `team_id` adds the caller's gap to the leader and to every other manager, with the points per gameweek needed to close each |
 | `squad_scout` | Deep scout report using FPL's less-visible data fields. Its `ep_next` figures are FPL's own; in 2026-27 FPL sets `ep_next` equal to form, so read them as recent form |
-| `manager_transfer_history` | A manager's transfers this season, and the purchase, market and selling price of each current squad player |
+| `manager_transfer_history` | A manager's transfers this season, with each one's points gained or lost net of any hit, and the purchase, market and selling price of each current squad player |
 
 Plus two resources — `fpl://status` (current and next gameweek state, the next deadline in UTC with time remaining, and season progress) and `fpl://teams` (all 20 Premier League teams) — and five pre-built prompts that appear in Claude Desktop's prompt selector.
 

@@ -24,6 +24,11 @@ type TransferHistoryResult struct {
 	SquadSellingValueM float64           `json:"squad_selling_value_m"`
 	TotalBudgetM       float64           `json:"total_budget_m"`
 	SquadNote          string            `json:"squad_note,omitempty"`
+
+	// ROI is each transfer's return totalled (issue #50); nil, with ROINote
+	// saying why, when a gameweek's live points can't be fetched.
+	ROI     *TransferROISummary `json:"roi,omitempty"`
+	ROINote string              `json:"roi_note,omitempty"`
 }
 
 // TransferHistoryEntry is one transfer. PurchasePriceM is what the manager
@@ -37,6 +42,16 @@ type TransferHistoryEntry struct {
 	PurchasePriceM float64     `json:"purchase_price_m"`
 	PlayerOut      TransferLeg `json:"player_out"`
 	SoldForM       float64     `json:"sold_for_m"`
+
+	// Return over the gameweeks the incoming player was held; see
+	// transfer_roi.go.
+	PointsSinceIn  int  `json:"points_since_in"`
+	PointsSinceOut int  `json:"points_since_out"`
+	HitCost        int  `json:"hit_cost"`
+	NetGain        int  `json:"net_gain"`
+	HeldGameweeks  int  `json:"held_gameweeks"`
+	SoldInGameweek *int `json:"sold_in_gameweek,omitempty"`
+	SoldByWildcard bool `json:"sold_by_wildcard,omitempty"`
 }
 
 // TransferLeg identifies a player in a transfer, with their market price
@@ -86,7 +101,8 @@ func (e *Engine) TransferHistory(ctx context.Context, teamID int) (any, error) {
 	// Chips are context, not essential, so a failed history fetch just
 	// leaves them out.
 	chipByGW := map[int]string{}
-	if history, err := e.client.TeamHistory(ctx, teamID); err == nil {
+	history, historyErr := e.client.TeamHistory(ctx, teamID)
+	if historyErr == nil {
 		for _, ch := range history.Chips {
 			if ch.Name == "wildcard" || ch.Name == "freehit" {
 				chipByGW[ch.Event] = ch.Name
@@ -128,6 +144,7 @@ func (e *Engine) TransferHistory(ctx context.Context, teamID int) (any, error) {
 		Transfers:    entries,
 		CurrentSquad: []SquadPriceEntry{},
 	}
+	e.addTransferROI(ctx, result, transfers, history, historyErr, bootstrap)
 
 	picks, err := e.client.TeamPicks(ctx, teamID, bootstrap.CurrentGameweek())
 	if err != nil {
