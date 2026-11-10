@@ -271,4 +271,6 @@ type LeagueCallerRow struct {
 	RequiredPPGOverLeader float64 `json:"required_ppg_over_leader,omitempty"`
 	WinProbability        float64 `json:"win_probability"`
 	Note                  string  `json:"note,omitempty"`
+	// Gaps is the caller's gap to every other modelled manager (#53).
+	Gaps []LeagueGap `json:"gaps,omitempty"`
 }
