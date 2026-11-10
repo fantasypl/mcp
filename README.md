@@ -53,6 +53,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `optimal_transfers` | Combinatorially optimal transfers for a team's current squad, weighed against hit cost. Set `wildcard` for the best squad reachable on a Wildcard, budgeted at bank plus selling prices |
 | `player_comparison` | Head-to-head comparison of 2-4 players. With `team_id`, each player gains `legality` (3-per-club and budget), and illegal buys are left out of the verdict |
 | `live_points` | Live points during an active gameweek |
+| `manager_history` | A manager's season gameweek by gameweek: points before and after hits, bench points, ranks, chips, captain and auto-subs, and the best captain in the XI with the points forgone |
 | `is_hit_worth_it` | Whether a -4 transfer hit is worth taking |
 | `chip_strategy` | When to use each remaining chip |
 | `rival_tracker` | Mini-league rival analysis and counter-strategies, against your neighbours or rivals you choose (`rival_team_ids`, `target_ranks`), with each manager's gameweek points and chips played |

@@ -378,6 +378,13 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.LivePoints(ctx, in.TeamID) }, "Failed to get live points. Check that the team ID is correct and try again."), nil
 	})
+	mcp.AddTool(s, &mcp.Tool{Name: "manager_history", Description: "A manager's season gameweek by gameweek: points before and after hits, bench points, overall and gameweek rank, the gameweek average and highest score, chip played, captain and vice-captain, automatic substitutions, and the best captain choice in the XI with the points forgone.\n\nUSE THIS WHEN the user asks: \"How has my season gone?\", \"How many points have I left on my bench?\", \"Have my captain picks been good?\", \"When did I play my chips?\", \"How has my rank moved?\", or wants to review decision quality over the season. Run it for league rivals to compare.\n\nsummary totals hits, bench points per gameweek, captain return against the best available in the XI, chips played and rank movement. The captain return is the vice-captain's points when the captain didn't play. points_forgone counts the multiplier, so a Triple Captain week doubles it."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
+		if e := validTeam(in.TeamID); e != "" {
+			return nil, errResult(e), nil
+		}
+		return nil, call(func() (any, error) { return engine.ManagerHistory(ctx, in.TeamID) },
+			fmt.Sprintf("Failed to get history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
+	})
 	mcp.AddTool(s, &mcp.Tool{Name: "is_hit_worth_it", Description: "Analyze whether taking a -4 point hit for a transfer is worth it.\n\nUSE THIS WHEN the user asks: \"Should I take a hit?\", \"Is it worth -4 to bring in X?\", \"Hit for Haaland worth it?\". Use player_comparison first to find player IDs if needed.\n\nProjects expected points for both players over N gameweeks, accounting for form, fixture difficulty, home/away, and playing chance.\n\nPass team_id to also check the transfer is affordable: bank plus the outgoing player's selling price (what FPL pays you, which keeps only half of any price rise) against the incoming player's market price."}, func(ctx context.Context, _ *mcp.CallToolRequest, in hitIn) (*mcp.CallToolResult, any, error) {
 		if in.PlayerOutID < 1 || in.PlayerInID < 1 {
 			return nil, errResult("Player IDs must be positive integers."), nil

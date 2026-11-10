@@ -49,6 +49,14 @@ type HistoryGameweek struct {
 	EventTransfersCost int `json:"event_transfers_cost"`
 	TotalPoints        int `json:"total_points"`
 
+	// PointsOnBench is what the bench scored that gameweek. Rank is the
+	// manager's rank for the gameweek alone; OverallRank is their season
+	// rank after it. omitempty only affects fplctl's scenario generator,
+	// which marshals these types; FPL always sends the fields.
+	PointsOnBench int `json:"points_on_bench,omitempty"`
+	Rank          int `json:"rank,omitempty"`
+	OverallRank   int `json:"overall_rank,omitempty"`
+
 	// Value is total team value in tenths (squad + bank, not squad alone —
 	// see ManagerHub's squad-value calculation) and Bank is the bank
 	// balance in tenths, both as of this gameweek.
