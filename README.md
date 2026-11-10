@@ -46,7 +46,7 @@ Or with a full path if `fpl-mcp` isn't on your `PATH`:
 | `captain_pick` | Top 5 captain recommendations for a gameweek, from every player or from one squad given by `team_id` or `player_ids` |
 | `pick_xi` | Starting XI, formation, bench order and captain for an existing 15, with each player's component scores, the two nearest alternative formations, and fixture exposure |
 | `differential_finder` | Underowned players outperforming their ownership |
-| `fixture_outlook` | Teams ranked by upcoming fixture difficulty |
+| `fixture_outlook` | Teams ranked by upcoming fixture difficulty, from the next gameweek on |
 | `price_predictions` | Likely price rises and falls tonight |
 | `transfer_suggestions` | Transfer recommendations for a team. Every option keeps the 3-per-club limit, and `club_limit_ok` flags options that break it together with earlier suggestions |
 | `optimal_squad` | The highest-projected-points 15-man squad achievable under a budget, via an exact combinatorial optimizer |
@@ -83,6 +83,10 @@ fplctl role-change [--season S] [--baseline-from N] [--baseline-to N] [--recent-
 fplctl elo-capture [--root DIR]
 fplctl congestion-capture [--root DIR]
 ```
+
+### Chip confidence
+
+`chip_strategy`'s `chip_score` is in each chip's own units, so compare it only between gameweeks for the same chip. `confidence` (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over that chip's next-best gameweek. Each recommendation also lists `next_best_gameweek`, `gap_to_next` and its top five `candidates` with the factors behind them. Pass `league_id` to see rivals' remaining chips.
 
 ## Development
 

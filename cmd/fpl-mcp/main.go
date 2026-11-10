@@ -70,6 +70,10 @@ type fixtureIn struct {
 	Position       string `json:"position,omitempty"        jsonschema:"Filter by position: GKP, DEF, MID, or FWD. Optional."`
 }
 type priceIn struct{}
+type chipIn struct {
+	TeamID   int  `json:"team_id"             jsonschema:"FPL team ID"`
+	LeagueID *int `json:"league_id,omitempty" jsonschema:"Optional mini-league ID. When set, the result adds league_chips: each rival's chips left this half of the season, for the top 20 of the standings."`
+}
 type transferIn struct {
 	TeamID        int     `json:"team_id"                  jsonschema:"FPL team ID"`
 	FreeTransfers int     `json:"free_transfers,omitempty" jsonschema:"Available free transfers. Default 1."`
@@ -287,7 +291,7 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.Differentials(ctx, maxOwnershipPct, in.Gameweek, 10) }, "Failed to find differentials. The FPL API may be temporarily unavailable — try again."), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "fixture_outlook", Description: "Rank all 20 Premier League teams by upcoming fixture difficulty.\n\nUSE THIS WHEN the user asks: \"Who has easy fixtures?\", \"Which teams to target?\", \"Best defenders to buy for the next 5 weeks?\", or any fixture-planning question."}, func(ctx context.Context, _ *mcp.CallToolRequest, in fixtureIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "fixture_outlook", Description: "Rank all 20 Premier League teams by upcoming fixture difficulty.\n\nUSE THIS WHEN the user asks: \"Who has easy fixtures?\", \"Which teams to target?\", \"Best defenders to buy for the next 5 weeks?\", or any fixture-planning question.\n\nThe window starts at the next gameweek (start_gameweek), so a finished or in-progress gameweek is never counted."}, func(ctx context.Context, _ *mcp.CallToolRequest, in fixtureIn) (*mcp.CallToolResult, any, error) {
 		n := in.GameweeksAhead
 		if n == 0 {
 			n = 5
@@ -414,11 +418,16 @@ func newServer(client *fpl.Client) *mcp.Server {
 		}
 		return nil, call(func() (any, error) { return engine.TransferHistory(ctx, in.TeamID) }, fmt.Sprintf("Failed to get transfer history for team %d. Check that the team ID is correct and try again.", in.TeamID)), nil
 	})
-	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans the next 10 gameweeks and scores each for every unused chip."}, func(ctx context.Context, _ *mcp.CallToolRequest, in teamIn) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(s, &mcp.Tool{Name: "chip_strategy", Description: "Recommend when to use each remaining FPL chip for maximum impact.\n\nUSE THIS WHEN the user asks: \"When should I use my bench boost?\", \"Best week for triple captain?\", \"Chip strategy?\", \"When to free hit?\", \"Should I wildcard?\".\n\nAuto-detects which chips are still available (handles mid-season reset after GW19). Scans up to the next 10 gameweeks, stopping at GW19 while first-half chips are in play, and scores each for every unused chip.\n\nEach recommendation has chip_score, in that chip's own units: compare it only between gameweeks for the same chip. confidence (high, medium or low) is comparable across chips: it is the recommended gameweek's margin over the same chip's next-best gameweek (margin_over_next_pct), and says how clear-cut the choice is, not how likely the chip is to pay off. next_best_gameweek and gap_to_next show the runner-up, and candidates lists the top five gameweeks with their factors (fixture count, confirmed and predicted doubles, blanks, average FDR, and squad fit). confidence_score is deprecated and equals chip_score. season_outlook lists confirmed doubles and blanks after the scan window. Pass league_id to see each rival's remaining chips."}, func(ctx context.Context, _ *mcp.CallToolRequest, in chipIn) (*mcp.CallToolResult, any, error) {
 		if e := validTeam(in.TeamID); e != "" {
 			return nil, errResult(e), nil
 		}
-		return nil, call(func() (any, error) { return engine.ChipStrategy(ctx, in.TeamID) }, "Failed to get chip strategy. Check that the team ID is correct and try again."), nil
+		if in.LeagueID != nil {
+			if e := validLeague(*in.LeagueID); e != "" {
+				return nil, errResult(e), nil
+			}
+		}
+		return nil, call(func() (any, error) { return engine.ChipStrategyWith(ctx, in.TeamID, in.LeagueID) }, "Failed to get chip strategy. Check that the team ID is correct and try again."), nil
 	})
 	mcp.AddTool(s, &mcp.Tool{Name: "rival_tracker", Description: "Analyze your mini-league rivals and get strategies to beat them.\n\nUSE THIS WHEN the user asks: \"How do I beat my rivals?\", \"What's my mini-league looking like?\", \"What players do my rivals have?\", \"Show me my league standings\", or any rival/league question.\n\nCompares your squad against nearby rivals (ranked within three places), or against the rivals you choose with rival_team_ids or target_ranks (for example [1, 2, 3] to chase the leaders), finds differentials (players you have that they don't), identifies rival weaknesses, predicts their likely next transfers, and suggests counter-strategies. You and every rival also get gameweek_points (each gameweek before and after hits) and chips_used with gameweeks, so score trends and chip timing can be compared.\n\nThe user needs their league ID (from the mini-league URL: fantasy.premierleague.com/leagues/LEAGUE_ID/standings/c) and their team ID."}, func(ctx context.Context, _ *mcp.CallToolRequest, in rivalIn) (*mcp.CallToolResult, any, error) {
 		if e := validLeague(in.LeagueID); e != "" {
