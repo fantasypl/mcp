@@ -129,6 +129,11 @@ type Engine struct {
 	// user sets one up. With it, selling prices for the logged-in manager's
 	// own team come from FPL instead of being computed, and my_team works.
 	MyTeamSource MyTeamSource
+
+	// Leagues are the mini-leagues the user saved as the ones they compete
+	// in (FPL_MCP_LEAGUES). Empty unless set. With them, team-scoped tools
+	// add how the caller's rivals own each player; see LeagueField.
+	Leagues []LeagueRef
 }
 
 // intelFetcher is the subset of *DGWIntelFetcher chip strategy needs — an

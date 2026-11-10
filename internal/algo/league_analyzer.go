@@ -309,30 +309,10 @@ func (e *Engine) AnalyzeLeagueForTeam(ctx context.Context, leagueID int, callerI
 		analyses = append(analyses, analysis)
 	}
 
-	// The simulation, over every modelled manager in standings order.
-	entries := make([]leagueSimEntry, len(modelled))
-	for i, m := range modelled {
-		entries[i] = leagueSimEntry{TotalPoints: m.Total}
-		if h := histories[m.Entry]; h != nil {
-			entries[i].NetScores = scoringWeeks(h)
-			entries[i].Chips = chipsRemaining(h.Chips, currentGW)
-			entries[i].HasHistory = true
-		}
-	}
-	probs := simulateLeagueWinners(entries, gwsRemaining, uint64(leagueID)<<8|uint64(currentGW))
-	probByTeam := make(map[int]float64, len(modelled))
-	table := make([]LeagueWinChance, len(modelled))
-	for i, m := range modelled {
-		probByTeam[m.Entry] = probs[i]
-		basis := "league average (history unavailable)"
-		if entries[i].HasHistory {
-			basis = fmt.Sprintf("own history (%d gameweeks)", len(entries[i].NetScores))
-		}
-		table[i] = LeagueWinChance{
-			Rank: m.Rank, ManagerName: m.PlayerName, TeamName: m.EntryName, TeamID: m.Entry,
-			TotalPoints: m.Total, PointsFromLeader: m.Total - leaderPoints,
-			WinProbability: probs[i], Basis: basis,
-		}
+	table := leagueWinTable(leagueID, modelled, histories, currentGW, gwsRemaining)
+	probByTeam := make(map[int]float64, len(table))
+	for _, row := range table {
+		probByTeam[row.TeamID] = row.WinProbability
 	}
 	for _, m := range managers {
 		switch v := m.(type) {
@@ -358,6 +338,50 @@ func (e *Engine) AnalyzeLeagueForTeam(ctx context.Context, leagueID int, callerI
 		WinProbabilities: table, StandingsNote: standingsNote,
 		Caller: leagueCallerRow(callerID, table, gwsRemaining),
 	}, nil
+}
+
+// leagueWinTable runs the season simulation over the modelled managers, in
+// standings order. The seed depends only on the league and gameweek, so
+// league_analyzer and fpl_manager_hub report the same probabilities.
+func leagueWinTable(leagueID int, modelled []fpl.LeagueEntry, histories map[int]*fpl.TeamHistory, currentGW, gwsRemaining int) []LeagueWinChance {
+	leaderPoints := 0
+	if len(modelled) > 0 {
+		leaderPoints = modelled[0].Total
+	}
+	entries := make([]leagueSimEntry, len(modelled))
+	for i, m := range modelled {
+		entries[i] = leagueSimEntry{TotalPoints: m.Total}
+		if h := histories[m.Entry]; h != nil {
+			entries[i].NetScores = scoringWeeks(h)
+			entries[i].Chips = chipsRemaining(h.Chips, currentGW)
+			entries[i].HasHistory = true
+		}
+	}
+	probs := simulateLeagueWinners(entries, gwsRemaining, uint64(leagueID)<<8|uint64(currentGW))
+	table := make([]LeagueWinChance, len(modelled))
+	for i, m := range modelled {
+		basis := "league average (history unavailable)"
+		if entries[i].HasHistory {
+			basis = fmt.Sprintf("own history (%d gameweeks)", len(entries[i].NetScores))
+		}
+		table[i] = LeagueWinChance{
+			Rank: m.Rank, ManagerName: m.PlayerName, TeamName: m.EntryName, TeamID: m.Entry,
+			TotalPoints: m.Total, PointsFromLeader: m.Total - leaderPoints,
+			WinProbability: probs[i], Basis: basis,
+		}
+	}
+	return table
+}
+
+// gameweeksRemaining counts the gameweeks not yet finished.
+func gameweeksRemaining(b *fpl.Bootstrap) int {
+	finished := 0
+	for i := range b.Events {
+		if b.Events[i].Finished {
+			finished++
+		}
+	}
+	return 38 - finished
 }
 
 // leagueHistories fetches every modelled manager's season history, eight

@@ -27,7 +27,9 @@
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_ID": "${user_config.weights_access_client_id}",
         "FPL_MCP_WEIGHTS_ACCESS_CLIENT_SECRET": "${user_config.weights_access_client_secret}",
         "FPL_MCP_APIFOOTBALL_KEY": "${user_config.apifootball_key}",
-        "FPL_MCP_LOGIN": "${user_config.fpl_login}"
+        "FPL_MCP_LOGIN": "${user_config.fpl_login}",
+        "FPL_MCP_TEAM_ID": "${user_config.my_team_id}",
+        "FPL_MCP_LEAGUES": "${user_config.my_leagues}"
       }
     }
   },
@@ -118,6 +120,18 @@
     "platforms": ["darwin", "win32", "linux"]
   },
   "user_config": {
+    "my_team_id": {
+      "type": "string",
+      "title": "Your FPL team ID (optional)",
+      "description": "The number after /entry/ in your FPL points page URL. Tools use it when you don't name a team, so you don't have to repeat it. Leave blank to give it each time; with the FPL login on, your logged-in team is used instead.",
+      "required": false
+    },
+    "my_leagues": {
+      "type": "string",
+      "title": "Your mini-leagues (optional)",
+      "description": "The mini-leagues you compete in, separated by commas: the number after /leagues/ in each standings URL, or the URL itself, optionally followed by a colon and a name, such as 314159, 271828:Work. Up to 5. The manager hub then reports your position, gaps and win chance in each, and captain and transfer advice shows how your rivals own each player. rival_tracker, league_analyzer and chip_strategy use the first league when you don't name one.",
+      "required": false
+    },
     "weights_url": {
       "type": "string",
       "title": "Optimized weights URL (advanced)",

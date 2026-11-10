@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fantasypl/mcp/internal/fpl"
+	"github.com/fantasypl/mcp/internal/fplauth"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -272,6 +273,10 @@ func TestManifestMatchesServer(t *testing.T) {
 // isError, not the MCP protocol-level error.
 func callTool(t *testing.T, name string, args map[string]any) map[string]any {
 	t.Helper()
+	// A developer's own saved settings must not turn a validation case
+	// into a live FPL request.
+	t.Setenv("FPL_MCP_TEAM_ID", "")
+	t.Setenv("FPL_MCP_LEAGUES", "")
 	ctx := context.Background()
 	s := newServer(fpl.NewClient())
 
@@ -312,6 +317,9 @@ func isError(m map[string]any) bool {
 // ---------------------------------------------------------------------------
 
 func TestToolValidation(t *testing.T) {
+	// team_id 0 falls back to the logged-in team, which would be a live
+	// request.
+	t.Setenv(fplauth.EnvLogin, "")
 	tests := []struct {
 		tool string
 		args map[string]any

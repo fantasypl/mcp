@@ -43,7 +43,8 @@ type OptimalTransfersResult struct {
 	ProjectedPointsBasis string               `json:"projected_points_basis"`
 	BestNote             string               `json:"best_note"` // what the best and safest flags on each option mean
 	Options              []TransferPlanOption `json:"options"`
-	PriceRiskNote        string               `json:"price_risk_note,omitempty"` // explains price_risk; set only when a leg carries one
+	PriceRiskNote        string               `json:"price_risk_note,omitempty"`        // explains price_risk; set only when a leg carries one
+	LeagueOwnershipBasis string               `json:"league_ownership_basis,omitempty"` // explains league_ownership; set only when leagues are saved
 	// Partial is true when any option's search hit its time limit before
 	// proving optimality (that option has optimal: false). PartialNote then
 	// says what that means for the caller.

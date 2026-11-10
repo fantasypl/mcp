@@ -324,6 +324,9 @@ type CaptainResult struct {
 	MostCaptained    *MostCaptained `json:"most_captained"`
 	NumPicks         int            `json:"num_picks"`
 	Picks            []CaptainPick  `json:"picks"`
+	// LeagueOwnershipBasis explains each pick's league_ownership; set only
+	// when that is.
+	LeagueOwnershipBasis string `json:"league_ownership_basis,omitempty"`
 }
 
 type MostCaptained struct {
@@ -342,6 +345,9 @@ type CaptainPick struct {
 	Reasoning string       `json:"reasoning"`
 	Stats     CaptainStats `json:"stats"`
 	Streak    Streak       `json:"streak"`
+	// LeagueOwnership is set when leagues are saved and a team is known:
+	// how the team's rivals hold this player. See league_field.go.
+	LeagueOwnership *LeagueOwnership `json:"league_ownership,omitempty"`
 }
 
 type PlayerBrief struct {
