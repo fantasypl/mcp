@@ -80,17 +80,33 @@ func runEloCapture(ctx context.Context, args []string) error {
 		Current:    currentByID,
 		History:    history,
 	}
-	b, err := json.MarshalIndent(capture, "", "  ")
+	path, err := writeEloCapture(*root, capture)
 	if err != nil {
-		return err
-	}
-	path := filepath.Join(*root, "elo", "teams.json")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
 		return err
 	}
 	fmt.Printf("Wrote %s (%d current, %d with history)\n", path, len(currentByID), len(history))
 	return nil
+}
+
+// writeEloCapture writes capture to root/elo/teams.json and returns the path.
+// A capture with no current ratings and no history is an error, and the
+// existing file is left alone: clubelo.com has answered every request with
+// 403 since at least November 2026, and overwriting the last good capture
+// with an empty one hid that.
+func writeEloCapture(root string, capture eloCapture) (string, error) {
+	path := filepath.Join(root, "elo", "teams.json")
+	if len(capture.Current) == 0 && len(capture.History) == 0 {
+		return "", fmt.Errorf("captured no Elo ratings, so %s was not written", path)
+	}
+	b, err := json.MarshalIndent(capture, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return "", err
+	}
+	if err := os.WriteFile(path, b, 0o644); err != nil {
+		return "", err
+	}
+	return path, nil
 }
